@@ -344,13 +344,13 @@
       root.innerHTML = `<style>${css}
 @page{size:A4;margin:12mm 10mm 14mm}
 #tipar .tp-cap{break-before:page;page-break-before:always}#tipar .tp-cap:first-of-type{break-before:auto;page-break-before:auto}
-#tipar img{break-inside:avoid}#tipar button{pointer-events:none}
+#tipar img{break-inside:avoid}#tipar .tp-cap-fil{font:600 10px system-ui;color:#8a8f9c;letter-spacing:.04em;padding:4px 14px 0;text-align:right}#tipar button{pointer-events:none}
 #tipar .tp-fil{position:fixed;left:0;right:0;bottom:0;text-align:center;font:9px system-ui;color:#8a8f9c}
 .tp-bara{position:sticky;top:0;z-index:9;display:flex;gap:8px;align-items:center;padding:10px 12px;background:#1a1e2a;color:#fff;font:600 14px system-ui}
 .tp-bara button{pointer-events:auto!important;font:700 14px system-ui;padding:8px 14px;border-radius:99px;border:0;background:#fff;color:#1a1e2a}
 @media print{.tp-bara{display:none!important}}</style>
 <div class="tp-bara"><button id="tp-x">‹ înapoi</button><span style="flex:1">${mod === "trimite" ? "alege „partajează” în fereastra de tipărire" : "pdf: " + keys.length + " capitole"}</span><button id="tp-p">tipărește / pdf</button></div>
-${parti.map(h => `<div class="tp-cap">${h}</div>`).join("")}
+${parti.map(h => `<div class="tp-cap"><div class="tp-cap-fil">cartea casei · ${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")} · ${esc(azi)}</div>${h}</div>`).join("")}
 <div class="tp-fil">cartea casei · ${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")} · ${esc(azi)} · serviciu privat de analiză</div>`;
       const link = document.querySelector('link[href^="styles.css"]'), clsVechi = document.body.className;
       const inchide = () => { root.remove(); if (link) link.disabled = false; document.body.className = clsVechi; app.style.display = ""; window.removeEventListener("afterprint", inchide); };
