@@ -265,7 +265,8 @@
       const fr = $("#rap");
       cit._gata = new Promise((ok, nu) => {
         const t0 = Date.now(), iv = setInterval(() => {
-          try { const w = fr.contentWindow; if (w && w.D && w.D.id === rid && w.RIC_STARE && Object.keys(w.RIC_STARE).length > 10) { clearInterval(iv); setTimeout(ok, 900); } } catch (er) {}
+          try { const w = fr.contentWindow; // D e declarat cu let în pagina raportului: nu e window.D, se citește prin eval în cadrul ei
+            if (w && w.eval && w.eval("typeof D !== 'undefined' && D && D.id") === rid && w.RIC_STARE && Object.keys(w.RIC_STARE).length > 10) { clearInterval(iv); setTimeout(ok, 900); } } catch (er) {}
           if (Date.now() - t0 > 45000) { clearInterval(iv); nu(new Error("timp")); }
         }, 250);
       });
