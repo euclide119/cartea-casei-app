@@ -59,7 +59,7 @@
     app.innerHTML = `<div class="ecran">${marca()}
       <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu codul raportului și pin-ul.</p></div>
       <div class="cutie" id="f-pin">
-        <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-7DAJMV"></label>
+        <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-XXXXXX"></label>
         <label class="camp">pin<input type="tel" id="pp" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="6 cifre"></label>
         <button class="btn lat" id="pin-go">intră</button>
         <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
@@ -78,7 +78,7 @@
         </div>
       </details>
       ${desk ? `<div class="cutie" style="align-items:center;text-align:center"><b>se citește pe telefon</b><div class="qr">${qrSvg(BAZA)}</div><p class="mut" style="margin:0;font-size:14px">scanează cu camera telefonului.</p></div>` : ""}
-      <p class="nota">serviciu privat de analiză, independent de instituțiile publice. fără parole: intri cu un cod de unică folosință.</p></div>`;
+      <p class="nota">serviciu privat de analiză, independent de instituțiile publice. intri cu codul raportului și pin-ul, fără parolă de ținut minte.</p></div>`;
     const m = $("#msg");
     $("#pc").value = (() => { try { return localStorage.getItem("cc-cod") || ""; } catch (e) { return ""; } })();
     const pinGo = async () => {
