@@ -1,7 +1,7 @@
 /* cartea casei · aplicația clientului (F0.4, 24.10.2026). Plan: documente/analize/aplicatia_clientului_cartea_casei.md.
    intrare (cod pe e-mail sau QR de o folosință) → acasă (rapoartele lui) → raport (prima pagină + meniul capitolelor) → capitol (glisare stânga / dreapta) → cont.
    Aplicația nu randează date: primește de la server HTML-ul gata randat al unui singur capitol (Edge Function „capitol") și îl afișează într-un cadru fără scripturi.
-   Nimic din raport nu se scrie pe telefon: capitolele stau doar în memorie, cel mult 9 minute (URL-urile pozelor expiră în 10), și se șterg la ieșire.
+   Capitolele (textul) stau doar în memorie; pozele rămân în cache-ul telefonului (sw.js), ca să se vadă și după ce expiră linkul de 24 h; totul se șterge la „ieși din cont”.
    Pe desktop: doar coperta + codul QR pentru telefon. */
 (function () {
   "use strict";
@@ -40,7 +40,7 @@
   async function token() { const { data: { session } } = await sb.auth.getSession(); return session && session.access_token; }
   async function capitol(rid, k, retry) {
     const key = rid + "/" + k, c = S.cache.get(key);
-    if (c && Date.now() - c.t < 9 * 60e3) return c.v;
+    if (c && Date.now() - c.t < 23 * 3600e3) return c.v;  // linkurile pozelor țin 24 h; pozele rămân oricum în cache-ul telefonului
     const r = await fetch(`${FN}capitol?raport=${encodeURIComponent(rid)}&k=${encodeURIComponent(k)}`, {
       headers: { Authorization: "Bearer " + await token(), apikey: CFG.supabaseKey, "x-dispozitiv": amprenta() } });
     const j = await r.json().catch(() => ({}));
@@ -250,6 +250,11 @@
           b.innerHTML = `<span><small style="display:block;opacity:.7;font-weight:500">capitolul următor · ${n.nr}</small>${esc(n.t)}</span><span style="font-size:22px">›</span>`;
           b.addEventListener("click", () => du(next)); d.body.appendChild(b); }
         d.defaultView && d.defaultView.scrollTo(0, 0);
+        // o poză care nu s-a încărcat (link expirat): capitolul se cere din nou, o singură dată
+        let reluat = false;
+        const reia = () => { if (reluat || gen !== generatia) return; reluat = true; S.cache.delete(rid + "/" + k); ecranCapitol(rid, k); };
+        if ([...d.images].some(i => i.complete && i.naturalWidth === 0 && i.getAttribute("src"))) reia();
+        d.addEventListener("error", ev => { if (ev.target && ev.target.tagName === "IMG") reia(); }, true);
       });
     } catch (err) {
       if (gen !== generatia || !$("#inc")) return;
@@ -306,6 +311,7 @@
   }
   async function iesi() {
     S.cache.clear(); S.css = {}; S.rapoarte = []; S.user = null;
+    try { navigator.serviceWorker && navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage("sterge-poze"); } catch (e) {}
     await sb.auth.signOut({ scope: "local" }).catch(() => {});
     location.hash = ""; ecranIntrare();
   }
