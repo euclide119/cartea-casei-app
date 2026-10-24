@@ -79,3 +79,7 @@ input:focus{outline:2px solid var(--acc);outline-offset:1px}
 .foaie button.c .bf-m{margin-left:auto;font-weight:800;color:var(--ok)}
 .foaie button.c .e+.bf-m{margin-left:8px}
 #bife .r input,.lista .r input{flex:none}
+/* mapa proprietății */
+.mp-prog{height:8px;border-radius:99px;background:#e9e1d1;overflow:hidden}.mp-prog i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.mp-st label{padding:7px 12px;font-size:14px}
+.mp-r small{display:block;margin-top:3px}

@@ -203,7 +203,8 @@
       ${capsDe(r).map(c => { const g = c.grup !== g0 ? `<div class="g">${esc(mic(c.grup))}</div>` : ""; g0 = c.grup;
         return `${g}<button class="c ${c.are_date ? "" : "gri"} ${c.k === kAcum ? "acum" : ""}" data-k="${esc(c.k)}"><i>${String(c.nr).padStart(2, "0")}</i>${esc(mic(c.titlu))}${c.clasa === "esential" ? '<span class="e" title="esențial"></span>' : ""}</button>`; }).join("")}
       <button class="c ${kAcum === "concluzii" ? "acum" : ""}" data-k="concluzii"><i>27</i>rezumat și concluzii</button>
-      <button class="c ${kAcum === "final" ? "acum" : ""}" data-k="final" style="font-weight:700"><i>✓</i>pdf, trimitere și alte servicii</button></div>`;
+      <button class="c ${kAcum === "final" ? "acum" : ""}" data-k="final" style="font-weight:700"><i>✓</i>pdf, trimitere și alte servicii</button>
+      <button class="c" data-k="mapa" style="font-weight:700"><i>▤</i>mapa proprietății</button></div>`;
     f.addEventListener("click", e => {
       if (e.target === f || e.target.closest("[data-x]")) { f.remove(); return; }
       const b = e.target.closest("[data-k]"); if (b) { f.remove(); location.hash = `#/r/${r.id}/${b.dataset.k}`; }
@@ -317,6 +318,7 @@
     const r = S.rapoarte.find(x => x.id === rid);
     if (!r) { location.hash = "#/acasa"; return; }
     if (k === "final") return ecranFinal(r);
+    if (k === "mapa" && window.CC_MAPA) return CC_MAPA.ecran(app, r);
     if (!ordine(r).includes(k)) k = "coperta";
     if (S.interactiv !== false && await swGata()) return capitolInteractiv(r, k, gen);
     const ord = ordine(r); if (!ord.includes(k)) k = "coperta";
@@ -367,7 +369,7 @@
 
   /* ---------- pagina finală: pdf (complet / bifate / trimite), „am nevoie și de", aplicația pe telefon ---------- */
   const SERVICII = [["evaluare", "evaluare de la un evaluator autorizat anevar"], ["energetic", "certificat energetic"], ["opinie", "opinie juridică de la avocat"],
-    ["cf", "extras de carte funciară sau alte date de cadastru"], ["mapa", "mapa proprietății: toate actele, în ordine"]];
+    ["cf", "extras de carte funciară sau alte date de cadastru"], ["mapa", "mapa proprietății pregătită de noi: toate actele, în ordine"]];
   async function ecranFinal(r) {
     const rid = r.id, sel = await bife(rid), lista = deTiparit(r);
     const cuDate = lista.filter(k => k === "coperta" || k === "concluzii" || (capsDe(r).find(c => c.k === k) || {}).are_date);
@@ -379,6 +381,7 @@
         <button class="btn alb lat" id="pdf-sel">pdf cu ce ai bifat</button>
         <button class="btn alb lat" id="trimite">trimite ce ai bifat</button>
         <p class="mut" style="margin:0;font-size:13px">pdf-ul se face pe telefon, cu numele tău și codul raportului pe fiecare pagină. în fereastra care se deschide alege „salvează ca pdf”, sau „partajează” ca să-l trimiți pe e-mail ori whatsapp.</p></div>
+      <div class="cutie"><h2>mapa proprietății</h2><p class="mut" style="margin:0;font-size:14px">actele pe care le cer notarul și banca la vânzare, pe grupe: bifezi ce ai, vezi ce lipsește, ceri prin noi ce putem obține.</p><button class="btn lat" data-go="#/r/${esc(rid)}/mapa">deschide mapa</button></div>
       <div class="cutie"><h2>am nevoie și de</h2><p class="mut" style="margin:0;font-size:14px">bifează ce mai vrei pentru proprietatea asta. îți scriem cu prețul și termenul; nu plătești nimic acum.</p>
         <div class="lista">${SERVICII.map(([v, t]) => `<label class="r" style="cursor:pointer"><input type="checkbox" name="srv" value="${v}" style="width:22px;height:22px"><div>${esc(t)}</div></label>`).join("")}</div>
         <label class="camp">ce ar trebui să știm (opțional)<input type="text" id="srv-nota" maxlength="300" placeholder="ex.: am nevoie până vineri"></label>
