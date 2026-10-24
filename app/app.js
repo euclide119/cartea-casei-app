@@ -252,7 +252,7 @@
         d.defaultView && d.defaultView.scrollTo(0, 0);
         // o poză care nu s-a încărcat (link expirat): capitolul se cere din nou, o singură dată
         let reluat = false;
-        const reia = () => { if (reluat || gen !== generatia) return; reluat = true; S.cache.delete(rid + "/" + k); ecranCapitol(rid, k); };
+        const reia = () => { if (reluat || gen !== generatia || !navigator.onLine) return; reluat = true; S.cache.delete(rid + "/" + k); ecranCapitol(rid, k); };
         if ([...d.images].some(i => i.complete && i.naturalWidth === 0 && i.getAttribute("src"))) reia();
         d.addEventListener("error", ev => { if (ev.target && ev.target.tagName === "IMG") reia(); }, true);
       });
