@@ -202,33 +202,59 @@
       <button class="c ${kAcum === "coperta" ? "acum" : ""}" data-k="coperta"><i>00</i>prima pagină</button>
       ${capsDe(r).map(c => { const g = c.grup !== g0 ? `<div class="g">${esc(mic(c.grup))}</div>` : ""; g0 = c.grup;
         return `${g}<button class="c ${c.are_date ? "" : "gri"} ${c.k === kAcum ? "acum" : ""}" data-k="${esc(c.k)}"><i>${String(c.nr).padStart(2, "0")}</i>${esc(mic(c.titlu))}${c.clasa === "esential" ? '<span class="e" title="esențial"></span>' : ""}</button>`; }).join("")}
-      <button class="c ${kAcum === "concluzii" ? "acum" : ""}" data-k="concluzii"><i>27</i>rezumat și concluzii</button></div>`;
+      <button class="c ${kAcum === "concluzii" ? "acum" : ""}" data-k="concluzii"><i>27</i>rezumat și concluzii</button>
+      <button class="c ${kAcum === "final" ? "acum" : ""}" data-k="final" style="font-weight:700"><i>✓</i>pdf, trimitere și alte servicii</button></div>`;
     f.addEventListener("click", e => {
       if (e.target === f || e.target.closest("[data-x]")) { f.remove(); return; }
       const b = e.target.closest("[data-k]"); if (b) { f.remove(); location.hash = `#/r/${r.id}/${b.dataset.k}`; }
     });
     document.body.appendChild(f);
+    const sel = SEL[r.id]; if (sel) f.querySelectorAll("button.c[data-k]").forEach(b => { if (sel.has(b.dataset.k)) b.insertAdjacentHTML("beforeend", '<span class="bf-m" title="bifat pentru pdf">✓</span>'); });
   }
-  function ordine(r) { return ["coperta", ...capsDe(r).map(c => c.k), "concluzii"]; }
+  function ordine(r) { return ["coperta", ...capsDe(r).map(c => c.k), "concluzii", "final"]; }
+  const deTiparit = r => ["coperta", ...capsDe(r).map(c => c.k), "concluzii"];
   function eticheta(r, k) {
     if (k === "coperta") return { nr: "00", t: "prima pagină" };
     if (k === "concluzii") return { nr: "27", t: "rezumat și concluzii" };
+    if (k === "final") return { nr: "✓", t: "pdf și cereri" };
     const c = capsDe(r).find(x => x.k === k) || {}; return { nr: String(c.nr || "").padStart(2, "0"), t: mic(c.titlu || k), gri: !c.are_date };
   }
+  /* ---------- bifele: ce intră în pdf / ce se trimite (pe cont, în selectii_client) ---------- */
+  const SEL = {};
+  async function bife(rid) {
+    if (SEL[rid]) return SEL[rid];
+    const { data } = await sb.from("selectii_client").select("capitole").eq("raport_id", rid).eq("user_id", S.user.id).maybeSingle();
+    const o = (data && data.capitole) || {};
+    SEL[rid] = new Set(Object.keys(o).filter(k => o[k]));
+    return SEL[rid];
+  }
+  let salvT = null;
+  function salveazaBife(rid) {
+    clearTimeout(salvT);
+    salvT = setTimeout(() => { const o = {}; SEL[rid].forEach(k => o[k] = true);
+      sb.from("selectii_client").upsert({ raport_id: rid, user_id: S.user.id, capitole: o, actualizat_la: new Date().toISOString() }).then(() => {}); }, 400);
+  }
+  function comuta(rid, k, pe) { const s = SEL[rid]; if (!s) return; (pe === undefined ? !s.has(k) : pe) ? s.add(k) : s.delete(k); salveazaBife(rid); }
+
   let generatia = 0;
   async function ecranCapitol(rid, k) {
     const gen = ++generatia;
     const r = S.rapoarte.find(x => x.id === rid);
     if (!r) { location.hash = "#/acasa"; return; }
+    if (k === "final") return ecranFinal(r);
     const ord = ordine(r); if (!ord.includes(k)) k = "coperta";
     const i = ord.indexOf(k), e = eticheta(r, k), prev = ord[i - 1], next = ord[i + 1];
     app.innerHTML = `<div class="cititor">
       <div class="bara"><button class="ic" data-go="${k === "coperta" ? "#/acasa" : "#/r/" + esc(rid)}" aria-label="înapoi">‹</button>
         <div class="t">${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr + (e.gri ? " · fără date încă" : "")}</small></div>
+        <button class="ic bifa" id="bf" aria-pressed="false" aria-label="bifează capitolul pentru pdf" title="bifează pentru pdf">✓</button>
         <button class="ic" id="m" aria-label="capitole">☰</button></div>
       <div style="position:relative;flex:1;display:flex"><iframe title="${esc(e.t)}" referrerpolicy="no-referrer"></iframe><div class="incarc" id="inc">se încarcă…</div></div>
       <div class="jos"><button class="btn alb mic" id="p" ${prev ? "" : "disabled"} aria-label="capitolul anterior">‹ înapoi</button><span class="n">${i + 1} / ${ord.length}</span><button class="btn mic" id="u" ${next ? "" : "disabled"} aria-label="capitolul următor">înainte ›</button></div></div>`;
     $("#m").onclick = () => meniu(r, k);
+    bife(rid).then(sel => { const b = $("#bf"); if (!b || gen !== generatia) return;
+      const arata = () => { const on = sel.has(k); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); };
+      arata(); b.onclick = () => { comuta(rid, k); arata(); }; });
     const du = kk => { if (kk) location.hash = `#/r/${rid}/${kk}`; };
     $("#p").onclick = () => du(prev); $("#u").onclick = () => du(next);
     const fr = $("iframe");
@@ -260,6 +286,82 @@
       if (gen !== generatia || !$("#inc")) return;
       $("#inc").textContent = err.status === 429 ? mic(err.message) : err.status === 403 ? "nu mai ai acces la acest raport." : "capitolul nu se poate deschide acum. verifică semnalul și încearcă din nou.";
     }
+  }
+
+  /* ---------- pagina finală: pdf (complet / bifate / trimite), „am nevoie și de", aplicația pe telefon ---------- */
+  const SERVICII = [["evaluare", "evaluare de la un evaluator autorizat anevar"], ["energetic", "certificat energetic"], ["opinie", "opinie juridică de la avocat"],
+    ["cf", "extras de carte funciară sau alte date de cadastru"], ["mapa", "mapa proprietății: toate actele, în ordine"]];
+  async function ecranFinal(r) {
+    const rid = r.id, sel = await bife(rid), lista = deTiparit(r);
+    const cuDate = lista.filter(k => k === "coperta" || k === "concluzii" || (capsDe(r).find(c => c.k === k) || {}).are_date);
+    app.innerHTML = `<div class="ecran"><div class="bara" style="margin:-14px -16px 0;padding-left:12px"><button class="ic" data-go="#/r/${esc(rid)}/concluzii" aria-label="înapoi">‹</button><div class="t">pdf și cereri<small>${esc(mic(r.titlu))}</small></div></div>
+      <div class="cutie"><h2>pdf-ul raportului</h2><p class="mut" style="margin:0;font-size:14px">bifează ce vrei în pdf sau ce vrei să trimiți. bifele se văd și în capitole, la butonul ✓ de sus.</p>
+        <div class="tip"><button class="btn alb mic" id="b-tot">bifează tot</button><button class="btn alb mic" id="b-nimic">nimic</button></div>
+        <div class="lista" id="bife">${lista.map(k => { const e = eticheta(r, k); return `<label class="r" style="cursor:pointer"><input type="checkbox" data-k="${esc(k)}" ${sel.has(k) ? "checked" : ""} style="width:22px;height:22px"><div>${esc(e.t)}<small>${e.nr === "00" ? "prima pagină" : e.nr === "27" ? "la final" : "capitolul " + e.nr}${e.gri ? " · fără date încă" : ""}</small></div></label>`; }).join("")}</div>
+        <button class="btn lat" id="pdf-tot">pdf complet (${cuDate.length} capitole cu date)</button>
+        <button class="btn alb lat" id="pdf-sel">pdf cu ce ai bifat</button>
+        <button class="btn alb lat" id="trimite">trimite ce ai bifat</button>
+        <p class="mut" style="margin:0;font-size:13px">pdf-ul se face pe telefon, cu numele tău și codul raportului pe fiecare pagină. în fereastra care se deschide alege „salvează ca pdf”, sau „partajează” ca să-l trimiți pe e-mail ori whatsapp.</p></div>
+      <div class="cutie"><h2>am nevoie și de</h2><p class="mut" style="margin:0;font-size:14px">bifează ce mai vrei pentru proprietatea asta. îți scriem cu prețul și termenul; nu plătești nimic acum.</p>
+        <div class="lista">${SERVICII.map(([v, t]) => `<label class="r" style="cursor:pointer"><input type="checkbox" name="srv" value="${v}" style="width:22px;height:22px"><div>${esc(t)}</div></label>`).join("")}</div>
+        <label class="camp">ce ar trebui să știm (opțional)<input type="text" id="srv-nota" maxlength="300" placeholder="ex.: am nevoie până vineri"></label>
+        <button class="btn lat" id="srv-go" disabled>trimite cererea</button><p id="srv-msg"></p></div>
+      <div class="cutie"><h2>aplicația pe telefon</h2>${instalata() ? '<p class="okm">aplicația e deja pe ecranul telefonului.</p>' : S.prompt ? '<button class="btn lat" id="inst2">instalează aplicația</button>' : `<p class="mut" style="margin:0;font-size:14px">${/iPhone|iPad/.test(navigator.userAgent) ? "în safari apasă butonul de partajare (pătratul cu săgeată), apoi „adaugă pe ecranul principal”." : "în meniul browserului (⋮) alege „instalează aplicația” sau „adaugă pe ecranul de pornire”."} pe ecran intri cu același cod al raportului și pin.</p>`}</div>
+      <p class="nota">serviciu privat de analiză, independent de instituțiile publice.</p></div>`;
+    const nr = () => { const n = [...sel].filter(k => lista.includes(k)).length; $("#pdf-sel").textContent = `pdf cu ce ai bifat (${n})`; $("#pdf-sel").disabled = !n; $("#trimite").disabled = !n; };
+    nr();
+    $("#bife").addEventListener("change", e => { const c = e.target.closest("input[data-k]"); if (c) { comuta(rid, c.dataset.k, c.checked); nr(); } });
+    $("#b-tot").onclick = () => { $$("#bife input").forEach(c => { c.checked = true; comuta(rid, c.dataset.k, true); }); nr(); };
+    $("#b-nimic").onclick = () => { $$("#bife input").forEach(c => { c.checked = false; comuta(rid, c.dataset.k, false); }); nr(); };
+    $("#pdf-tot").onclick = () => tipareste(r, cuDate, "complet");
+    $("#pdf-sel").onclick = () => tipareste(r, lista.filter(k => sel.has(k)), "selecție");
+    $("#trimite").onclick = () => tipareste(r, lista.filter(k => sel.has(k)), "trimite");
+    const i2 = $("#inst2"); if (i2) i2.onclick = async () => { S.prompt.prompt(); try { await S.prompt.userChoice; } catch (e) {} S.prompt = null; ecranFinal(r); };
+    const srvOk = () => { $("#srv-go").disabled = !$$("input[name=srv]:checked").length; };
+    app.querySelectorAll("input[name=srv]").forEach(c => c.addEventListener("change", srvOk));
+    $("#srv-go").onclick = async () => {
+      const servicii = $$("input[name=srv]:checked").map(c => c.value), m = $("#srv-msg");
+      $("#srv-go").disabled = true; m.className = "mut"; m.textContent = "trimit…";
+      const { data, error } = await sb.from("cereri").insert({ tip: "servicii", date: { raport_id: rid, servicii, nota: $("#srv-nota").value.trim().slice(0, 300) } }).select("nr").single();
+      if (error) { m.className = "err"; m.textContent = /5 cereri/.test(error.message) ? mic(error.message) : "cererea nu s-a putut trimite acum."; $("#srv-go").disabled = false; return; }
+      m.className = "okm"; m.textContent = `cererea ${data.nr.toLowerCase()} e înregistrată. îți scriem cu prețul și termenul.`;
+      $$("input[name=srv]").forEach(c => c.checked = false);
+    };
+  }
+
+  /* pdf pe telefon: capitolele alese (aceleași, randate pe server) puse unul după altul, cu filigran, apoi fereastra de tipărire a telefonului */
+  async function tipareste(r, keys, mod) {
+    if (!keys.length) return;
+    const rid = r.id, ov = document.createElement("div");
+    ov.className = "foaie"; ov.innerHTML = '<div class="f" style="text-align:center"><b>pregătesc pdf-ul…</b><p class="mut" id="tp-n"></p></div>'; document.body.appendChild(ov);
+    const parti = [];
+    try {
+      const css = S.css[rid] || await capitol(rid, "css"); S.css[rid] = css;
+      for (let i = 0; i < keys.length; i++) { $("#tp-n").textContent = `${i + 1} din ${keys.length} capitole`; parti.push(await capitol(rid, keys[i])); }
+      const body = (css.match(/^\/\*body:([^*]*)\*\//) || [, ""])[1];
+      const azi = new Date().toLocaleDateString("ro-RO");
+      const root = document.createElement("div"); root.id = "tipar";
+      root.innerHTML = `<style>${css}
+@page{size:A4;margin:12mm 10mm 14mm}
+#tipar .tp-cap{break-before:page;page-break-before:always}#tipar .tp-cap:first-of-type{break-before:auto;page-break-before:auto}
+#tipar img{break-inside:avoid}#tipar button{pointer-events:none}
+#tipar .tp-fil{position:fixed;left:0;right:0;bottom:0;text-align:center;font:9px system-ui;color:#8a8f9c}
+.tp-bara{position:sticky;top:0;z-index:9;display:flex;gap:8px;align-items:center;padding:10px 12px;background:#1a1e2a;color:#fff;font:600 14px system-ui}
+.tp-bara button{pointer-events:auto!important;font:700 14px system-ui;padding:8px 14px;border-radius:99px;border:0;background:#fff;color:#1a1e2a}
+@media print{.tp-bara{display:none!important}}</style>
+<div class="tp-bara"><button id="tp-x">‹ înapoi</button><span style="flex:1">${mod === "trimite" ? "alege „partajează” în fereastra de tipărire" : "pdf: " + keys.length + " capitole"}</span><button id="tp-p">tipărește / pdf</button></div>
+${parti.map(h => `<div class="tp-cap">${h}</div>`).join("")}
+<div class="tp-fil">cartea casei · ${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")} · ${esc(azi)} · serviciu privat de analiză</div>`;
+      const link = document.querySelector('link[href^="styles.css"]'), clsVechi = document.body.className;
+      const inchide = () => { root.remove(); if (link) link.disabled = false; document.body.className = clsVechi; app.style.display = ""; window.removeEventListener("afterprint", inchide); };
+      if (link) link.disabled = true; app.style.display = "none"; document.body.className = body; document.body.appendChild(root); ov.remove();
+      root.addEventListener("contextmenu", e => e.preventDefault());
+      $("#tp-x").onclick = inchide;
+      const tipar = async () => { await Promise.race([Promise.all([...root.querySelectorAll("img")].map(i => i.complete ? 0 : i.decode().catch(() => 0))), new Promise(z => setTimeout(z, 15000))]); window.print(); };
+      $("#tp-p").onclick = tipar;
+      window.addEventListener("afterprint", inchide);
+      tipar();
+    } catch (e) { ov.remove(); alert(e.status === 429 ? mic(e.message) : "pdf-ul nu se poate face acum. verifică semnalul și încearcă din nou."); }
   }
 
   /* ---------- cont ---------- */
