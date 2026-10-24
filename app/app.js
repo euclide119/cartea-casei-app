@@ -57,25 +57,48 @@
   function ecranIntrare(msg) {
     const desk = !MOBIL();
     app.innerHTML = `<div class="ecran">${marca()}
-      <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu e-mailul pe care ai primit raportul sau scanezi codul qr din pdf.</p></div>
-      <div class="cutie" id="f-intrare">
+      <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu codul raportului și pin-ul.</p></div>
+      <div class="cutie" id="f-pin">
+        <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-7DAJMV"></label>
+        <label class="camp">pin<input type="tel" id="pp" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="6 cifre"></label>
+        <button class="btn lat" id="pin-go">intră</button>
+        <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
+        <p class="mut" style="margin:0;font-size:13px">codul și pin-ul sunt pe prima pagină a raportului pdf și în e-mailul de livrare.</p>
+      </div>
+      <details class="cutie" id="f-alte"><summary style="cursor:pointer;font-weight:600">alte moduri de intrare</summary>
+        <div id="f-intrare" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
         <label class="camp">e-mailul tău<input type="email" id="em" autocomplete="email" inputmode="email" placeholder="nume@exemplu.ro"></label>
-        <button class="btn lat" id="trimite">trimite-mi codul</button>
+        <button class="btn alb lat" id="trimite">trimite-mi un link pe e-mail</button>
         <div id="pas2" hidden>
           <label class="camp">codul din e-mail<input type="tel" id="cod" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456"></label>
-          <p class="mut" style="font-size:14px;margin:6px 0 10px">sau apasă direct pe linkul din e-mail, de pe telefonul acesta.</p>
-          <button class="btn lat" id="intra">intră</button>
+          <button class="btn alb lat" id="intra">intră</button>
         </div>
-        <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
-      </div>
-      <div class="cutie">
-        <label class="camp">ai un cod sau un link de intrare?<input type="text" id="cs" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" placeholder="ABCDE-12345 sau linkul din e-mail"></label>
+        <label class="camp">cod sau link de intrare<input type="text" id="cs" autocapitalize="none" spellcheck="false" placeholder="ABCDE-12345 sau linkul din e-mail"></label>
         <button class="btn alb lat" id="cs-go">intră</button>
-        <p class="mut" style="margin:0;font-size:13px">codul îl găsești în aplicație, la „contul meu → aplicația pe ecranul de start”. dacă în e-mail ai primit un link, ține degetul pe el, alege „copiază linkul” și lipește-l aici (fără să-l deschizi).</p>
-      </div>
+        </div>
+      </details>
       ${desk ? `<div class="cutie" style="align-items:center;text-align:center"><b>se citește pe telefon</b><div class="qr">${qrSvg(BAZA)}</div><p class="mut" style="margin:0;font-size:14px">scanează cu camera telefonului.</p></div>` : ""}
       <p class="nota">serviciu privat de analiză, independent de instituțiile publice. fără parole: intri cu un cod de unică folosință.</p></div>`;
     const m = $("#msg");
+    $("#pc").value = (() => { try { return localStorage.getItem("cc-cod") || ""; } catch (e) { return ""; } })();
+    const pinGo = async () => {
+      const cod = $("#pc").value.trim(), pin = $("#pp").value.replace(/\D/g, "");
+      if (cod.replace(/[^A-Za-z0-9]/g, "").length < 6 || pin.length !== 6) { m.className = "err"; m.textContent = "scrie codul raportului și pin-ul de 6 cifre."; return; }
+      $("#pin-go").disabled = true; m.className = "mut"; m.textContent = "intru…";
+      try {
+        const r = await fetch(FN + "intra", { method: "POST", headers: { "Content-Type": "application/json", apikey: CFG.supabaseKey }, body: JSON.stringify({ cod, pin }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "nu am putut intra");
+        await sb.auth.signOut({ scope: "local" }).catch(() => {});
+        const { error } = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: "magiclink" });
+        if (error) throw new Error("nu am putut intra; încearcă din nou");
+        try { localStorage.setItem("cc-cod", cod.toUpperCase()); } catch (e) {}
+        if (j.raport) history.replaceState(null, "", location.pathname + "#/r/" + j.raport);
+        porneste();
+      } catch (e) { m.className = "err"; m.textContent = mic(e.message); $("#pin-go").disabled = false; }
+    };
+    $("#pin-go").onclick = pinGo;
+    $("#pp").addEventListener("keydown", e => { if (e.key === "Enter") pinGo(); });
     $("#trimite").onclick = async () => {
       const email = $("#em").value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { m.className = "err"; m.textContent = "scrie un e-mail valid."; return; }
       $("#trimite").disabled = true; m.textContent = "";
@@ -143,7 +166,7 @@
         <div class="cap"><span>${esc(mic(r.cod))}${rolul(r.id) === "vizitator" ? " · invitat" : ""}</span></div>
         <div class="in"><b>${esc(mic(r.titlu))}</b><span class="m">${r.capitole_total || 26} de capitole, ${r.capitole_cu_date ?? "—"} cu date pentru locul ăsta</span><span class="m">publicat ${esc(data(r.publicat_la))}</span></div></button>`).join("")}</div>
       <button class="btn alb lat" data-go="#/cerere">cere un raport nou</button>
-      ${instalata() ? "" : `<div class="cutie" id="inst"><b>pune aplicația pe ecranul telefonului</b>${S.prompt ? '<button class="btn lat" id="inst-go">instalează aplicația</button>' : `<span class="mut" style="font-size:14px">${/iPhone|iPad/.test(navigator.userAgent) ? "în safari apasă butonul de partajare (pătratul cu săgeată), apoi „adaugă pe ecranul principal”." : "în meniul browserului (⋮) alege „instalează aplicația” sau „adaugă pe ecranul de pornire”."} apoi deschide aplicația și intră cu codul din <a href="#/cont">contul meu</a>.</span>`}</div>`}
+      ${instalata() ? "" : `<div class="cutie" id="inst"><b>pune aplicația pe ecranul telefonului</b>${S.prompt ? '<button class="btn lat" id="inst-go">instalează aplicația</button>' : `<span class="mut" style="font-size:14px">${/iPhone|iPad/.test(navigator.userAgent) ? "în safari apasă butonul de partajare (pătratul cu săgeată), apoi „adaugă pe ecranul principal”." : "în meniul browserului (⋮) alege „instalează aplicația” sau „adaugă pe ecranul de pornire”."} apoi deschide aplicația de pe ecran și intră cu același cod al raportului și pin.</span>`}</div>`}
       <div id="cererile-mele"></div>
       <p class="nota">serviciu privat de analiză, independent de instituțiile publice.</p></div>`;
     if (window.CC_CERERI) CC_CERERI.lista($("#cererile-mele"));
@@ -239,7 +262,7 @@
     app.innerHTML = `<div class="ecran"><div class="bara" style="margin:-14px -16px 0;padding-left:12px"><button class="ic" data-go="#/acasa" aria-label="înapoi">‹</button><div class="t">contul meu</div></div>
       <div class="cutie"><b>${esc(S.user.email)}</b><span class="mut" style="font-size:14px">intri fără parolă: cu un cod pe e-mail sau cu un cod qr.</span></div>
       <div class="cutie"><h2>dispozitive</h2><p class="mut" style="margin:0;font-size:14px">cel mult 3 telefoane sau tablete. deconectează ce nu mai folosești.</p><div class="lista" id="disp">…</div></div>
-      <div class="cutie"><h2>aplicația pe ecranul de start</h2><p class="mut" style="margin:0;font-size:14px">după ce o pui pe ecranul telefonului, deschide-o și intră cu un cod de aici. codul merge o singură dată, 15 minute.</p>
+      <div class="cutie"><h2>aplicația pe ecranul de start</h2><p class="mut" style="margin:0;font-size:14px">pe ecranul telefonului intri cu același cod al raportului și pin. dacă nu le ai la îndemână, folosește un cod de aici (o singură dată, 15 minute), la „alte moduri de intrare”.</p>
         <button class="btn lat" id="cod-go">arată un cod de intrare</button><div id="cod-rez"></div></div>
       <div id="inv"></div>
       <button class="btn alb lat" id="iesi">ieși din cont</button>
