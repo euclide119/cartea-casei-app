@@ -151,7 +151,7 @@
   /* ---------- acasă ---------- */
   async function incarcaRapoarte() {
     const [{ data: r, error }, { data: a }] = await Promise.all([
-      sb.from("rapoarte").select("id,cod,titlu,tip_proprietate,capitole,capitole_cu_date,capitole_total,publicat_la").order("publicat_la", { ascending: false }),
+      sb.from("rapoarte").select("id,cod,titlu,tip_proprietate,capitole,capitole_cu_date,capitole_total,publicat_la,versiune").order("publicat_la", { ascending: false }),
       sb.from("acces_raport").select("raport_id,rol,expira_la").eq("user_id", S.user.id)]);
     if (error) throw error;
     S.rapoarte = r || []; S.acces = a || [];
@@ -236,12 +236,88 @@
   }
   function comuta(rid, k, pe) { const s = SEL[rid]; if (!s) return; (pe === undefined ? !s.has(k) : pe) ? s.add(k) : s.delete(k); salveazaBife(rid); }
 
+  /* ---------- raportul interactiv: aceeași pagină a raportului (hărți cu straturi, soare, bare, istoric), cu datele servite doar cu cont ---------- */
+  async function swGata() {
+    if (!("serviceWorker" in navigator) || !isSecureContext) return false;
+    if (navigator.serviceWorker.controller) return true;
+    await Promise.race([new Promise(z => navigator.serviceWorker.addEventListener("controllerchange", z, { once: true })), new Promise(z => setTimeout(z, 4000))]);
+    return !!navigator.serviceWorker.controller;
+  }
+  async function trimiteSesiune(rid) {
+    const c = navigator.serviceWorker && navigator.serviceWorker.controller; if (!c) return;
+    c.postMessage({ tip: "sesiune", jwt: await token(), amp: amprenta(), apikey: CFG.supabaseKey, fn: FN, rid,
+      rapoarte: S.rapoarte.map(r => ({ id: r.id, titlu: mic(r.titlu), versiune: r.versiune })) });
+  }
+  const INTERACTIV_EXCLUS = "input,select,textarea,button,a,canvas,svg,label,.bar,.seg,.box,.hm-box,.hm-c,.tmap,.tpan,.pzmap,.ist-img,.ist-th,[role=slider],[draggable=true]";
+  async function capitolInteractiv(r, k, gen) {
+    const rid = r.id, ord = ordine(r), i = ord.indexOf(k), e = eticheta(r, k), prev = ord[i - 1], next = ord[i + 1];
+    const du = kk => { if (kk) location.hash = `#/r/${rid}/${kk}`; };
+    let cit = $(".cititor.int");
+    if (!cit || cit.dataset.rid !== rid) {
+      await trimiteSesiune(rid);
+      app.innerHTML = `<div class="cititor int" data-rid="${esc(rid)}">
+        <div class="bara"><button class="ic" id="inap" aria-label="înapoi">‹</button><div class="t" id="tt"></div>
+          <button class="ic bifa" id="bf" aria-pressed="false" aria-label="bifează capitolul pentru pdf" title="bifează pentru pdf">✓</button>
+          <button class="ic" id="m" aria-label="capitole">☰</button></div>
+        <div style="position:relative;flex:1;display:flex"><iframe id="rap" title="raportul" src="raport/index.html#${encodeURIComponent(rid)}"></iframe><div class="incarc" id="inc">se încarcă raportul…</div></div>
+        <div class="jos"><button class="btn alb mic" id="p" aria-label="capitolul anterior">‹ înapoi</button><span class="n" id="nn"></span><button class="btn mic" id="u" aria-label="capitolul următor">înainte ›</button></div></div>`;
+      cit = $(".cititor.int");
+      const fr = $("#rap");
+      cit._gata = new Promise((ok, nu) => {
+        const t0 = Date.now(), iv = setInterval(() => {
+          try { const w = fr.contentWindow; if (w && w.D && w.D.id === rid && w.RIC_STARE && Object.keys(w.RIC_STARE).length > 10) { clearInterval(iv); setTimeout(ok, 900); } } catch (er) {}
+          if (Date.now() - t0 > 45000) { clearInterval(iv); nu(new Error("timp")); }
+        }, 250);
+      });
+      cit._gata.then(() => {
+        const d = fr.contentDocument;
+        const fil = d.createElement("div"); fil.id = "cc-fil"; fil.textContent = `${mic(r.cod || "")} · ${S.user.email || ""}`; d.body.appendChild(fil);
+        // glisare între capitole, dar nu pe hărți, bare, butoane și glisoare (acolo e interactivitatea raportului)
+        let x0 = 0, y0 = 0, t0 = 0, ok = false;
+        d.addEventListener("touchstart", ev => { const t = ev.changedTouches[0]; ok = !(ev.target.closest && ev.target.closest(INTERACTIV_EXCLUS)); x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); }, { passive: true });
+        d.addEventListener("touchend", ev => { if (!ok) return; const t = ev.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+          if (Math.abs(dx) > 80 && Math.abs(dy) < Math.abs(dx) * 0.5 && Date.now() - t0 < 700) { const c2 = $(".cititor.int"); if (c2 && c2._du) c2._du(dx < 0 ? 1 : -1); } }, { passive: true });
+      }).catch(() => { const inc = $("#inc"); if (inc) inc.textContent = "raportul nu s-a putut încărca. verifică semnalul și redeschide."; });
+    }
+    // bara de sus și de jos pentru capitolul curent
+    $("#tt").innerHTML = `${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr + (e.gri ? " · fără date încă" : "")}</small>`;
+    $("#inap").onclick = () => { location.hash = k === "coperta" ? "#/acasa" : `#/r/${rid}`; };
+    $("#m").onclick = () => meniu(r, k);
+    $("#nn").textContent = `${i + 1} / ${ord.length}`;
+    $("#p").disabled = !prev; $("#u").disabled = !next; $("#p").onclick = () => du(prev); $("#u").onclick = () => du(next);
+    cit._du = dir => du(dir > 0 ? next : prev);
+    bife(rid).then(sel => { const b = $("#bf"); if (!b || gen !== generatia) return;
+      const arata = () => { const on = sel.has(k); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); };
+      arata(); b.onclick = () => { comuta(rid, k); arata(); }; });
+    try { await cit._gata; } catch (er) { return; }
+    if (gen !== generatia) return;
+    $("#inc") && $("#inc").remove();
+    const fr = $("#rap"), w = fr.contentWindow, d = fr.contentDocument;
+    d.documentElement.dataset.k = k;
+    d.querySelectorAll(".cc-on").forEach(x => x.classList.remove("cc-on"));
+    try { w.showTab(k === "coperta" || k === "concluzii" ? "rezumat" : k); } catch (er) {}
+    let el = k === "concluzii" ? d.getElementById("cl-final") : d.getElementById(k === "coperta" ? "rezumat" : k);
+    if (!el || !el.matches(".wrap > section, #cl-final")) {
+      el = d.getElementById("cc-stub") || Object.assign(d.createElement("section"), { id: "cc-stub" });
+      el.innerHTML = `<div style="border:1px dashed #c9ced8;border-radius:16px;padding:22px 20px;margin-top:24px;font:15px/1.5 system-ui"><b style="font-size:20px">${esc(e.t)}</b><p>pentru locul ăsta nu avem încă date despre acest capitol. îl vezi aici când apar.</p></div>`;
+      d.querySelector(".wrap").appendChild(el);
+    }
+    el.classList.add("cc-on");
+    let nx = d.getElementById("cc-next");
+    if (!nx) { nx = d.createElement("div"); nx.id = "cc-next"; d.querySelector(".wrap").appendChild(nx); nx.style.order = "9999"; }
+    if (next) { const n = eticheta(r, next); nx.hidden = false; nx.innerHTML = `<span><small>capitolul următor · ${esc(n.nr)}</small>${esc(n.t)}</span><span style="font-size:22px">›</span>`; nx.onclick = () => du(next); }
+    else nx.hidden = true;
+    w.scrollTo(0, 0); setTimeout(() => { try { w.dispatchEvent(new Event("resize")); } catch (er) {} }, 80);
+  }
+
   let generatia = 0;
   async function ecranCapitol(rid, k) {
     const gen = ++generatia;
     const r = S.rapoarte.find(x => x.id === rid);
     if (!r) { location.hash = "#/acasa"; return; }
     if (k === "final") return ecranFinal(r);
+    if (!ordine(r).includes(k)) k = "coperta";
+    if (S.interactiv !== false && await swGata()) return capitolInteractiv(r, k, gen);
     const ord = ordine(r); if (!ord.includes(k)) k = "coperta";
     const i = ord.indexOf(k), e = eticheta(r, k), prev = ord[i - 1], next = ord[i + 1];
     app.innerHTML = `<div class="cititor">
@@ -457,7 +533,8 @@ ${parti.map(h => `<div class="tp-cap"><div class="tp-cap-fil">cartea casei · ${
     if ("serviceWorker" in navigator && isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
     const q = location.hash.match(/qr=([A-Za-z0-9_-]{30,80})/);
     if (q) { history.replaceState(null, "", location.pathname); if (!(await intrareQr(q[1]))) return; }
-    sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT" && S.user) { S.user = null; S.cache.clear(); ecranIntrare(); } });
+    sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT" && S.user) { S.user = null; S.cache.clear(); ecranIntrare(); }
+      if (ev === "TOKEN_REFRESHED" && S.user) { const c = $(".cititor.int"); trimiteSesiune(c ? c.dataset.rid : null); } });
     porneste();
   })();
 })();

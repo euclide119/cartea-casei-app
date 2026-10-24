@@ -1,0 +1,673 @@
+{
+ "versiune": "1.0",
+ "data": "2026-10-24",
+ "descriere": "cele 26 de capitole ale raportului Cartea Casei (PC31, E1). sursa unică pentru pagina principală, meniu, numerotare și regulile de lipsă. 'obligatorii'/'optionale': chei din p/<id>/date.json (cu punct = câmp în adâncime) sau fișiere din p/<id>/ (fișier:câmp).",
+ "reguli": {
+  "esential_la_lipsa": "capitolul rămâne cu ce există și primește eticheta",
+  "eticheta_lipsa": "fără registru local",
+  "informativ_la_lipsa": "capitolul dispare; în meniu rămâne numărul, gri",
+  "fara_date": "nu se randează; numărul rămâne în meniu, gri",
+  "trunchiere": {
+   "h1": 48,
+   "rand_lista": 110,
+   "lead": 240,
+   "nota": 160
+  },
+  "si_inca": "și încă {k}",
+  "scari": [
+   "300 m",
+   "1 km",
+   "5 km",
+   "25 km"
+  ],
+  "format_numere": "ro-RO; 0 zecimale peste 100, 1 sub 100, 2 sub 1; „—” pentru lipsă"
+ },
+ "grupuri": [
+  {
+   "id": "riscuri",
+   "prefix": "verificăm riscurile de"
+  },
+  {
+   "id": "construire",
+   "prefix": "căutăm în baze publice și private despre"
+  },
+  {
+   "id": "casa și actele",
+   "prefix": "trebuie să știi și astea"
+  },
+  {
+   "id": "viața în zonă",
+   "prefix": "poate arăta"
+  },
+  {
+   "id": "soare și bani",
+   "prefix": "poate arăta"
+  },
+  {
+   "id": "antecontract",
+   "prefix": "trebuie să știi și astea"
+  }
+ ],
+ "capitole": [
+  {
+   "id": "inundatii",
+   "nr": 1,
+   "titlu": "inundații",
+   "scurt": "inundații",
+   "grup": "riscuri",
+   "clasa": "esential",
+   "enumerare": "râurile și canalele din apropiere, zonele care se inundă o dată la 10, 100 sau 1000 de ani, digul cel mai apropiat",
+   "date": {
+    "obligatorii": [
+     "inundatii"
+    ],
+    "optionale": [
+     "inundatii.dig",
+     "inund_local.jpg",
+     "inund_regional.jpg"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "5 km"
+  },
+  {
+   "id": "seismic",
+   "nr": 2,
+   "titlu": "cutremur",
+   "scurt": "cutremur",
+   "grup": "riscuri",
+   "clasa": "esential",
+   "enumerare": "zona seismică, cutremurele din jur de-a lungul anilor, blocurile vechi care pot intra în consolidare",
+   "date": {
+    "obligatorii": [
+     "seismic.ag",
+     "seismic.uat"
+    ],
+    "optionale": [
+     "seismic.cutremure",
+     "seismic.legea212",
+     "teritoriu.json:cutremure"
+    ]
+   },
+   "registru_local": [],
+   "top": [
+    {
+     "ce": "cutremure",
+     "n": 5,
+     "sel": ":scope > .ex li",
+     "bloc_text": "cele mai puternice cutremure"
+    }
+   ],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "25 km"
+  },
+  {
+   "id": "alunecari",
+   "nr": 3,
+   "titlu": "teren și relief",
+   "scurt": "teren",
+   "grup": "riscuri",
+   "clasa": "informativ",
+   "enumerare": "panta, solul și forma terenului în 3D, pe 300 m și pe 1,5 km",
+   "date": {
+    "obligatorii": [
+     "alunecari"
+    ],
+    "optionale": [
+     "teren3d.json",
+     "teren3d_sat_300.jpg",
+     "teren3d_sat_1500.jpg"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "300 m"
+  },
+  {
+   "id": "zgomot",
+   "nr": 4,
+   "titlu": "zgomot",
+   "scurt": "zgomot",
+   "grup": "riscuri",
+   "clasa": "esential",
+   "enumerare": "drumurile, calea ferată, avioanele și sălile de evenimente care se aud la proprietate",
+   "date": {
+    "obligatorii": [
+     "zgomot"
+    ],
+    "optionale": [
+     "zgomot_osm.json",
+     "zgomot_reg.png",
+     "zgomot_zi.png",
+     "zgomot_wk.png"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "1 km"
+  },
+  {
+   "id": "aer",
+   "nr": 5,
+   "titlu": "calitatea aerului",
+   "scurt": "aer",
+   "grup": "riscuri",
+   "clasa": "informativ",
+   "enumerare": "particulele fine și gazele din trafic, față de limitele europene",
+   "date": {
+    "obligatorii": [
+     "aer"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": null
+  },
+  {
+   "id": "urbanism",
+   "nr": 6,
+   "titlu": "ce poți construi",
+   "scurt": "ce poți construi",
+   "grup": "construire",
+   "clasa": "esential",
+   "enumerare": "înălțimea, procentul de ocupare, retragerile și planurile urbanistice din jur",
+   "date": {
+    "obligatorii": [
+     "urbanism.uat",
+     "urbanism.pug"
+    ],
+    "optionale": [
+     "indicatori_urbanistici",
+     "urbanism.planse",
+     "urbis.json"
+    ]
+   },
+   "registru_local": [
+    "urbis.json"
+   ],
+   "top": [
+    {
+     "ce": "PUZ-uri din jur",
+     "n": 8,
+     "sel": "#urbis .ub-l > li"
+    }
+   ],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "300 m"
+  },
+  {
+   "id": "proiecte",
+   "nr": 7,
+   "titlu": "proiecte care schimbă zona",
+   "scurt": "proiecte în zonă",
+   "grup": "construire",
+   "clasa": "esential",
+   "enumerare": "planurile urbanistice noi, ansamblurile de locuințe, drumurile și investițiile publice din apropiere",
+   "date": {
+    "obligatorii": [
+     "urbis.json:puz.lista"
+    ],
+    "optionale": [
+     "autorizatii.trimestre",
+     "urbis.json:acte.lista"
+    ]
+   },
+   "registru_local": [
+    "urbis.json"
+   ],
+   "top": [
+    {
+     "ce": "PUZ-uri noi",
+     "n": 8,
+     "sel": ".cn-l > div"
+    }
+   ],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "1 km",
+   "poza_alias": "urbis"
+  },
+  {
+   "id": "autorizatii",
+   "nr": 8,
+   "titlu": "ce s-a construit până acum",
+   "scurt": "ce s-a construit",
+   "grup": "construire",
+   "clasa": "esential",
+   "enumerare": "autorizațiile de construire din jur, pe ani și pe tipuri, și cum s-a schimbat locul în imaginile satelit",
+   "date": {
+    "obligatorii": [
+     "autorizatii.colectat",
+     "autorizatii.pe_strada"
+    ],
+    "optionale": [
+     "autorizatii.trimestre",
+     "autorizatii.recente",
+     "autorizatii.cu",
+     "istoric.json"
+    ]
+   },
+   "registru_local": [
+    "autorizatii.pe_strada"
+   ],
+   "top": [
+    {
+     "ce": "autorizații",
+     "n": 6,
+     "sel": ":scope > .scroll tbody > tr"
+    }
+   ],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "1 km"
+  },
+  {
+   "id": "zonare",
+   "nr": 9,
+   "titlu": "cartierul și utilitățile",
+   "scurt": "cartier și utilități",
+   "grup": "construire",
+   "clasa": "informativ",
+   "enumerare": "cum e folosit cartierul: locuințe, comerț, industrie, spații verzi și rețelele cunoscute",
+   "date": {
+    "obligatorii": [
+     "harta.json"
+    ],
+    "optionale": [
+     "ring"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "1 km"
+  },
+  {
+   "id": "monumente",
+   "nr": 10,
+   "titlu": "monumente și situri",
+   "scurt": "monumente",
+   "grup": "construire",
+   "clasa": "informativ",
+   "enumerare": "monumentele și siturile arheologice care pot cere avize în plus",
+   "date": {
+    "obligatorii": [
+     "monumente"
+    ],
+    "optionale": [
+     "fundal_monumente_topo.jpg",
+     "poze.json:monumente"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "1 km"
+  },
+  {
+   "id": "arii_protejate",
+   "nr": 11,
+   "titlu": "natura protejată",
+   "scurt": "natură protejată",
+   "grup": "construire",
+   "clasa": "informativ",
+   "enumerare": "ariile Natura 2000 și rezervațiile din jur, cu distanțele până la ele",
+   "date": {
+    "obligatorii": [
+     "arii_protejate"
+    ],
+    "optionale": [
+     "fundal_arii_voyager.jpg"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "25 km"
+  },
+  {
+   "id": "acces_drum",
+   "nr": 12,
+   "titlu": "accesul la drumul public",
+   "scurt": "acces la drum",
+   "grup": "casa și actele",
+   "clasa": "esential",
+   "enumerare": "dacă ai ieșire directă la stradă sau prin servitute și ce lățime are drumul",
+   "date": {
+    "obligatorii": [
+     "harta.json:dr"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "300 m",
+   "poza_alias": "transport"
+  },
+  {
+   "id": "constructii_acte",
+   "nr": 13,
+   "titlu": "construcții care lipsesc din acte",
+   "scurt": "construcții fără acte",
+   "grup": "casa și actele",
+   "clasa": "informativ",
+   "enumerare": "ce se vede din satelit pe parcelă și nu apare în cartea funciară",
+   "date": {
+    "obligatorii": [
+     "cadastru:parcela",
+     "satelit:amprente"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "300 m",
+   "poza_alias": "autorizatii"
+  },
+  {
+   "id": "energie",
+   "nr": 14,
+   "titlu": "izolație și performanță energetică",
+   "scurt": "energie",
+   "grup": "casa și actele",
+   "clasa": "informativ",
+   "enumerare": "anul construcției, certificatul energetic și ce ar costa îmbunătățirea",
+   "date": {
+    "obligatorii": [
+     "certificat_energetic"
+    ],
+    "optionale": [
+     "an_constructie"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": null,
+   "poza_alias": "pv"
+  },
+  {
+   "id": "scoli",
+   "nr": 15,
+   "titlu": "școli și grădinițe",
+   "scurt": "școli",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "unitățile din jur, timpul de mers și locul școlilor în clasamentul județului",
+   "date": {
+    "obligatorii": [
+     "scoli.lista"
+    ],
+    "optionale": [
+     "scoli.note"
+    ]
+   },
+   "registru_local": [],
+   "top": [
+    {
+     "ce": "școli",
+     "n": 8,
+     "sel": ":scope > .scroll tbody > tr"
+    },
+    {
+     "ce": "note la evaluarea națională",
+     "n": 8,
+     "sel": "#cc2-sc > .sc-r"
+    }
+   ],
+   "la_lipsa": "dispare",
+   "scara_harta": "5 km"
+  },
+  {
+   "id": "facilitati",
+   "nr": 16,
+   "titlu": "la pas de casă",
+   "scurt": "la pas de casă",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "magazine, farmacii, medici, parcuri și minutele până la ele",
+   "date": {
+    "obligatorii": [
+     "facilitati"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "1 km"
+  },
+  {
+   "id": "transport",
+   "nr": 17,
+   "titlu": "transport",
+   "scurt": "transport",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "stațiile, drumurile mari și minutele până la centru, gară și aeroport, cu mașina și pe jos",
+   "date": {
+    "obligatorii": [
+     "transport"
+    ],
+    "optionale": [
+     "izocrone"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "5 km"
+  },
+  {
+   "id": "internet",
+   "nr": 18,
+   "titlu": "internet și semnal mobil",
+   "scurt": "internet",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "rețelele de fibră din zonă și acoperirea 4G / 5G",
+   "date": {
+    "obligatorii": [
+     "acoperire_fibra",
+     "acoperire_mobil"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "5 km",
+   "poza_alias": "zonare"
+  },
+  {
+   "id": "criminalitate",
+   "nr": 19,
+   "titlu": "siguranța zonei",
+   "scurt": "siguranță",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "datele publice despre infracționalitate, la nivel de oraș sau județ",
+   "date": {
+    "obligatorii": [
+     "infractionalitate_uat"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "25 km",
+   "poza_alias": "populatie"
+  },
+  {
+   "id": "populatie",
+   "nr": 20,
+   "titlu": "vecinii tăi",
+   "scurt": "vecinii",
+   "grup": "viața în zonă",
+   "clasa": "informativ",
+   "enumerare": "câți oameni locuiesc în zonă, cum a evoluat populația, ce fel de locuințe predomină",
+   "date": {
+    "obligatorii": [
+     "populatie"
+    ],
+    "optionale": [
+     "teritoriu.json"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "5 km"
+  },
+  {
+   "id": "insorire",
+   "nr": 21,
+   "titlu": "însorire",
+   "scurt": "însorire",
+   "grup": "soare și bani",
+   "clasa": "informativ",
+   "enumerare": "drumul soarelui pe cer și umbrele pe parcelă, în fiecare lună",
+   "date": {
+    "obligatorii": [
+     "insorire",
+     "lat",
+     "lon"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": "300 m"
+  },
+  {
+   "id": "pv",
+   "nr": 22,
+   "titlu": "energie solară",
+   "scurt": "energie solară",
+   "grup": "soare și bani",
+   "clasa": "informativ",
+   "enumerare": "câtă energie ar produce panourile și ce parte din consumul casei ar acoperi",
+   "date": {
+    "obligatorii": [
+     "pv"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": null
+  },
+  {
+   "id": "costuri",
+   "nr": 23,
+   "titlu": "costurile tranzacției",
+   "scurt": "costuri",
+   "grup": "soare și bani",
+   "clasa": "esential",
+   "enumerare": "taxele notariale, cadastrul, impozitul vânzătorului și impozitul local pe an",
+   "date": {
+    "obligatorii": [
+     "costuri"
+    ],
+    "optionale": []
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": null
+  },
+  {
+   "id": "evaluare",
+   "nr": 24,
+   "titlu": "prețul de piață",
+   "scurt": "preț de piață",
+   "grup": "antecontract",
+   "clasa": "esential",
+   "enumerare": "intervalul de preț din comparație cu anunțurile din zonă și cum a evoluat în timp",
+   "date": {
+    "obligatorii": [
+     "piata.json"
+    ],
+    "optionale": [
+     "piata_istoric.json"
+    ]
+   },
+   "registru_local": [
+    "piata.json"
+   ],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": "5 km"
+  },
+  {
+   "id": "cronologie",
+   "nr": 25,
+   "titlu": "cronologia locului",
+   "scurt": "cronologie",
+   "grup": "antecontract",
+   "clasa": "informativ",
+   "enumerare": "tot ce are dată: planuri, autorizații, imagini satelit, cutremure, prețuri",
+   "date": {
+    "obligatorii": [
+     "istoric.json"
+    ],
+    "optionale": [
+     "urbis.json",
+     "autorizatii",
+     "seismic.cutremure",
+     "piata.json"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "dispare",
+   "scara_harta": null
+  },
+  {
+   "id": "negociere",
+   "nr": 26,
+   "titlu": "de discutat între părți",
+   "scurt": "de discutat",
+   "grup": "antecontract",
+   "clasa": "esential",
+   "enumerare": "riscurile proprietății, ale zonei și ale plății, și argumentele care urcă sau coboară prețul",
+   "date": {
+    "obligatorii": [
+     "juridic.json"
+    ],
+    "optionale": [
+     "piata.json"
+    ]
+   },
+   "registru_local": [],
+   "top": [],
+   "la_lipsa": "ramane, cu eticheta",
+   "scara_harta": null
+  }
+ ],
+ "fara_numar": [
+  {
+   "id": "rezumat",
+   "titlu": "rezumat"
+  },
+  {
+   "id": "surse",
+   "titlu": "surse",
+   "doar_intern": true
+  },
+  {
+   "id": "stare",
+   "titlu": "starea datelor",
+   "doar_intern": true
+  }
+ ]
+}

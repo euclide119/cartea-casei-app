@@ -1,0 +1,172 @@
+/* Raport _ Cartea Casei - sistemul vizual standard (PC31 sec. 1-3, E2, 24.10.2026).
+   Un singur loc pentru: tokens (culori, tipografie), grila pe latimi (600 / 900 / 1200), antetul capitolului (banda + panou), meniul, print.
+   Inlocuieste stilurile de asezare din client.js si dublurile din estetica.js / prima2.js. Se leaga ultimul in <head> (hero.js). */
+
+/* ---------- tokens ---------- */
+:root {
+  --c-verde: #1f8a4c; --c-portocaliu: #c86a0a; --c-rosu: #c0392b; --c-info: #2c5c9c;
+  --t-exact: #1f8a4c; --t-regulament: #2c5c9c; --t-lege: #c9a227; --t-estimat: #8a909c; --t-lipsa: #c0392b;
+  --f-titlu: "Fraunces", Georgia, serif; --f-text: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --f-cifre: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --fs-h1: 44px; --fs-h2: 48px; --fs-text: 15px; --fs-leg: 12px; --fs-pe-poza: 14px;
+  --menu-w: 176px; --gap-col: 20px; --content-max: 1180px; --hero-max: 400px; --hero-print: 60mm;
+  /* breakpoints (nu se pot folosi ca variabile in @media): telefon < 600, tableta 600-899, o coloana < 900, desktop >= 1200 */
+}
+@media (max-width: 1199px) { :root { --fs-h1: 36px; --fs-h2: 36px } }
+@media (max-width: 599px) { :root { --fs-h1: 28px; --fs-h2: 30px } }
+
+body { font-size: var(--fs-text); overflow-x: clip }
+/* nimic mai lat decat ecranul: barele de clasament (facilitati) si eticheta noptii (insorire) */
+.eb-f { max-width: 100% } #hours { overflow-x: clip }
+.ok, .verd.g i { color: var(--c-verde) }
+
+/* ---------- grila ---------- */
+@media screen and (min-width: 1200px) {
+  html body .wrap { max-width: calc(var(--menu-w) + var(--gap-col) + var(--content-max)) !important; margin-inline: auto !important;
+    grid-template-columns: var(--menu-w) minmax(0, 1fr) !important; column-gap: var(--gap-col) !important }
+}
+@media screen and (min-width: 900px) {
+  html body .wrap { grid-template-columns: var(--menu-w) minmax(0, 1fr) !important; margin-inline: auto !important }
+  .wrap > nav#tabs { grid-row: 1 / span 400 !important; order: -5 !important; top: 8px }
+  .wrap > .mbar, .wrap > .brand, .wrap > header { grid-column: 2 !important }
+  .wrap > .mbar { order: -4 !important } .wrap > .brand { order: -3 !important } .wrap > header { order: -2 !important }
+  .wrap > #generic { grid-row: auto !important }
+}
+@media screen and (max-width: 1199px) and (min-width: 900px) { html body .wrap { max-width: none !important } }
+@media screen and (max-width: 899px) {
+  html body .wrap { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; padding-inline: 16px !important }
+  .wrap > * { grid-column: 1 / -1 !important; grid-row: auto !important; min-width: 0 }
+  /* 3.12: meniul devine bara orizontala derulabila, sus */
+  .wrap > nav#tabs { position: static !important; max-height: none !important; order: -6 !important; flex-direction: row !important; flex-wrap: nowrap !important;
+    overflow-x: auto !important; overflow-y: hidden !important; gap: 2px !important; padding: 0 0 6px !important; border-bottom: 1px solid var(--line) !important; scrollbar-width: thin }
+  .wrap > nav#tabs .ng { flex-direction: row !important; flex-wrap: nowrap !important; margin: 0 !important; align-items: center; border-right: 1px solid var(--line) !important; padding-right: 4px !important }
+  .wrap > nav#tabs .nl { display: none !important }
+  .wrap > nav#tabs > button, .wrap > nav#tabs .ng button, .wrap > nav#tabs .sx-ph { width: auto !important; white-space: nowrap; flex: none }
+}
+/* sub 600 px: butonul \"capitole\" deschide meniul */
+@media screen and (max-width: 599px) {
+  .wrap > nav#tabs { flex-direction: column !important; overflow: visible !important; border-bottom: 0 !important; padding: 0 !important }
+  .wrap > nav#tabs > *:not(#sx-capb) { display: none !important }
+  .wrap > nav#tabs.sx-open > *:not(#sx-capb) { display: flex !important }
+  .wrap > nav#tabs.sx-open { max-height: 70vh !important; overflow-y: auto !important; background: var(--panel); border: 1px solid var(--line) !important; border-radius: 12px; padding: 8px !important }
+  .wrap > nav#tabs.sx-open .ng { flex-direction: column !important; align-items: stretch; border-right: 0 !important }
+  .wrap > nav#tabs.sx-open .nl { display: block !important; margin-top: 6px }
+  #sx-capb { display: inline-flex !important; align-self: flex-start; align-items: center; gap: 8px; font: 700 14px var(--f-text); padding: 9px 16px; border-radius: 99px; border: 1px solid #c9ced8; background: var(--panel); color: var(--fg); cursor: pointer }
+  #sx-capb::before { content: "\2630" }
+  #ac-bar { position: static !important }
+}
+
+/* ---------- tipografie ---------- */
+.wrap > header h1, #name { font-family: var(--f-titlu) !important; font-weight: 700 !important; font-size: var(--fs-h1) !important; line-height: 1.08 !important; letter-spacing: -.01em }
+.hm-src, .hm-lg, .legend, figcaption, .cc2-l, .tlg { font-size: var(--fs-leg) }
+.card b, .sem-n b, .cn-k b, .p2-tn { font-family: var(--f-cifre) }
+
+/* ---------- antetul capitolului: banda 21:9 ---------- */
+section > .hero.hg.hx { display: block; position: relative; padding: 0; margin: 0; border-radius: 16px; overflow: hidden; background: color-mix(in srgb, var(--c, #2c5c9c) 12%, #fff);
+  border: 0; break-inside: avoid; break-after: avoid; page-break-after: avoid; z-index: 4 }
+.hero.hx > .hg-ph { position: relative; margin: 0; width: 100%; aspect-ratio: 21 / 9 !important; max-height: var(--hero-max) !important; height: auto; overflow: hidden; background: color-mix(in srgb, var(--c, #2c5c9c) 14%, #fff) }
+.hero.hx.cu-hh > .hg-ph { aspect-ratio: auto !important; height: min(var(--hh), var(--hero-max)) !important }
+.hero.hx > .hg-ph > img { position: absolute; inset: 0; width: 100%; height: 100% !important; max-height: none !important; object-fit: cover; object-position: 50% var(--fy, 50%); filter: brightness(1.06) saturate(1.05); transition: filter .25s }
+.hero.hx > .hg-ph.fara > img { display: none }
+.hero.hx .hx-svg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--c, #2c5c9c) 14%, #fff) }
+.hero.hx .hx-svg svg { height: 100%; width: auto; max-width: 100%; opacity: .9 }
+.hero.hx .hg-cr, .hero.hx .hg-th, .hx-b .hg-th { display: none }
+body.aspect .hero.hx .hg-th, body.aspect .hx-b .hg-th { display: flex }
+/* titlul: stanga sus */
+.hero.hx:not(.mv) .hg-ov { position: absolute !important; inset: 0 auto auto 0 !important; max-width: 70%; padding: 22px 28px 56px !important; display: flex; flex-direction: column; gap: 6px;
+  background: radial-gradient(120% 140% at 0 0, rgba(8, 12, 20, .62) 0%, rgba(8, 12, 20, .3) 45%, transparent 72%) !important; color: #fff; transition: all .2s }
+.hero.hx .hg-ov h2 { font-family: var(--f-titlu) !important; font-weight: 700 !important; font-size: calc(var(--fs-h2) * var(--fs, 1)) !important; line-height: 1.02 !important; letter-spacing: -.015em !important;
+  color: #fff !important; margin: 0; text-transform: none !important; text-shadow: 0 2px 18px rgba(0, 0, 0, .45), 0 1px 2px rgba(0, 0, 0, .35) !important;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden }
+.hero.hx .hero-k { font-size: var(--fs-pe-poza) }
+/* panoul cu cifre: jos-stanga, peste poza, cel mult 1/3 din latime */
+.hero.hx .hx-k { position: absolute; left: 16px; bottom: 16px; width: min(420px, calc(33.33% - 16px)); box-sizing: border-box; background: rgba(255, 255, 255, .9); color: #1a1e2a;
+  backdrop-filter: blur(6px); border-radius: 14px; box-shadow: 0 12px 30px -14px rgba(0, 0, 0, .5); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; transition: opacity .2s; z-index: 2 }
+.hx-v { display: flex; flex-wrap: wrap; gap: 6px }
+.hx-v i { font: 700 var(--fs-pe-poza) / 1 var(--f-text); font-style: normal; text-transform: lowercase !important; padding: 5px 10px; border-radius: 99px; color: #fff; background: var(--vc, var(--c-info)) }
+.hx-v i.hx-reg { background: #fff; color: var(--c-rosu); box-shadow: inset 0 0 0 1.5px var(--c-rosu) }
+.hx-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px }
+.hx-g.n1 { grid-template-columns: 1fr }
+.hx-i { min-width: 0; display: flex; flex-direction: column; gap: 2px }
+.hx-i b { font: 700 20px / 1.1 var(--f-cifre); letter-spacing: -.02em; color: #1a1e2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.hx-i span { font: 500 var(--fs-pe-poza) / 1.25 var(--f-text); color: #2a3040; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+@media screen and (max-width: 1199px) { .hx-i b { font-size: 18px } .hx-i span { -webkit-line-clamp: 1; white-space: nowrap; display: block; text-overflow: ellipsis } }
+/* cardurile mutate in panou nu se mai repeta dedesubt */
+.hx-in, .hx-in-all { display: none !important }
+/* blocul de sub banda: verdictul, lead-ul */
+.hx-b { padding: 10px 4px 2px; display: flex; flex-direction: column; gap: 8px }
+.hx-b:empty { display: none }
+.hx-b .hero-v { font: 600 var(--fs-text) / 1.45 var(--f-text) }
+.hx-b .hero-v i { display: none }
+.hx-b .hero-l { font: var(--fs-text) / 1.5 var(--f-text); color: var(--muted); max-width: 72ch }
+
+/* sticky: ultimii 120 px ai benzii raman sus (bara de titlu cu poza estompata), doar >= 900 px */
+@media screen and (min-width: 900px) {
+  .wrap > section > .hero.hx { position: sticky !important; top: var(--hx-top, 0) }
+  .hero.hx.hx-stuck > .hg-ph > img { filter: blur(6px) brightness(.62) saturate(.9) }
+  .hero.hx.hx-stuck .hx-k { opacity: 0; pointer-events: none }
+  .hero.hx.hx-stuck:not(.mv) .hg-ov { inset: auto auto 0 0 !important; padding: 14px 26px !important; background: none !important; max-width: 90% }
+  .hero.hx.hx-stuck .hg-ov h2 { font-size: 28px !important; -webkit-line-clamp: 1 }
+  section:has(> .hero.hx) > *:not(.hero):not(.rc-cap) { position: relative; z-index: 1 }
+}
+/* sub 900 px: banda fara cifre peste poza; cifrele sub poza */
+@media screen and (max-width: 899px) {
+  .hero.hx > .hg-ph { aspect-ratio: auto !important; max-height: none !important; display: flex; flex-direction: column; overflow: visible; background: transparent }
+  .hero.hx > .hg-ph > img { position: relative; inset: auto; aspect-ratio: 21 / 9; height: auto !important; border-radius: 16px }
+  .hero.hx .hx-svg { position: relative; aspect-ratio: 21 / 9; border-radius: 16px }
+  .hero.hx { overflow: visible !important; background: transparent !important }
+  .hero.hx:not(.mv) .hg-ov { border-radius: 16px 0 0 0 }
+  .hero.hx .hx-k { position: static; width: auto; margin-top: 10px; background: var(--panel); color: var(--fg); box-shadow: none; border: 1px solid var(--line); backdrop-filter: none }
+  .hero.hx .hx-g { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)) }
+  .hx-i b { color: var(--fg) } .hx-i span { color: var(--muted); -webkit-line-clamp: 2; white-space: normal; display: -webkit-box }
+}
+@media screen and (max-width: 599px) {
+  .hero.hx > .hg-ph > img, .hero.hx .hx-svg { aspect-ratio: 4 / 3 }
+  .hero.hx:not(.mv) .hg-ov { max-width: 100%; padding: 16px 18px 40px !important }
+  .hero.hx .hx-g { grid-template-columns: 1fr 1fr }
+  .hx-i span { -webkit-line-clamp: 2; white-space: normal; display: -webkit-box }
+}
+
+/* ---------- text pe poza: minimul 14 px (coperta, placi, carduri din pagina principala) ---------- */
+.p2-k, .p2-tk, .p2-tk em, .p2-td, .p2-ch span, .p2-val .p2-vt, .gn-h .gn-n, .gn-k, .ist-d { font-size: max(var(--fs-pe-poza), 1em) !important }
+.p2-td { -webkit-line-clamp: 2 }
+
+/* ---------- hartile: latimea intreaga a continutului, fundal in culoarea hartiei (Manu, 24.10) ---------- */
+.hm, .hm-box, .hmh, #teren3d, .t3-cv, .pz, .tpan, .ch:has(> svg), .ch:has(> .hm-box) { width: 100%; max-width: none; box-sizing: border-box }
+.hm-c, .t3-cv canvas, .pzmap, .tmap { width: 100% !important; max-width: none !important; height: auto }
+.hm-box, .pz, .t3-cv { background: #f6f3ee }
+@media print { .hm-box, .pz, .t3-cv, .tpan { width: 100% !important; max-width: none !important } }
+/* relieful: cand exista 3D-ul real cu satelit (#teren3d), blocul vechi cu planul inclinat din 4 colturi nu se mai arata (Manu, 24.10) */
+#alunecari:has(> #teren3d) > .ch { display: none !important }
+/* ordinea in capitol: eticheta, banda, blocul de sub banda; apoi restul (sectiunea e flex column) */
+.wrap > section > .rc-cap { order: -3 } .wrap > section > .hero.hx { order: -2 } .wrap > section > .hx-b { order: -1 }
+
+/* ---------- 3.11: blocuri care nu se rup ---------- */
+.card, .cards, .hm-box, .hmh, .ch, .charts > *, figure, .ublock, .ex, .verd, .fisa, .cn-k, .cn-l, .cn-v, .ng-c, #cc2-seism, #cc2-sc, .sc-r, .bal, .dn, .tpan, .sem-c, .p2-t, #retrageri, .eb-r, .hx-b, .sx-stub, .ev-sec > .cards, .ev-k, .ev-k > div, .uc-c, .uc-g > *, .cards > *, svg { break-inside: avoid; page-break-inside: avoid }
+thead { display: table-header-group } tr { break-inside: avoid }
+
+/* ---------- print: A4 portret, margini 14 mm ---------- */
+@page { size: A4 portrait; margin: 14mm }
+@media print {
+  :root { --fs-h1: 26pt; --fs-h2: 28pt; --fs-text: 10.5pt; --fs-leg: 8.5pt; --fs-pe-poza: 9pt }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important }
+  html, body { background: #fff !important; font-size: 10.5pt }
+  nav#tabs, #ac-bar, #cl-home, #sx-capb, button, .hg-th, .ax, #ax-bar, .mbar, .brand select { display: none !important }
+  [style*="sticky"], .wrap > section > .hero.hx, #ac-bar { position: static !important }
+  .wrap { display: block !important; max-width: none !important; padding: 0 !important }
+  section > .hero.hg.hx { break-inside: avoid; break-after: avoid; page-break-after: avoid; border-radius: 3mm }
+  .hero.hx > .hg-ph { aspect-ratio: auto !important; height: var(--hero-print) !important; max-height: none !important; display: block; overflow: hidden }
+  .hero.hx > .hg-ph > img { position: absolute !important; inset: 0; height: 100% !important; aspect-ratio: auto; border-radius: 0; filter: none }
+  .hero.hx .hx-svg { position: absolute; inset: 0; aspect-ratio: auto }
+  .hero.hx:not(.mv) .hg-ov { position: absolute !important; inset: 0 auto auto 0 !important; padding: 4mm 5mm 10mm !important; max-width: 70% }
+  .hero.hx .hg-ov h2 { font-size: var(--fs-h2) !important }
+  .hero.hx .hx-k { position: absolute; left: 3mm; bottom: 3mm; width: calc(33.33% - 3mm); margin: 0; padding: 2mm 2.5mm; gap: 1.5mm; background: rgba(255, 255, 255, .9); border: 0; box-shadow: none; backdrop-filter: none; color: #1a1e2a }
+  .hero.hx .hx-g { grid-template-columns: 1fr 1fr; gap: 1.5mm 2.5mm }
+  .hx-i b { font-size: 12pt; color: #1a1e2a } .hx-i span { font-size: 9pt; color: #2a3040; -webkit-line-clamp: 2; display: -webkit-box; white-space: normal }
+  .hx-v i { font-size: 9pt; padding: 1mm 2.5mm }
+  .hx-b { padding: 2mm 0 0; break-before: avoid }
+  .hx-b .hero-v, .hx-b .hero-l { font-size: 10.5pt }
+  .wrap > header h1, #name { font-size: var(--fs-h1) !important }
+  section { gap: 3.5mm !important }
+  /* nimic lipit, nimic transparent peste text */
+  section:has(> .hero.hx) > * { position: static !important; box-shadow: none !important }
+}
