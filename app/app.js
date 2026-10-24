@@ -69,9 +69,9 @@
         <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
       </div>
       <div class="cutie">
-        <label class="camp">ai un cod de intrare?<input type="text" id="cs" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="ABCDE-12345"></label>
-        <button class="btn alb lat" id="cs-go">intră cu codul</button>
-        <p class="mut" style="margin:0;font-size:13px">codul îl găsești în aplicație, la „contul meu → aplicația pe ecranul de start”, sau îl primești de la noi.</p>
+        <label class="camp">ai un cod sau un link de intrare?<input type="text" id="cs" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" placeholder="ABCDE-12345 sau linkul din e-mail"></label>
+        <button class="btn alb lat" id="cs-go">intră</button>
+        <p class="mut" style="margin:0;font-size:13px">codul îl găsești în aplicație, la „contul meu → aplicația pe ecranul de start”. dacă în e-mail ai primit un link, ține degetul pe el, alege „copiază linkul” și lipește-l aici (fără să-l deschizi).</p>
       </div>
       ${desk ? `<div class="cutie" style="align-items:center;text-align:center"><b>se citește pe telefon</b><div class="qr">${qrSvg(BAZA)}</div><p class="mut" style="margin:0;font-size:14px">scanează cu camera telefonului.</p></div>` : ""}
       <p class="nota">serviciu privat de analiză, independent de instituțiile publice. fără parole: intri cu un cod de unică folosință.</p></div>`;
@@ -82,9 +82,25 @@
       const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: BAZA } });
       $("#trimite").disabled = false;
       if (error) { m.className = "err"; m.textContent = /signups not allowed|not found|user/i.test(error.message) ? "nu avem un raport pe acest e-mail. scrie e-mailul de pe comandă." : /rate|seconds/i.test(error.message) ? "ai cerut deja un cod; mai așteaptă un minut." : "codul nu s-a putut trimite acum."; return; }
-      $("#pas2").hidden = false; m.className = "okm"; m.textContent = "ți-am trimis codul pe e-mail."; $("#cod").focus();
+      $("#pas2").hidden = false; m.className = "okm"; m.textContent = "ți-am trimis un e-mail. dacă are un cod, scrie-l mai jos; dacă are doar un link, copiază linkul (fără să-l deschizi) și lipește-l la „ai un cod sau un link de intrare?”."; $("#cod").focus();
     };
-    $("#cs-go").onclick = () => { const c = $("#cs").value.replace(/[^A-Za-z0-9]/g, "").toUpperCase(); if (c.length !== 10) { m.className = "err"; m.textContent = "codul are 10 caractere (ex. ABCDE-12345)."; return; } intrareQr(c).then(ok => ok && porneste()); };
+    $("#cs-go").onclick = async () => {
+      const v = $("#cs").value.trim();
+      // linkul din e-mailul de conectare: .../auth/v1/verify?token=<hash>&type=magiclink → aceeași verificare, fără să mai treacă prin pagina de redirect
+      if (/token=/.test(v)) {
+        let th = null, tip = "magiclink";
+        try { const u = new URL(v.replace(/&amp;/g, "&")); th = u.searchParams.get("token") || u.searchParams.get("token_hash"); tip = u.searchParams.get("type") || tip; } catch (e) {}
+        if (!th || th.startsWith("pkce_")) { m.className = "err"; m.textContent = "linkul nu se poate folosi aici; cere un cod nou."; return; }
+        $("#cs-go").disabled = true;
+        const { error } = await sb.auth.verifyOtp({ token_hash: th, type: ["magiclink", "signup", "invite", "recovery", "email"].includes(tip) ? tip : "magiclink" });
+        $("#cs-go").disabled = false;
+        if (error) { m.className = "err"; m.textContent = "linkul a fost deja deschis sau a expirat. cere unul nou cu „trimite-mi codul”."; return; }
+        return porneste();
+      }
+      const c = v.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      if (c.length !== 10) { m.className = "err"; m.textContent = "codul are 10 caractere (ex. ABCDE-12345), sau lipește linkul întreg din e-mail."; return; }
+      intrareQr(c).then(ok => ok && porneste());
+    };
     $("#intra").onclick = async () => {
       const email = $("#em").value.trim().toLowerCase(), cod = $("#cod").value.replace(/\D/g, "");
       if (cod.length < 6) { m.className = "err"; m.textContent = "codul are 6 cifre."; return; }
