@@ -52,12 +52,12 @@
   }
 
   /* ---------- intrare ---------- */
-  const SIGLA = `<svg class="sigla" viewBox="0 0 512 512" aria-hidden="true"><use href="logo.svg#sigla"/></svg>`;
-  const marca = () => `<div class="marca">${SIGLA}<span>cartea casei</span></div>`;
+  const marca = () => `<div class="marca"><img class="sigla" src="emblema.png" alt="" width="44" height="35"><span>cartea casei</span></div>`;
   function qrSvg(text, cell) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: cell || 5, margin: 2, scalable: true }); } catch (e) { return ""; } }
   function ecranIntrare(msg) {
     const desk = !MOBIL();
     app.innerHTML = `<div class="ecran">${marca()}
+      <div style="text-align:center;margin:6px 0 2px"><img src="emblema.png" alt="cartea casei" style="width:min(58vw,230px);height:auto"></div>
       <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu codul raportului și pin-ul.</p></div>
       <div class="cutie" id="f-pin">
         <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-XXXXXX"></label>

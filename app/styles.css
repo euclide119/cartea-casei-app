@@ -86,4 +86,4 @@ input:focus{outline:2px solid var(--acc);outline-offset:1px}
 /* v25.10: ascuns real, fâșia filigran, sigla */
 [hidden]{display:none!important}
 .fil{flex:none;text-align:center;font:600 10.5px system-ui;color:#9a9484;padding:3px 8px;background:var(--panel);border-top:1px solid var(--linie);letter-spacing:.03em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.marca{font:700 17px var(--titlu);letter-spacing:-.01em}.marca .sigla{width:36px;height:36px;flex:none;border-radius:9px}
+.marca{font:700 17px var(--titlu);letter-spacing:-.01em;gap:12px}.marca .sigla{width:44px;height:auto;flex:none}
