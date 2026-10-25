@@ -52,7 +52,8 @@
   }
 
   /* ---------- intrare ---------- */
-  const marca = () => `<div class="marca"><img src="icon-192.png" alt="">cartea casei</div>`;
+  const SIGLA = `<svg class="sigla" viewBox="0 0 512 512" aria-hidden="true"><use href="logo.svg#sigla"/></svg>`;
+  const marca = () => `<div class="marca">${SIGLA}<span>cartea casei</span></div>`;
   function qrSvg(text, cell) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: cell || 5, margin: 2, scalable: true }); } catch (e) { return ""; } }
   function ecranIntrare(msg) {
     const desk = !MOBIL();
@@ -63,7 +64,11 @@
         <label class="camp">pin<input type="tel" id="pp" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="6 cifre"></label>
         <button class="btn lat" id="pin-go">intră</button>
         <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
-        <p class="mut" style="margin:0;font-size:13px">codul și pin-ul sunt pe prima pagină a raportului pdf și în e-mailul de livrare.</p>
+        <p class="mut" style="margin:0;font-size:13px">codul și pin-ul sunt pe prima pagină a raportului pdf și în mesajul în care ai primit raportul.</p>
+        <button class="btn alb mic" id="uitat" type="button" style="align-self:flex-start">am uitat pin-ul</button>
+        <div id="uitat-f" hidden style="display:none;flex-direction:column;gap:10px">
+          <label class="camp">telefonul sau e-mailul la care te putem găsi<input type="text" id="ut-c" autocomplete="tel" placeholder="07xx xxx xxx sau nume@exemplu.ro"></label>
+          <button class="btn lat" id="ut-go" type="button">cere un pin nou</button><p id="ut-m" class="mut" style="margin:0"></p></div>
       </div>
       <details class="cutie" id="f-alte"><summary style="cursor:pointer;font-weight:600">alte moduri de intrare</summary>
         <div id="f-intrare" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
@@ -98,6 +103,15 @@
       } catch (e) { m.className = "err"; m.textContent = mic(e.message); $("#pin-go").disabled = false; }
     };
     $("#pin-go").onclick = pinGo;
+    $("#uitat").onclick = () => { const f = $("#uitat-f"); const dechis = f.style.display === "flex"; f.style.display = dechis ? "none" : "flex"; if (!dechis) $("#ut-c").focus(); };
+    $("#ut-go").onclick = async () => {
+      const cod = $("#pc").value.trim(), ct = $("#ut-c").value.trim(), um = $("#ut-m");
+      if (cod.replace(/[^A-Za-z0-9]/g, "").length < 6) { um.className = "err"; um.textContent = "scrie mai sus codul raportului (CC-…)."; return; }
+      if (ct.length < 5) { um.className = "err"; um.textContent = "scrie un telefon sau un e-mail."; return; }
+      $("#ut-go").disabled = true;
+      try { await fetch(FN + "intra", { method: "POST", headers: { "Content-Type": "application/json", apikey: CFG.supabaseKey }, body: JSON.stringify({ actiune: "uitat", cod, contact: ct }) }); } catch (e) {}
+      um.className = "okm"; um.textContent = "am primit cererea. îți trimitem un pin nou în cel mult o zi lucrătoare.";
+    };
     $("#pp").addEventListener("keydown", e => { if (e.key === "Enter") pinGo(); });
     $("#trimite").onclick = async () => {
       const email = $("#em").value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { m.className = "err"; m.textContent = "scrie un e-mail valid."; return; }
@@ -164,7 +178,7 @@
       <div><h1>${L.length > 1 ? "rapoartele tale" : "raportul tău"}</h1><p class="lead">${L.length ? "apasă pe raport și citește-l capitol cu capitol." : "încă nu ai un raport publicat pe acest cont."}</p></div>
       <div class="carduri">${L.map(r => `<button class="card" data-go="#/r/${esc(r.id)}">
         <div class="cap"><span>${esc(mic(r.cod))}${rolul(r.id) === "vizitator" ? " · invitat" : ""}</span></div>
-        <div class="in"><b>${esc(mic(r.titlu))}</b><span class="m">${r.capitole_total || 26} de capitole, ${r.capitole_cu_date ?? "—"} cu date pentru locul ăsta</span><span class="m">publicat ${esc(data(r.publicat_la))}</span></div></button>`).join("")}</div>
+        <div class="in"><b>${esc(mic(r.titlu))}</b><span class="m">${capsDe(r).length} capitole despre locul ăsta</span><span class="m">publicat ${esc(data(r.publicat_la))}</span></div></button>`).join("")}</div>
       <button class="btn alb lat" data-go="#/cerere">cere un raport nou</button>
       ${instalata() ? "" : `<div class="cutie" id="inst"><b>pune aplicația pe ecranul telefonului</b>${S.prompt ? '<button class="btn lat" id="inst-go">instalează aplicația</button>' : `<span class="mut" style="font-size:14px">${/iPhone|iPad/.test(navigator.userAgent) ? "în safari apasă butonul de partajare (pătratul cu săgeată), apoi „adaugă pe ecranul principal”." : "în meniul browserului (⋮) alege „instalează aplicația” sau „adaugă pe ecranul de pornire”."} apoi deschide aplicația de pe ecran și intră cu același cod al raportului și pin.</span>`}</div>`}
       <div id="cererile-mele"></div>
@@ -194,15 +208,17 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'none'">
 <style>${css || ""}</style></head><body class="${esc(body)}">${html}${fil}<i id="cartea-casei-fin" hidden></i></body></html>`;
   }
-  const capsDe = r => (r.capitole || []);
+  /* capitolele fără date nu se prezintă deloc (le știm doar noi, în evidența internă); numerotarea e continuă, fără goluri */
+  const capsDe = r => (r.capitole || []).filter(c => c.are_date !== false);
+  const nrDe = (r, k) => { const i = capsDe(r).findIndex(c => c.k === k); return i < 0 ? "" : String(i + 1).padStart(2, "0"); };
   function meniu(r, kAcum) {
     const f = document.createElement("div"); f.className = "foaie";
     let g0 = null;
     f.innerHTML = `<div class="f" role="dialog" aria-label="capitolele raportului"><div style="display:flex;justify-content:space-between;align-items:center"><h2>capitole</h2><button class="ic" data-x aria-label="închide">✕</button></div>
       <button class="c ${kAcum === "coperta" ? "acum" : ""}" data-k="coperta"><i>00</i>prima pagină</button>
       ${capsDe(r).map(c => { const g = c.grup !== g0 ? `<div class="g">${esc(mic(c.grup))}</div>` : ""; g0 = c.grup;
-        return `${g}<button class="c ${c.are_date ? "" : "gri"} ${c.k === kAcum ? "acum" : ""}" data-k="${esc(c.k)}"><i>${String(c.nr).padStart(2, "0")}</i>${esc(mic(c.titlu))}${c.clasa === "esential" ? '<span class="e" title="esențial"></span>' : ""}</button>`; }).join("")}
-      <button class="c ${kAcum === "concluzii" ? "acum" : ""}" data-k="concluzii"><i>27</i>rezumat și concluzii</button>
+        return `${g}<button class="c ${c.k === kAcum ? "acum" : ""}" data-k="${esc(c.k)}"><i>${nrDe(r, c.k)}</i>${esc(mic(c.titlu))}${c.clasa === "esential" ? '<span class="e" title="esențial"></span>' : ""}</button>`; }).join("")}
+      <button class="c ${kAcum === "concluzii" ? "acum" : ""}" data-k="concluzii"><i>${String(capsDe(r).length + 1).padStart(2, "0")}</i>rezumat și concluzii</button>
       <button class="c ${kAcum === "final" ? "acum" : ""}" data-k="final" style="font-weight:700"><i>✓</i>pdf, trimitere și alte servicii</button>
       <button class="c" data-k="mapa" style="font-weight:700"><i>▤</i>mapa proprietății</button></div>`;
     f.addEventListener("click", e => {
@@ -216,9 +232,9 @@
   const deTiparit = r => ["coperta", ...capsDe(r).map(c => c.k), "concluzii"];
   function eticheta(r, k) {
     if (k === "coperta") return { nr: "00", t: "prima pagină" };
-    if (k === "concluzii") return { nr: "27", t: "rezumat și concluzii" };
+    if (k === "concluzii") return { nr: String(capsDe(r).length + 1).padStart(2, "0"), t: "rezumat și concluzii" };
     if (k === "final") return { nr: "✓", t: "pdf și cereri" };
-    const c = capsDe(r).find(x => x.k === k) || {}; return { nr: String(c.nr || "").padStart(2, "0"), t: mic(c.titlu || k), gri: !c.are_date };
+    const c = capsDe(r).find(x => x.k === k) || {}; return { nr: nrDe(r, k), t: mic(c.titlu || k) };
   }
   /* ---------- bifele: ce intră în pdf / ce se trimite (pe cont, în selectii_client) ---------- */
   const SEL = {};
@@ -258,9 +274,11 @@
       await trimiteSesiune(rid);
       app.innerHTML = `<div class="cititor int" data-rid="${esc(rid)}">
         <div class="bara"><button class="ic" id="inap" aria-label="înapoi">‹</button><div class="t" id="tt"></div>
+          <button class="ic" id="toc" aria-label="în acest capitol" title="în acest capitol" hidden>≡</button>
           <button class="ic bifa" id="bf" aria-pressed="false" aria-label="bifează capitolul pentru pdf" title="bifează pentru pdf">✓</button>
           <button class="ic" id="m" aria-label="capitole">☰</button></div>
         <div style="position:relative;flex:1;display:flex"><iframe id="rap" title="raportul" src="raport/index.html#${encodeURIComponent(rid)}"></iframe><div class="incarc" id="inc">se încarcă raportul…</div></div>
+        <div class="fil">${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")}</div>
         <div class="jos"><button class="btn alb mic" id="p" aria-label="capitolul anterior">‹ înapoi</button><span class="n" id="nn"></span><button class="btn mic" id="u" aria-label="capitolul următor">înainte ›</button></div></div>`;
       cit = $(".cititor.int");
       const fr = $("#rap");
@@ -273,7 +291,6 @@
       });
       cit._gata.then(() => {
         const d = fr.contentDocument;
-        const fil = d.createElement("div"); fil.id = "cc-fil"; fil.textContent = `${mic(r.cod || "")} · ${S.user.email || ""}`; d.body.appendChild(fil);
         // glisare între capitole, dar nu pe hărți, bare, butoane și glisoare (acolo e interactivitatea raportului)
         let x0 = 0, y0 = 0, t0 = 0, ok = false;
         d.addEventListener("touchstart", ev => { const t = ev.changedTouches[0]; ok = !(ev.target.closest && ev.target.closest(INTERACTIV_EXCLUS)); x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); }, { passive: true });
@@ -282,7 +299,8 @@
       }).catch(() => { const inc = $("#inc"); if (inc) inc.textContent = "raportul nu s-a putut încărca. verifică semnalul și redeschide."; });
     }
     // bara de sus și de jos pentru capitolul curent
-    $("#tt").innerHTML = `${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr + (e.gri ? " · fără date încă" : "")}</small>`;
+    $("#toc").hidden = true;
+    $("#tt").innerHTML = `${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr}</small>`;
     $("#inap").onclick = () => { location.hash = k === "coperta" ? "#/acasa" : `#/r/${rid}`; };
     $("#m").onclick = () => meniu(r, k);
     $("#nn").textContent = `${i + 1} / ${ord.length}`;
@@ -299,12 +317,26 @@
     d.querySelectorAll(".cc-on").forEach(x => x.classList.remove("cc-on"));
     try { w.showTab(k === "coperta" || k === "concluzii" ? "rezumat" : k); } catch (er) {}
     let el = k === "concluzii" ? d.getElementById("cl-final") : d.getElementById(k === "coperta" ? "rezumat" : k);
-    if (!el || !el.matches(".wrap > section, #cl-final")) {
-      el = d.getElementById("cc-stub") || Object.assign(d.createElement("section"), { id: "cc-stub" });
-      el.innerHTML = `<div style="border:1px dashed #c9ced8;border-radius:16px;padding:22px 20px;margin-top:24px;font:15px/1.5 system-ui"><b style="font-size:20px">${esc(e.t)}</b><p>pentru locul ăsta nu avem încă date despre acest capitol. îl vezi aici când apar.</p></div>`;
-      d.querySelector(".wrap").appendChild(el);
-    }
+    if (!el || !el.matches(".wrap > section, #cl-final")) { $("#inc") || cit.querySelector("div[style*=relative]").insertAdjacentHTML("beforeend", '<div class="incarc" id="inc">capitolul nu se poate afișa acum.</div>'); return; }
     el.classList.add("cc-on");
+    // registrul comercial: fără etichete de lucru; numărul capitolului după numerotarea clientului (continuă, fără goluri)
+    const curata = () => { try { w.__ccCurata && w.__ccCurata(el); } catch (er) {}
+      const rc = el.querySelector(".rc-cap"); if (rc && e.nr && k !== "coperta" && k !== "concluzii") rc.textContent = rc.textContent.replace(/capitolul \d+/, "capitolul " + Number(e.nr)); };
+    curata(); setTimeout(curata, 1200);
+    // cuprinsul capitolului, doar la capitolele lungi
+    setTimeout(() => { if (gen !== generatia) return; const tb = $("#toc"); if (!tb) return;
+      const H = [...el.querySelectorAll("h3,.ch-t,.dn-t,.ng-c>b")].filter(h => h.getBoundingClientRect().height > 0 && h.textContent.trim().length > 2 && h.textContent.trim().length < 90);
+      if (el.getBoundingClientRect().height < w.innerHeight * 2.2 || H.length < 3) { tb.hidden = true; return; }
+      tb.hidden = false;
+      tb.onclick = () => { const f = document.createElement("div"); f.className = "foaie";
+        f.innerHTML = `<div class="f" role="dialog" aria-label="în acest capitol"><div style="display:flex;justify-content:space-between;align-items:center"><h2>în acest capitol</h2><button class="ic" data-x aria-label="închide">✕</button></div>
+          ${H.map((h, i) => `<button class="c" data-i="${i}">${esc(mic(h.textContent.trim().replace(/\s+/g, " ")))}</button>`).join("")}</div>`;
+        f.addEventListener("click", ev => { if (ev.target === f || ev.target.closest("[data-x]")) { f.remove(); return; }
+          const b = ev.target.closest("[data-i]"); if (b) { f.remove(); const t = H[+b.dataset.i].getBoundingClientRect().top + w.scrollY - 12; w.scrollTo({ top: t, behavior: "smooth" }); } });
+        document.body.appendChild(f); }; }, 1500);
+    // semnal de citire (ce capitole interesează clienții); o dată pe capitol și sesiune
+    if (!S.citit) S.citit = new Set();
+    if (!S.citit.has(rid + "/" + k)) { S.citit.add(rid + "/" + k); sb.rpc("citit_capitol", { rid, k }).then(() => {}, () => {}); }
     let nx = d.getElementById("cc-next");
     if (!nx) { nx = d.createElement("div"); nx.id = "cc-next"; d.querySelector(".wrap").appendChild(nx); nx.style.order = "9999"; }
     if (next) { const n = eticheta(r, next); nx.hidden = false; nx.innerHTML = `<span><small>capitolul următor · ${esc(n.nr)}</small>${esc(n.t)}</span><span style="font-size:22px">›</span>`; nx.onclick = () => du(next); }
@@ -325,7 +357,7 @@
     const i = ord.indexOf(k), e = eticheta(r, k), prev = ord[i - 1], next = ord[i + 1];
     app.innerHTML = `<div class="cititor">
       <div class="bara"><button class="ic" data-go="${k === "coperta" ? "#/acasa" : "#/r/" + esc(rid)}" aria-label="înapoi">‹</button>
-        <div class="t">${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr + (e.gri ? " · fără date încă" : "")}</small></div>
+        <div class="t">${esc(e.t)}<small>${k === "coperta" ? esc(mic(r.titlu)) : "capitolul " + e.nr}</small></div>
         <button class="ic bifa" id="bf" aria-pressed="false" aria-label="bifează capitolul pentru pdf" title="bifează pentru pdf">✓</button>
         <button class="ic" id="m" aria-label="capitole">☰</button></div>
       <div style="position:relative;flex:1;display:flex"><iframe title="${esc(e.t)}" referrerpolicy="no-referrer"></iframe><div class="incarc" id="inc">se încarcă…</div></div>
@@ -372,12 +404,12 @@
     ["cf", "extras de carte funciară sau alte date de cadastru"], ["mapa", "mapa proprietății pregătită de noi: toate actele, în ordine"]];
   async function ecranFinal(r) {
     const rid = r.id, sel = await bife(rid), lista = deTiparit(r);
-    const cuDate = lista.filter(k => k === "coperta" || k === "concluzii" || (capsDe(r).find(c => c.k === k) || {}).are_date);
+    const cuDate = lista;
     app.innerHTML = `<div class="ecran"><div class="bara" style="margin:-14px -16px 0;padding-left:12px"><button class="ic" data-go="#/r/${esc(rid)}/concluzii" aria-label="înapoi">‹</button><div class="t">pdf și cereri<small>${esc(mic(r.titlu))}</small></div></div>
       <div class="cutie"><h2>pdf-ul raportului</h2><p class="mut" style="margin:0;font-size:14px">bifează ce vrei în pdf sau ce vrei să trimiți. bifele se văd și în capitole, la butonul ✓ de sus.</p>
         <div class="tip"><button class="btn alb mic" id="b-tot">bifează tot</button><button class="btn alb mic" id="b-nimic">nimic</button></div>
-        <div class="lista" id="bife">${lista.map(k => { const e = eticheta(r, k); return `<label class="r" style="cursor:pointer"><input type="checkbox" data-k="${esc(k)}" ${sel.has(k) ? "checked" : ""} style="width:22px;height:22px"><div>${esc(e.t)}<small>${e.nr === "00" ? "prima pagină" : e.nr === "27" ? "la final" : "capitolul " + e.nr}${e.gri ? " · fără date încă" : ""}</small></div></label>`; }).join("")}</div>
-        <button class="btn lat" id="pdf-tot">pdf complet (${cuDate.length} capitole cu date)</button>
+        <div class="lista" id="bife">${lista.map(k => { const e = eticheta(r, k); return `<label class="r" style="cursor:pointer"><input type="checkbox" data-k="${esc(k)}" ${sel.has(k) ? "checked" : ""} style="width:22px;height:22px"><div>${esc(e.t)}<small>${k === "coperta" ? "prima pagină" : k === "concluzii" ? "la final" : "capitolul " + e.nr}</small></div></label>`; }).join("")}</div>
+        <button class="btn lat" id="pdf-tot">pdf complet (${cuDate.length} pagini)</button>
         <button class="btn alb lat" id="pdf-sel">pdf cu ce ai bifat</button>
         <button class="btn alb lat" id="trimite">trimite ce ai bifat</button>
         <p class="mut" style="margin:0;font-size:13px">pdf-ul se face pe telefon, cu numele tău și codul raportului pe fiecare pagină. în fereastra care se deschide alege „salvează ca pdf”, sau „partajează” ca să-l trimiți pe e-mail ori whatsapp.</p></div>
@@ -409,6 +441,16 @@
     };
   }
 
+  /* disclaimerul de la finalul pdf-ului: aici (și doar aici) se spune ce capitole nu au încă registre locale */
+  function disclaimer(r, keys) {
+    const fara = capsDe(r).filter(c => c.fara_registru && keys.includes(c.k)).map(c => mic(c.titlu));
+    return `<div class="tp-cap tp-disc"><h3>despre acest raport</h3>
+      <p>raportul e un serviciu privat de analiză și arată informații orientative despre locul unde se află proprietatea: ce se poate construi, riscurile, viața din zonă și costurile unei tranzacții. el nu înlocuiește un extras de carte funciară, o evaluare făcută de un evaluator autorizat, un certificat energetic sau o opinie juridică, și nu e o concluzie juridică.</p>
+      ${fara.length ? `<p>pentru ${fara.length === 1 ? "capitolul" : "capitolele"} <b>${esc(fara.join(", "))}</b> nu avem încă registre locale (evidențe ținute la nivelul localității): datele de acolo vin din surse generale și sunt orientative; confirmă-le la nivel local înainte de semnarea unui act.</p>` : ""}
+      <p>estimările (prețuri, zgomot, costuri) sunt calcule pe baza datelor disponibile la data raportului și pot diferi de realitate. verifică actele la notar și la bancă, mai ales acolo unde un capitol e marcat „de verificat”.</p>
+      <p style="color:#8a8f9c;font-size:12px">raport ${esc(mic(r.cod || ""))} · generat pentru ${esc(S.user.email || "")} · ${esc(new Date().toLocaleDateString("ro-RO"))}</p></div>`;
+  }
+
   /* pdf pe telefon: capitolele alese (aceleași, randate pe server) puse unul după altul, cu filigran, apoi fereastra de tipărire a telefonului */
   async function tipareste(r, keys, mod) {
     if (!keys.length) return;
@@ -424,13 +466,14 @@
       root.innerHTML = `<style>${css}
 @page{size:A4;margin:12mm 10mm 14mm}
 #tipar .tp-cap{break-before:page;page-break-before:always}#tipar .tp-cap:first-of-type{break-before:auto;page-break-before:auto}
-#tipar img{break-inside:avoid}#tipar .tp-cap-fil{font:600 10px system-ui;color:#8a8f9c;letter-spacing:.04em;padding:4px 14px 0;text-align:right}#tipar button{pointer-events:none}
+#tipar img{break-inside:avoid}#tipar .tp-disc{padding:18px 16px;font:14px/1.55 system-ui;color:#1a1e2a}#tipar .tp-disc h3{font:700 20px system-ui;margin:0 0 10px}#tipar .tp-cap-fil{font:600 10px system-ui;color:#8a8f9c;letter-spacing:.04em;padding:4px 14px 0;text-align:right}#tipar button{pointer-events:none}
 #tipar .tp-fil{position:fixed;left:0;right:0;bottom:0;text-align:center;font:9px system-ui;color:#8a8f9c}
 .tp-bara{position:sticky;top:0;z-index:9;display:flex;gap:8px;align-items:center;padding:10px 12px;background:#1a1e2a;color:#fff;font:600 14px system-ui}
 .tp-bara button{pointer-events:auto!important;font:700 14px system-ui;padding:8px 14px;border-radius:99px;border:0;background:#fff;color:#1a1e2a}
 @media print{.tp-bara{display:none!important}}</style>
 <div class="tp-bara"><button id="tp-x">‹ înapoi</button><span style="flex:1">${mod === "trimite" ? "alege „partajează” în fereastra de tipărire" : "pdf: " + keys.length + " capitole"}</span><button id="tp-p">tipărește / pdf</button></div>
 ${parti.map(h => `<div class="tp-cap"><div class="tp-cap-fil">cartea casei · ${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")} · ${esc(azi)}</div>${h}</div>`).join("")}
+${disclaimer(r, keys)}
 <div class="tp-fil">cartea casei · ${esc(mic(r.cod || ""))} · ${esc(S.user.email || "")} · ${esc(azi)} · serviciu privat de analiză</div>`;
       const link = document.querySelector('link[href^="styles.css"]'), clsVechi = document.body.className;
       const inchide = () => { root.remove(); if (link) link.disabled = false; document.body.className = clsVechi; app.style.display = ""; window.removeEventListener("afterprint", inchide); };

@@ -1,7 +1,7 @@
 /* Cartea Casei · service worker: doar scheletul aplicației (pornește și fără semnal).
    Capitolele, rapoartele și orice răspuns de la server NU se păstrează aici (alt domeniu → nu trec prin cache). */
-const CACHE = 'cartea-casei-20261025c';
-const SHELL = ['./', './index.html', './styles.css?v=20261025c', './app.js?v=20261025c', './cereri.js?v=20261024a', './mapa.js?v=20261025c', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'cartea-casei-20261025d';
+const SHELL = ['./', './index.html', './styles.css?v=20261025d', './app.js?v=20261025d', './cereri.js?v=20261024a', './mapa.js?v=20261025c', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 const POZE = 'cartea-casei-poze';
@@ -32,9 +32,10 @@ self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
   // raportul interactiv: datele proprietății doar cu cont; sursele și celelalte proprietăți nu există aici
   const rp = u.origin === location.origin ? u.pathname.match(/\/app\/raport\/(.+)$/) : null;
-  if (rp && e.request.method === 'GET') {
+  if (rp && (e.request.method === 'GET' || e.request.method === 'HEAD')) {
     const cale = decodeURIComponent(rp[1]), m = cale.match(/^p\/([a-z0-9_]{3,64})\/(.+)$/);
-    if (m) { e.respondWith(fisierRaport(e, m[1] + '/' + m[2], m[1])); return; }
+    // HEAD (raportul verifică dacă un registru există): același răspuns, fără corp — altfel ar da 404 pe găzduirea publică și ar marca fals „fără registru"
+    if (m) { const g = fisierRaport(e, m[1] + '/' + m[2], m[1]); e.respondWith(e.request.method === 'HEAD' ? g.then((r) => new Response(null, { status: r.status })) : g); return; }
     if (cale === 'proprietati.json') { e.respondWith(sesiune().then((S) => raspunsJson(((S && S.rapoarte) || []).map((r) => ({ id: r.id, eticheta: r.titlu }))))); return; }
     if (cale === 'surse.json') { e.respondWith(raspunsJson({})); return; }
     if (cale === 'piata_istoric.json') { e.respondWith(sesiune().then((S) => S && S.rid ? fisierRaport(e, 'piata_istoric.json', S.rid) : raspunsJson({}))); return; }
