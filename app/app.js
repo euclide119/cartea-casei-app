@@ -57,7 +57,7 @@
   function ecranIntrare(msg) {
     const desk = !MOBIL();
     app.innerHTML = `<div class="ecran">${marca()}
-      <div style="text-align:center;margin:6px 0 2px"><img src="emblema.png" alt="cartea casei" style="width:min(58vw,230px);height:auto"></div>
+      <img src="deschidere.jpg" alt="cartea casei" style="width:100%;height:auto;border-radius:18px;display:block;aspect-ratio:2000/1116;object-fit:cover;background:#2a2f3f">
       <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu codul raportului și pin-ul.</p></div>
       <div class="cutie" id="f-pin">
         <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-XXXXXX"></label>
