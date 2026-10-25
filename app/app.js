@@ -323,6 +323,9 @@
     const curata = () => { try { w.__ccCurata && w.__ccCurata(el); } catch (er) {}
       const rc = el.querySelector(".rc-cap"); if (rc && e.nr && k !== "coperta" && k !== "concluzii") rc.textContent = rc.textContent.replace(/capitolul \d+/, "capitolul " + Number(e.nr)); };
     curata(); setTimeout(curata, 1200);
+    // capitolele își scriu textele și după câteva secunde (grafice, tabele): curățarea rulează și la fiecare schimbare, nu doar la început
+    if (cit._mo) cit._mo.disconnect();
+    try { let tm = null; cit._mo = new w.MutationObserver(() => { clearTimeout(tm); tm = setTimeout(curata, 250); }); cit._mo.observe(el, { childList: true, subtree: true, characterData: true }); } catch (er) {}
     // cuprinsul capitolului, doar la capitolele lungi
     setTimeout(() => { if (gen !== generatia) return; const tb = $("#toc"); if (!tb) return;
       const H = [...el.querySelectorAll("h3,.ch-t,.dn-t,.ng-c>b")].filter(h => h.getBoundingClientRect().height > 0 && h.textContent.trim().length > 2 && h.textContent.trim().length < 90);
