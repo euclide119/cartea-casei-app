@@ -1,7 +1,7 @@
 /* Cartea Casei · service worker: doar scheletul aplicației (pornește și fără semnal).
    Capitolele, rapoartele și orice răspuns de la server NU se păstrează aici (alt domeniu → nu trec prin cache). */
-const CACHE = 'cartea-casei-20261025d';
-const SHELL = ['./', './index.html', './styles.css?v=20261025d', './app.js?v=20261025d', './cereri.js?v=20261024a', './mapa.js?v=20261025c', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.svg'];
+const CACHE = 'cartea-casei-20261025e';
+const SHELL = ['./', './index.html', './styles.css?v=20261025d', './app.js?v=20261025e', './cereri.js?v=20261024a', './mapa.js?v=20261025c', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 const POZE = 'cartea-casei-poze';
@@ -18,13 +18,13 @@ async function fisierRaport(e, f, rid) {
   const S = await sesiune();
   if (!S || !S.jwt) return new Response('fără sesiune', { status: 401 });
   const r0 = (S.rapoarte || []).find((x) => x.id === rid) || {};
-  const cheie = `/v/${rid}/${r0.versiune || ''}/${f}`, imagine = !/\.(geo)?json$/i.test(f);
+  const cheie = `/v/${rid}/${r0.versiune || ''}/${f}`;
   const c = await caches.open(POZE);
-  if (imagine) { const hit = await c.match(cheie); if (hit) return hit; }
+  // cheia are versiunea raportului: conținutul unei versiuni nu se schimbă, deci și datele (json) se servesc din telefon, fără alt apel la server
+  if (r0.versiune) { const hit = await c.match(cheie); if (hit) return hit; }
   try {
     const r = await fetch(`${S.fn}fisier?raport=${encodeURIComponent(rid)}&f=${encodeURIComponent(f)}`, { headers: { Authorization: 'Bearer ' + S.jwt, apikey: S.apikey, 'x-dispozitiv': S.amp } });
-    if (r.ok) c.put(cheie, r.clone());
-    else if (!imagine) { const hit = await c.match(cheie); if (hit) return hit; }
+    if (r.ok && r0.versiune) c.put(cheie, r.clone());
     return r;
   } catch (err) { const hit = await c.match(cheie); return hit || new Response('fără semnal', { status: 503 }); }
 }
