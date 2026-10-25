@@ -66,7 +66,7 @@
         <p id="msg" class="${msg && msg.ok ? "okm" : "err"}">${esc(msg ? msg.t : "")}</p>
         <p class="mut" style="margin:0;font-size:13px">codul și pin-ul sunt pe prima pagină a raportului pdf și în mesajul în care ai primit raportul.</p>
         <button class="btn alb mic" id="uitat" type="button" style="align-self:flex-start">am uitat pin-ul</button>
-        <div id="uitat-f" hidden style="display:none;flex-direction:column;gap:10px">
+        <div id="uitat-f" style="display:none;flex-direction:column;gap:10px">
           <label class="camp">telefonul sau e-mailul la care te putem găsi<input type="text" id="ut-c" autocomplete="tel" placeholder="07xx xxx xxx sau nume@exemplu.ro"></label>
           <button class="btn lat" id="ut-go" type="button">cere un pin nou</button><p id="ut-m" class="mut" style="margin:0"></p></div>
       </div>
