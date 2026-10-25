@@ -1,0 +1,21 @@
+{
+ "casa": {
+  "nume": "raportul casei",
+  "lema": "analiză & documentație",
+  "coperta": "brand_casa_coperta.jpg",
+  "logo": "emblema.png"
+ },
+ "teren": {
+  "nume": "raportul parcelei",
+  "lema": "analiză & topografie",
+  "coperta": "brand_teren_coperta.jpg",
+  "logo": "brand_teren_logo.png"
+ },
+ "apartament": {
+  "nume": "raportul apartamentului",
+  "lema": "analiză & evaluare",
+  "coperta": "brand_apartament_coperta.jpg",
+  "logo": "brand_apartament_logo.jpg"
+ },
+ "_nota": "setul de brand pe tip; originalele sunt în site/brand/. Aplicat în aplicație: cererea de raport nou (previzualizare) și cardul raportului din acasă."
+}

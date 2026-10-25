@@ -52,6 +52,10 @@
   }
 
   /* ---------- intrare ---------- */
+  /* brandul pe tip de proprietate (casă / teren / apartament): copertă, nume, lemă, logo — din brand.json; se aleg după tipul raportului */
+  const BR = { data: null }; fetch("brand.json").then(r => r.json()).then(j => { BR.data = j; }).catch(() => {});
+  const brandDe = tip => (BR.data && (BR.data[tip] || BR.data.casa)) || { nume: "raportul casei", lema: "analiză & documentație", coperta: "brand_casa_coperta.jpg", logo: "emblema.png" };
+  window.CC_BRAND = brandDe;
   const marca = () => `<div class="marca"><img class="sigla" src="emblema.png" alt="" width="44" height="35"><span>cartea casei</span></div>`;
   function qrSvg(text, cell) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: cell || 5, margin: 2, scalable: true }); } catch (e) { return ""; } }
   function ecranIntrare(msg) {
@@ -177,7 +181,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between">${marca()}<button class="ic" data-go="#/cont" aria-label="contul meu">☰</button></div>
       <div><h1>${L.length > 1 ? "rapoartele tale" : "raportul tău"}</h1><p class="lead">${L.length ? "apasă pe raport și citește-l capitol cu capitol." : "încă nu ai un raport publicat pe acest cont."}</p></div>
       <div class="carduri">${L.map(r => `<button class="card" data-go="#/r/${esc(r.id)}">
-        <div class="cap"><span>${esc(mic(r.cod))}${rolul(r.id) === "vizitator" ? " · invitat" : ""}</span></div>
+        <div class="cap" style="background:#1c2534 url('${esc(brandDe(r.tip_proprietate).coperta)}') center/cover;aspect-ratio:2000/1116;height:auto"><span>${esc(mic(r.cod))}${rolul(r.id) === "vizitator" ? " · invitat" : ""}</span></div>
         <div class="in"><b>${esc(mic(r.titlu))}</b><span class="m">${capsDe(r).length} capitole despre locul ăsta</span><span class="m">publicat ${esc(data(r.publicat_la))}</span></div></button>`).join("")}</div>
       <button class="btn alb lat" data-go="#/cerere">cere un raport nou</button>
       ${instalata() ? "" : `<div class="cutie" id="inst"><b>pune aplicația pe ecranul telefonului</b>${S.prompt ? '<button class="btn lat" id="inst-go">instalează aplicația</button>' : `<span class="mut" style="font-size:14px">${/iPhone|iPad/.test(navigator.userAgent) ? "în safari apasă butonul de partajare (pătratul cu săgeată), apoi „adaugă pe ecranul principal”." : "în meniul browserului (⋮) alege „instalează aplicația” sau „adaugă pe ecranul de pornire”."} apoi deschide aplicația de pe ecran și intră cu același cod al raportului și pin.</span>`}</div>`}

@@ -27,12 +27,21 @@
         <div class="rez" id="rez"></div>
         <label class="ck"><input type="checkbox" id="ck"><span>confirm localizarea: punctul găsit este proprietatea (sau terenul) pentru care vreau raportul</span></label>
         <div><div style="font:600 14px var(--font);margin-bottom:8px">tipul proprietății</div><div class="tip">${Object.entries(TIP).map(([v, t]) => `<label><input type="radio" name="tip" value="${v}">${t}</label>`).join("")}</div></div>
+        <div id="brand-prev" hidden style="border-radius:16px;overflow:hidden;border:1px solid var(--linie);background:#fff">
+          <img id="bp-img" alt="" style="width:100%;height:auto;display:block;aspect-ratio:2000/1116;object-fit:cover">
+          <div style="padding:12px 14px"><b id="bp-nume" style="font:700 18px var(--titlu)"></b><div id="bp-lema" class="mut" style="font-size:14px"></div></div></div>
         <p id="msg"></p>
         <button class="btn lat" id="go" disabled>trimite cererea</button>
       </div></div>`;
     const m = $("#msg");
     const valid = () => { const ok = !!loc && $("#ck").checked && !!$("input[name=tip]:checked"); $("#go").disabled = !ok; return ok; };
-    app.querySelector(".cutie").addEventListener("change", valid);
+    app.querySelector(".cutie").addEventListener("change", e => {
+      valid();
+      // tipul ales arată brandul lui: copertă, nume, lemă (casă / parcelă / apartament)
+      const t = e.target.closest("input[name=tip]"); if (!t || !window.CC_BRAND) return;
+      const b = window.CC_BRAND(t.value);
+      $("#bp-img").src = b.coperta; $("#bp-nume").textContent = b.nume; $("#bp-lema").textContent = b.lema; $("#brand-prev").hidden = false;
+    });
     $("#adr").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); cauta(); } });
     $("#caut").onclick = cauta;
     async function cauta() {
