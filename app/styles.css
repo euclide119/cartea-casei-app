@@ -87,3 +87,9 @@ input:focus{outline:2px solid var(--acc);outline-offset:1px}
 [hidden]{display:none!important}
 .fil{flex:none;text-align:center;font:600 10.5px system-ui;color:#9a9484;padding:3px 8px;background:var(--panel);border-top:1px solid var(--linie);letter-spacing:.03em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .marca{font:700 17px var(--titlu);letter-spacing:-.01em;gap:12px}.marca .sigla{width:44px;height:auto;flex:none}
+
+/* deschidere: 3 rânduri libere sus, logo stilizat, apoi poza cu raportul pe panou, puțin mai jos */
+.ecran-intrare .sus3{flex:none;height:calc(3 * 1.6em)}
+.sigla-mare{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font:700 22px var(--titlu);letter-spacing:-.01em}
+.sigla-mare img{width:min(34vw,132px);height:auto;filter:drop-shadow(0 6px 14px rgba(28,37,52,.18))}
+.poza-panou{width:100%;height:auto;border-radius:18px;display:block;aspect-ratio:2000/1116;object-fit:cover;background:#2a2f3f;margin-top:14px}

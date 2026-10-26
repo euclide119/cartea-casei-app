@@ -60,8 +60,9 @@
   function qrSvg(text, cell) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: cell || 5, margin: 2, scalable: true }); } catch (e) { return ""; } }
   function ecranIntrare(msg) {
     const desk = !MOBIL();
-    app.innerHTML = `<div class="ecran">${marca()}
-      <img src="deschidere.jpg" alt="cartea casei" style="width:100%;height:auto;border-radius:18px;display:block;aspect-ratio:2000/1116;object-fit:cover;background:#2a2f3f">
+    app.innerHTML = `<div class="ecran ecran-intrare"><div class="sus3" aria-hidden="true"></div>
+      <div class="sigla-mare"><img src="emblema.png" alt="" width="132" height="104"><b>cartea casei</b></div>
+      <img class="poza-panou" src="deschidere.jpg" alt="raportul casei, pe panou, la intrarea în cartier" width="1200" height="670">
       <div><h1>raportul casei tale</h1><p class="lead">doar pentru tine, capitol cu capitol. intri cu codul raportului și pin-ul.</p></div>
       <div class="cutie" id="f-pin">
         <label class="camp">codul raportului<input type="text" id="pc" autocapitalize="characters" autocomplete="username" spellcheck="false" placeholder="CC-XXXXXX"></label>
