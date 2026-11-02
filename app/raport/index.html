@@ -172,7 +172,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
 <div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s;display:flex;align-items:center;justify-content:center"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:auto;max-height:100%;object-fit:contain;display:block"></div>
-<script charset="utf-8" src="intrare.js?v=7"></script>
+<script charset="utf-8" src="intrare.js?v=8"></script>
 <div class="wrap">
   <div class="brand"><span>Raport _ Cartea Casei</span><select id="pick" aria-label="Proprietatea"></select></div>
   <header><h1 id="name">Se încarcă raportul…</h1><div class="sub" id="where"></div></header>
@@ -353,7 +353,7 @@ function renderSummary() {
       if (!c.cards || !c.cards.length) return null;   // un capitol fără carduri nu oprește rezumatul
       const col = { g: "var(--ok)", o: "var(--hz100)", r: "var(--hz10)" }[c.verd[0]] || "#2c5c9c";
       return [V.k, `<span class="tag" style="background:color-mix(in srgb, ${col} 16%, transparent);color:${col}">${esc(V.t.split(" ")[0].toLowerCase())}</span>${c.titlu ? `<strong class="clk">${esc(c.titlu)}</strong>` : ""}<b>${esc(c.cards[0][0])}</b><span>${esc(c.cards[0][1])}</span>`]; }),
-    ...(D.urbanism ? [["urbanism", `<span class="tag" style="background:color-mix(in srgb, var(--accent) 16%, transparent);color:var(--accent)">urbanism</span><b>${esc(D.urbanism.uat || "—")}</b><span>${D.urbanism.pug.gasit ? `PUG ${esc(D.urbanism.pug.an)}` : "PUG necunoscut"} · ${D.urbanism.acte.puz.potrivite} PUZ și ${D.urbanism.planse_total} parcele din planșe în apropiere</span>`]] : []),
+    ...(D.urbanism ? [["urbanism", `<span class="tag" style="background:color-mix(in srgb, var(--accent) 16%, transparent);color:var(--accent)">urbanism</span><b>${esc(D.urbanism.uat || "—")}</b><span>${D.urbanism.pug.gasit ? (/preliminar|PUG-ul vechi/i.test(String(D.urbanism.pug.valabil || "") + String(D.urbanism.pug.hcl || "")) ? `PUG vechi în vigoare, PUG nou ${esc(D.urbanism.pug.an)} preliminar` : `PUG ${esc(D.urbanism.pug.an)}`) : "PUG necunoscut"} · ${D.urbanism.acte.puz.potrivite} PUZ în apropiere</span>`]] : []),
   ].filter(Boolean).map(([t, h]) => `<div class="card go" data-go="${t}" tabindex="0">${h}</div>`).join("");
   document.querySelectorAll("[data-go]").forEach(c => { c.onclick = () => showTab(c.dataset.go); c.onkeydown = e => e.key === "Enter" && showTab(c.dataset.go); });
 }
@@ -498,7 +498,7 @@ function renderUrb() {
     [U.uat || "—", "unitatea administrativ-teritorială"],
     (P.gasit && /preliminar|PUG-ul vechi|rămâne PUG/i.test(String(P.valabil || "") + " " + String(P.hcl || ""))) ? [`PUG nou ${P.an}`, "preliminar, în avizare; în vigoare rămâne PUG-ul vechi"] : [P.gasit ? `PUG ${P.an}` : "—", P.gasit ? "anul aprobării planului general în vigoare" : "nu avem fișa PUG a acestui UAT"],
     [A.puz.colectat ? `${A.puz.potrivite}` : "—", A.puz.colectat ? `PUZ-uri pe aceeași stradă sau pe parcelele din jur (din ${nf(A.puz.total_uat)} în UAT)` : "PUZ-urile acestui UAT nu sunt încă colectate"],
-    [`${U.planse_total}`, `parcele din planșele PUZ la mai puțin de ${U.raza_planse_m} m`]
+    U.puz_aplicabil ? [U.puz_aplicabil.titlu, U.puz_aplicabil.text] : [`${U.planse_total}`, `parcele din planșele PUZ la mai puțin de ${U.raza_planse_m} m`]
   ].map(([b, s]) => `<div class="card"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
   $("#upug").innerHTML = P.gasit ? [
     ["Aprobat", P.hcl], ["Valabilitate", P.valabil], ["PUG nou", P.pug_nou], ["Litigii", P.litigii],
@@ -589,7 +589,7 @@ function renderPV() {
 <script charset="utf-8" src="surse.js?v=1792869783"></script>
 <script charset="utf-8" src="interfata.js?v=1792869783"></script>  
 <script charset="utf-8" src="negociere.js?v=1792869783"></script>
-<script charset="utf-8" src="evaluare.js?v=1792869783"></script>
+<script charset="utf-8" src="evaluare.js?v=2"></script>
 <script charset="utf-8" src="pret_piata.js?v=1792869783"></script>
 <script charset="utf-8" src="cronologie.js?v=1792869783"></script>
 <script charset="utf-8" src="concluzii.js?v=1792869783"></script>
@@ -608,14 +608,14 @@ function renderPV() {
 <script charset="utf-8" src="meniu.js?v=1792869783"></script>
 <script charset="utf-8" src="generic.js?v=1792869783"></script>
 <script charset="utf-8" src="client.js?v=1792869783"></script>
-<script charset="utf-8" src="urbanism_client.js?v=1792869783"></script>
+<script charset="utf-8" src="urbanism_client.js?v=2"></script>
 <script charset="utf-8" src="capitole_client.js?v=1792869783"></script>
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="harti_v79.js?v=4"></script>
+<script charset="utf-8" src="harti_v79.js?v=7"></script>
 <script charset="utf-8" src="protectie.js?v=1"></script>
-<script charset="utf-8" src="g7.js?v=8"></script>  
+<script charset="utf-8" src="g7.js?v=9"></script>  
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
 <script charset="utf-8" src="excelent.js?v=1792869783"></script>
