@@ -171,7 +171,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 </style>
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
-<div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+<div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s;display:flex;align-items:center;justify-content:center"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:auto;max-height:100%;object-fit:contain;display:block"></div>
 <script charset="utf-8" src="intrare.js?v=5"></script>
 <div class="wrap">
   <div class="brand"><span>Raport _ Cartea Casei</span><select id="pick" aria-label="Proprietatea"></select></div>
@@ -496,7 +496,7 @@ function renderUrb() {
   $("#ulead").textContent = `Proprietatea e în UAT ${U.uat || "necunoscut"}, pe ${strada}. Mai jos: planul general, PUZ-urile, actele emise pe aceeași stradă și parcelele din planșele PUZ din jur.`;
   $("#ucards").innerHTML = [
     [U.uat || "—", "unitatea administrativ-teritorială"],
-    [P.gasit ? `PUG ${P.an}` : "—", P.gasit ? "anul aprobării planului general în vigoare" : "nu avem fișa PUG a acestui UAT"],
+    (P.gasit && /preliminar|PUG-ul vechi|rămâne PUG/i.test(String(P.valabil || "") + " " + String(P.hcl || ""))) ? [`PUG nou ${P.an}`, "preliminar, în avizare; în vigoare rămâne PUG-ul vechi"] : [P.gasit ? `PUG ${P.an}` : "—", P.gasit ? "anul aprobării planului general în vigoare" : "nu avem fișa PUG a acestui UAT"],
     [A.puz.colectat ? `${A.puz.potrivite}` : "—", A.puz.colectat ? `PUZ-uri pe aceeași stradă sau pe parcelele din jur (din ${nf(A.puz.total_uat)} în UAT)` : "PUZ-urile acestui UAT nu sunt încă colectate"],
     [`${U.planse_total}`, `parcele din planșele PUZ la mai puțin de ${U.raza_planse_m} m`]
   ].map(([b, s]) => `<div class="card"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
@@ -613,8 +613,9 @@ function renderPV() {
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="harti_v79.js?v=3"></script>
-<script charset="utf-8" src="g7.js?v=7"></script>  
+<script charset="utf-8" src="harti_v79.js?v=4"></script>
+<script charset="utf-8" src="protectie.js?v=1"></script>
+<script charset="utf-8" src="g7.js?v=8"></script>  
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
 <script charset="utf-8" src="excelent.js?v=1792869783"></script>
