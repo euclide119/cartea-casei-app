@@ -171,7 +171,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
 <div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:100%;object-fit:cover;display:block"></div>
-<script charset="utf-8" src="intrare.js?v=4"></script>
+<script charset="utf-8" src="intrare.js?v=5"></script>
 <div class="wrap">
   <div class="brand"><span>Raport _ Cartea Casei</span><select id="pick" aria-label="Proprietatea"></select></div>
   <header><h1 id="name">Se încarcă raportul…</h1><div class="sub" id="where"></div></header>
@@ -519,7 +519,7 @@ function renderUrb() {
   $("#upl").innerHTML = U.planse.length ? `<thead><tr><th>CF</th><th>Suprafață</th><th>Distanță</th><th>Planșa</th></tr></thead><tbody>` +
     U.planse.map(p => `<tr><td>${esc(p.cf)}</td><td>${nf(p.arie_mp)} m²</td><td>${p.dist_m ? nf(p.dist_m) + " m" : "aici"}</td><td style="text-align:left;font-family:var(--font);font-size:12px">${esc(p.plansa)}</td></tr>`).join("") + `</tbody>`
     : `<tbody><tr><td>Nicio parcelă din planșele PUZ vectorizate în raza de ${U.raza_planse_m} m.</td></tr></tbody>`;
-  $("#unote").innerHTML = `<b>Surse:</b> UAT — ${esc(U.uat_sursa)}; adresă — ${esc(adr.sursa || "—")}; PUG — fișe Fabrica (${esc(P.data || "—")}); PUZ, AC, CU — registrele primăriilor, APM și CJ Timiș colectate de Fabrica; parcele — planșele PUZ vectorizate. Potrivirea actelor se face pe numele străzii, pentru că adresele nu au coordonate; verifică numărul și CF-ul în actul original. Actualizat ${esc(U.data)}.`;
+  $("#unote").innerHTML = `<b>Surse:</b> UAT — ${esc(U.uat_sursa)}; adresă — ${esc(adr.sursa || "—")}; PUG — fișe Fabrica (${esc(P.data || "—")}); PUZ, AC, CU — registrele primăriilor, APM și CJ Timiș ; parcele — planșele PUZ vectorizate. Potrivirea actelor se face pe numele străzii, pentru că adresele nu au coordonate; verifică numărul și CF-ul în actul original. Actualizat ${esc(U.data)}.`;
 }
 
 function renderVec() {
@@ -612,7 +612,7 @@ function renderPV() {
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="harti_v79.js?v=1"></script>
+<script charset="utf-8" src="harti_v79.js?v=2"></script>
 <script charset="utf-8" src="g7.js?v=7"></script>  
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
