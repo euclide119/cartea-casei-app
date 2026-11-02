@@ -31,7 +31,7 @@
     if (src.length) o.src_limite = src.join("; ");
     return o;
   }
-  function incarca() { S = Object.assign({}, DEF, limiteRLU()); try { Object.assign(S, JSON.parse(localStorage.getItem(key()) || "{}")); } catch (e) {} }
+  function incarca() { S = Object.assign({}, DEF, limiteRLU(), Dd()?.evaluare_implicit || {}); try { Object.assign(S, JSON.parse(localStorage.getItem(key()) || "{}")); } catch (e) {} }
   function salveaza() { try { localStorage.setItem(key(), JSON.stringify(S)); } catch (e) {} }
 
   function css() {

@@ -88,7 +88,7 @@ body.generic .rf-loc{display:none}body:not(.generic) #rep-foot-g{display:none}
     if (!g) { g = document.createElement("div"); g.id = "generic"; const w = $(".wrap"); if (!w) return; w.appendChild(g); }
     const cv = foto("rezumat"), COLORS = (window.ILU && ILU.COL) || {};
     let grup = "";
-    g.innerHTML = `<div class="gn-cov">${cv ? `<img src="ilu/${esc(cv.f)}" alt="">` : ""}<div class="gn-ov"><div class="gn-tx"><span class="gn-k">${esc(mic("raport de proprietate"))}</span><h1>${esc(mic("Cartea Casei"))}</h1><p>${esc(mic("Tot ce se poate afla despre un loc, \u00eenainte de a-l cump\u0103ra sau de a-l vinde."))}</p>
+    g.innerHTML = `<div class="gn-cov">${cv ? `<img src="ilu/${esc(cv.f)}" alt="">` : ""}<div class="gn-ov"><div class="gn-tx"><span class="gn-k">${esc(mic("raport de proprietate"))}</span><h1>${esc(mic("Cartea Casei / Cartea Terenului"))}</h1><p>${esc(mic("Tot ce se poate afla despre un loc, \u00eenainte de a-l cump\u0103ra sau de a-l vinde."))}</p>
         <div class="gn-go"><select id="gn-sel" aria-label="alege loca\u021bia">${LIST.map(p => `<option value="${esc(p.id)}">${esc(p.eticheta)}</option>`).join("")}</select><button type="button" id="gn-open">${esc(mic("Alege loca\u021bia \u0219i vezi raportul"))}</button></div></div></div></div>` +
       `<div class="gn-colab"><b>${esc(mic("servicii autorizate, prin colaboratorii no\u0219tri"))}</b><span>${COLAB.map(c => `<i>${esc(mic(c))}</i>`).join("")}</span></div>` +
       CAP.map(([k, gr, t, en], i) => { const f = foto(k), h = gr !== grup ? `<div class="gn-gr">${esc(mic(gr))}</div>` : ""; grup = gr;

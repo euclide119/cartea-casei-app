@@ -171,6 +171,8 @@ section { display: flex; flex-direction: column; gap: 16px }
 </style>
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
+<div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+<script charset="utf-8" src="intrare.js?v=2"></script>
 <div class="wrap">
   <div class="brand"><span>Raport _ Cartea Casei</span><select id="pick" aria-label="Proprietatea"></select></div>
   <header><h1 id="name">Se încarcă raportul…</h1><div class="sub" id="where"></div></header>
@@ -444,7 +446,7 @@ function draw() {
   if (sun.alt <= 0) { ctx.fillStyle = "rgba(10,12,40,.6)"; ctx.fillRect(0, 0, S, S); }
   if (D.ring) {
     ctx.beginPath(); D.ring.forEach(([lon, lat], i) => { const u = ((lon - D.lon) * KX + RZ) * mpx, v = (RZ - (lat - D.lat) * KY) * mpx; i ? ctx.lineTo(u, v) : ctx.moveTo(u, v); }); ctx.closePath();
-    ctx.lineWidth = S / 220; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.stroke(); ctx.lineWidth = S / 400; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.lineWidth = S / 170; ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.stroke(); ctx.lineWidth = S / 300; ctx.strokeStyle = "#ff2a2a"; ctx.stroke();
   }
   if (sun.alt > 0) {
     const L = Math.min(H_UMBRA / Math.tan(sun.alt), RZ * 1.4) * mpx, dx = -Math.sin(sun.az), dy = Math.cos(sun.az);
@@ -622,7 +624,7 @@ function renderPV() {
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="g7.js?v=3"></script>  <!-- capitolele parcelei (v79.0): istoric, CU electronic, juridic, tehnic, utilități, zona AC/CU, PUG preliminar, proiecte, prețul în timp, comercial, afiș 3 pagini + QR, privat -->
+<script charset="utf-8" src="g7.js?v=6"></script>  <!-- capitolele parcelei (v79.0): istoric, CU electronic, juridic, tehnic, utilități, zona AC/CU, PUG preliminar, proiecte, prețul în timp, comercial, afiș 3 pagini + QR, privat -->
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
 <script charset="utf-8" src="excelent.js?v=1792869783"></script>

@@ -170,3 +170,6 @@ thead { display: table-header-group } tr { break-inside: avoid }
   /* nimic lipit, nimic transparent peste text */
   section:has(> .hero.hx) > * { position: static !important; box-shadow: none !important }
 }
+
+/* v79.1: bara laterală ocupă sute de rânduri de grilă; fiecare rând gol adăuga 10 px de spațiu și lăsa o zonă albă lungă la final */
+@media screen{.wrap{row-gap:0!important}.wrap>*:not(nav#tabs):not(:empty){margin-bottom:10px}}

@@ -151,6 +151,7 @@
     [d => !!d.inundatii || !!document.querySelector("#sumhart, .hm-c"), "imagini satelit: Esri World Imagery (Esri, Maxar / Vantor, Earthstar Geographics)"],
     [() => !!document.querySelector("#evolutie .ev-sat, #autorizatii .tpan"), "arhiva de imagini: Esri World Imagery Wayback"],
     [d => !!(d.arii_protejate && /voyager/.test(d.arii_protejate.fundal || "")), "fundal: \u00a9 CARTO (CARTO Voyager)"],
+    [d => !!d.fundaluri, "imagini: Contains modified Copernicus Sentinel data (Sentinel-2 L2A)"],
     [d => !!(d.monumente && /topo/.test(d.monumente.fundal || "")), "fundal: \u00a9 OpenTopoMap (CC-BY-SA), SRTM"],
     [() => !!document.querySelector("#teren3d canvas"), "relief: Terrain Tiles (Mapzen / AWS Open Data), SRTM, Copernicus DEM"],
     [d => !!d.alunecari, "relief \u0219i pante: Copernicus DEM (prin Open-Meteo, CC BY 4.0)"],

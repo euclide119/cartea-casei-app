@@ -67,7 +67,7 @@
       [200000, v => 1705 + .011 * (v - 100001)], [600000, v => 2805 + .009 * (v - 200001)], [Infinity, v => 6405 + .006 * (v - 600001)]];
     const onor = v => BENZI.find(([l]) => v <= l)[1](v);
     const PIZZA = { notar: "#2c5c9c", impozit: "#c84b31", intab: "#16868c", extras: "#e8a33d", agent: "#8e5ea2", credit: "#6b7280" };
-    const stare0 = X => ({ pret: (X.exemplu && X.exemplu.pret) || 500000, prima: false, notarTva: true, scurt: (X.exemplu && X.exemplu.detinere || 5) <= 3, agent: false, credit: false });
+    const stare0 = X => ({ pret: (X.exemplu && X.exemplu.pret) || 500000, prima: false, notarTva: true, scurt: (X.exemplu && X.exemplu.detinere || 5) <= 3, agent: false, credit: false, pj: !!(X.exemplu && X.exemplu.vanzator_pj) });
     function model(st) {
       const p = Math.max(+st.pret || 0, 1000), rows = [];
       let o = onor(p); if (st.prima) o *= .70; o += 25; if (st.notarTva) o *= 1.21;
@@ -76,7 +76,7 @@
       rows.push({ k: "extras", label: "Extras CF pentru autentificare", v: 40, plata: "tu", marca: "HARD DATA" });
       if (st.agent) rows.push({ k: "agent", label: "Comision agent: 2% + TVA 21%", v: .02 * p * 1.21, plata: "tu", marca: "ESTIMARE" });
       if (st.credit) rows.push({ k: "credit", label: "Credit ipotecar: evaluare \u0219i analiz\u0103 dosar", v: 1500, plata: "tu", marca: "ESTIMARE" });
-      rows.push({ k: "impozit", label: `Impozit pe transfer (${st.scurt ? 3 : 1}%), \u00eel pl\u0103te\u0219te v\u00e2nz\u0103torul`, v: p * (st.scurt ? .03 : .01), plata: "v\u00e2nz\u0103torul", marca: "HARD DATA" });
+      if (!st.pj) rows.push({ k: "impozit", label: `Impozit pe transfer (${st.scurt ? 3 : 1}%), \u00eel pl\u0103te\u0219te v\u00e2nz\u0103torul`, v: p * (st.scurt ? .03 : .01), plata: "v\u00e2nz\u0103torul", marca: "HARD DATA" });
       const tu = rows.filter(r => r.plata === "tu").reduce((a, r) => a + r.v, 0), vz = rows.filter(r => r.plata !== "tu").reduce((a, r) => a + r.v, 0);
       return { rows, tu, vz, p };
     }
