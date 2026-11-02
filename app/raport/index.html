@@ -172,7 +172,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
 <div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:100%;object-fit:cover;display:block"></div>
-<script charset="utf-8" src="intrare.js?v=2"></script>
+<script charset="utf-8" src="intrare.js?v=3"></script>
 <div class="wrap">
   <div class="brand"><span>Raport _ Cartea Casei</span><select id="pick" aria-label="Proprietatea"></select></div>
   <header><h1 id="name">Se încarcă raportul…</h1><div class="sub" id="where"></div></header>
@@ -273,7 +273,6 @@ const nf = (v, d = 0) => Number(v).toLocaleString("ro-RO", { minimumFractionDigi
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let D = null, HR = null;
 
-/* ---------- soarele (formulele SunCalc, V. Agafonkin, BSD) ---------- */
 function sunPos(ms, lat, lng) {
   const d = ms / 864e5 - 0.5 + 2440588 - 2451545, M = RAD * (357.5291 + 0.98560028 * d);
   const L = M + RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + RAD * 102.9372 + Math.PI;
@@ -292,8 +291,7 @@ function dayInfo(month) {
   return { rise, set, len: set - rise, max: mx };
 }
 
-/* ---------- file ---------- */
-/* Hash-ul: #<id> sau #<id>.<element> (linkurile și codurile QR din PDF duc direct la pagina elementului). */
+
 const EL = { rezumat: "rezumat", insorire: "insorire", fotovoltaic: "pv", inundatii: "inundatii", urbanism: "urbanism",
   zonare: "zonare", facilitati: "facilitati", transport: "transport", scoli: "scoli", populatie: "populatie", monumente: "monumente", seismic: "seismic", autorizatii: "autorizatii", costuri: "costuri",
   alunecari: "alunecari", arii: "arii_protejate", aer: "aer", zgomot: "zgomot", surse: "surse" };
@@ -313,7 +311,6 @@ function showTab(t) {
 }
 document.querySelectorAll("nav [data-t]").forEach(b => b.onclick = () => showTab(b.dataset.t));
 
-/* ---------- încărcare ---------- */
 async function load(id) {
   D = await (await fetch(`p/${id}/date.json`)).json();
   HR = null; try { const r = await fetch(`p/${id}/harta.json`); if (r.ok) HR = await r.json(); } catch (e) {}
@@ -344,7 +341,6 @@ async function load(id) {
     else if (w.id === D.id && (w.tab || "rezumat") !== curTab) showTab(w.tab || "rezumat"); });
 })();
 
-/* ---------- rezumat ---------- */
 const distTxt = v => v === 0 ? "în zonă" : typeof v === "number" ? `≈ ${nf(v)} m` : v === ">5000" ? "peste 5 km" : "indisponibil";
 function renderSummary() {
   const F = D.inundatii, iarna = dayInfo(11), A = D.pv?.annual;
@@ -362,8 +358,7 @@ function renderSummary() {
   document.querySelectorAll("[data-go]").forEach(c => { c.onclick = () => showTab(c.dataset.go); c.onkeydown = e => e.key === "Enter" && showTab(c.dataset.go); });
 }
 
-/* ---------- inundații ---------- */
-/* ciclul II pe punct: adâncimea apei pe scenarii + dig, APSFR, inundații istorice */
+
 function floodPunct(F, mic) {
   const C = F.ciclu2_punct, O = F.date_deschise, S = C && C.disponibil ? C.scenarii : null, h = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const f1 = v => String(v).replace(".", ","), km = m => m >= 1000 ? f1((m / 1000).toFixed(1)) + " km" : nf(m) + " m";
@@ -408,7 +403,6 @@ function renderFlood() {
     <b>Sursă:</b> ${esc(F.sursa)}, interogat ${esc(F.data)}. Pentru o decizie de cumpărare, cere certificatul de urbanism și avizul de gospodărire a apelor.`;
 }
 
-/* ---------- însorire ---------- */
 let month = new Date().getMonth(), hour = 12, S = 600;
 const cv = $("#c"), ctx = cv.getContext("2d"), img = new Image();
 img.onload = () => { resize(); renderSun(); };
@@ -492,7 +486,6 @@ function renderSun() {
   draw();
 }
 
-/* ---------- urbanism ---------- */
 const link = (u, t) => u && /^https?:\/\//.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>` : "";
 function renderUrb() {
   const tab = document.querySelector('[data-t="urbanism"]');
@@ -530,7 +523,6 @@ function renderUrb() {
   $("#unote").innerHTML = `<b>Surse:</b> UAT — ${esc(U.uat_sursa)}; adresă — ${esc(adr.sursa || "—")}; PUG — fișe Fabrica (${esc(P.data || "—")}); PUZ, AC, CU — registrele primăriilor, APM și CJ Timiș colectate de Fabrica; parcele — planșele PUZ vectorizate. Potrivirea actelor se face pe numele străzii, pentru că adresele nu au coordonate; verifică numărul și CF-ul în actul original. Actualizat ${esc(U.data)}.`;
 }
 
-/* ---------- vecinătate: facilități, transport, școli, populație, monumente, costuri (vecinatate.js) ---------- */
 function renderVec() {
   (window.VEC || []).forEach(V => {
     const X = V.k === "zonare" ? (HR ? {} : null) : D[V.k], tab = document.querySelector(`nav [data-t="${V.k}"]`), sec = document.getElementById(V.k);
@@ -552,8 +544,6 @@ function renderVec() {
   const sa = $("#sumauto"); if (sa) sa.innerHTML = HR && HR.iso_auto ? `<div class="ch"><div class="ch-t">Cu mașina: unde ajungi în 5, 10 și 15 minute (fără trafic)</div>${HM.autoMap(HR, "p/" + D.id + "/")}</div>` : "";
 }
 
-
-/* ---------- fișa sursei pe fiecare capitol: sursa națională · la proprietate · bază locală sau sursa originală (fise.js) ---------- */
 function adaugaFise() {
   const F = window.FISE || {};
   document.querySelectorAll("section[id]").forEach(sec => {
@@ -571,7 +561,6 @@ function adaugaFise() {
   });
 }
 
-/* ---------- fotovoltaic ---------- */
 function renderPV() {
   if (!D.pv) { $("#pvlead").textContent = "Datele Global Solar Atlas nu sunt disponibile pentru acest punct."; return; }
   const A = D.pv.annual, M = D.pv.monthly, pv = M.PVOUT_csi;
@@ -598,7 +587,7 @@ function renderPV() {
 <script charset="utf-8" src="verdict.js?v=1792869783"></script>
 <script charset="utf-8" src="builder.js?v=1792869783"></script>
 <script charset="utf-8" src="surse.js?v=1792869783"></script>
-<script charset="utf-8" src="interfata.js?v=1792869783"></script>  <!-- interfața: bară laterală, Simplu/Complet, Stare date -->
+<script charset="utf-8" src="interfata.js?v=1792869783"></script>  
 <script charset="utf-8" src="negociere.js?v=1792869783"></script>
 <script charset="utf-8" src="evaluare.js?v=1792869783"></script>
 <script charset="utf-8" src="pret_piata.js?v=1792869783"></script>
@@ -624,7 +613,8 @@ function renderPV() {
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="g7.js?v=6"></script>  <!-- capitolele parcelei (v79.0): istoric, CU electronic, juridic, tehnic, utilități, zona AC/CU, PUG preliminar, proiecte, prețul în timp, comercial, afiș 3 pagini + QR, privat -->
+<script charset="utf-8" src="harti_v79.js?v=1"></script>
+<script charset="utf-8" src="g7.js?v=7"></script>  
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
 <script charset="utf-8" src="excelent.js?v=1792869783"></script>
