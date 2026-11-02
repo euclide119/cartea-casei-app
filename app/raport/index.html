@@ -371,10 +371,10 @@ function floodPunct(F, mic) {
     const cell = v => typeof v === "number" ? f1(v.toFixed(2)) : v === "uscat" ? "0" : "—";
     const f100 = S.F && S.F["100"] && S.F["100"].adancime_m;
     const lead = typeof f100 === "number" ? `La o inundație de 100 de ani (râuri), apa ajunge la <b>${f1(f100.toFixed(2))} m</b> în punctul proprietății.`
-      : f100 === "uscat" ? "La o inundație de 100 de ani (râuri), punctul proprietății <b>rămâne uscat</b>." : "Pentru o inundație de 100 de ani (râuri), harta ANAR nu are valori în punctul proprietății.";
+      : f100 === "uscat" ? "La o inundație de 100 de ani (râuri), punctul proprietății <b>rămâne uscat</b>." : "Pentru o inundație de 100 de ani (râuri), harta administrația apelor nu are valori în punctul proprietății.";
     out += `<div class="fpunct"><p class="fl">${lead}</p>` + (rows.length ? `<table class="sr-t"><thead><tr><th>Adâncimea apei (m)</th>${cols.map(([, l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(t =>
       `<tr><td>${TIP[t]}</td>${cols.map(([p]) => `<td>${cell(S[t][p] && S[t][p].adancime_m)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "") +
-      `<p class="fs">0 = punctul rămâne uscat în scenariu; — = harta nu are valori pentru scenariul acesta în zonă. Viteza apei: ${Object.values(S).some(x => Object.values(x).some(c => typeof c.viteza_ms === "number")) ? "vezi harta ANAR" : "stratul de viteză nu are valori în punctul proprietății"}.</p></div>`;
+      `<p class="fs">0 = punctul rămâne uscat în scenariu; — = harta nu are valori pentru scenariul acesta în zonă. Viteza apei: ${Object.values(S).some(x => Object.values(x).some(c => typeof c.viteza_ms === "number")) ? "vezi harta administrația apelor" : "stratul de viteză nu are valori în punctul proprietății"}.</p></div>`;
   } else if (C) out += `<p class="fs">Adâncimea pe scenarii (ciclul II): ${h(C.motiv || "indisponibilă")}.</p>`;
   if (O) {
     const L = [];
@@ -384,12 +384,12 @@ function floodPunct(F, mic) {
     if (O.apsfr_nota) L.push(h(O.apsfr_nota) + ".");
     if (L.length) out += `<ul class="fo">${L.map(x => `<li>${x}</li>`).join("")}</ul>`;
   }
-  return out + (S || O ? `<p class="fs">Sursa: ANAR, hărți de hazard și risc ciclul II (interogat ${h((C && C.data) || F.data)}); APSFR, PFRA și diguri: ANAR prin data.gov.ro, licență CC BY 4.0. Fapte din hărți, nu concluzie juridică.</p>` : "");
+  return out + (S || O ? `<p class="fs">Sursa: administrația apelor, hărți de hazard și risc ciclul II (interogat ${h((C && C.data) || F.data)}); APSFR, PFRA și diguri: administrația apelor prin data.gov.ro, licență CC BY 4.0. Fapte din hărți, nu concluzie juridică.</p>` : "");
 }
 function renderFlood() {
   const F = D.inundatii, rau = F.rau, H = F.hazard;
   { const ist = F.date_deschise && F.date_deschise.istorice, dg = F.date_deschise && F.date_deschise.dig;
-    $("#flead").textContent = (ist ? `Istoric inundații în zonă: ${ist.tronsoane ? `${ist.tronsoane} tronsoane de râu cu inundații trecute în 10 km (ANAR, PFRA).` : `niciun râu cu inundații trecute în 10 km; cel mai apropiat, la ${nf(Math.round((ist.cel_mai_apropiat_m || 0) / 1000))} km.`} ` : "") +
+    $("#flead").textContent = (ist ? `Istoric inundații în zonă: ${ist.tronsoane ? `${ist.tronsoane} tronsoane de râu cu inundații trecute în 10 km (administrația apelor, PFRA).` : `niciun râu cu inundații trecute în 10 km; cel mai apropiat, la ${nf(Math.round((ist.cel_mai_apropiat_m || 0) / 1000))} km.`} ` : "") +
       (dg ? `Cel mai apropiat dig: ${dg.nume}, la ${nf(Math.round(dg.dist_m / 100) / 10, 1)} km. ` : "") +
       (rau ? `Cel mai apropiat curs de apă este ${rau.nume}, la ${nf(rau.dist_m)} m.` : "Nu există niciun curs de apă din cadastrul apelor pe o rază de 15 km."); }
   $("#fcards").innerHTML = [["hz10", "var(--hz10)"], ["hz100", "var(--hz100)"], ["hz1000", "var(--hz1000)"]].map(([k, c]) =>
@@ -397,9 +397,9 @@ function renderFlood() {
   $("#fpunct").innerHTML = floodPunct(F, false);
   $("#flegend").innerHTML = [["hz10", "var(--hz10)"], ["hz100", "var(--hz100)"], ["hz1000", "var(--hz1000)"]].map(([k, c]) => `<span><i style="background:${c}"></i>${esc(H[k].eticheta)}</span>`).join("") + `<span><i style="background:var(--water)"></i>râu sau lac</span>`;
   $("#imReg").src = `p/${D.id}/inund_regional.jpg`; $("#imLoc").src = `p/${D.id}/inund_local.jpg`;
-  $("#capLoc").textContent = rau ? `Proprietatea (punct roșu) și ${rau.nume}, la ${nf(rau.dist_m)} m. Fundal: satelit Esri.` : "Proprietatea (punct roșu). Fundal: satelit Esri.";
+  $("#capLoc").textContent = rau ? `Proprietatea (punct roșu) și ${rau.nume}, la ${nf(rau.dist_m)} m. Fundal: satelit .` : "Proprietatea (punct roșu). Fundal: satelit .";
   $("#fnote").innerHTML = `<b>Cum se citește.</b> Distanțele până la zonele inundabile sunt praguri (25, 50, 100, 250, 500 m, 1, 2,5, 5 km). În oraș, zonele pot fi celule mici de scurgere a apei de ploaie, nu revărsări de râu; imaginea a doua arată care e cazul.
-    <b>Hărți folosite:</b> ${esc(F.ciclu_nume || "ciclul 2 (revizuit)")}${F.ciclu_motiv ? ` — ${esc(F.ciclu_motiv)}` : ""}; date din ${esc(F.sursa_hazard || "serviciul ANAR live")}.
+    <b>Hărți folosite:</b> ${esc(F.ciclu_nume || "ciclul 2 (revizuit)")}${F.ciclu_motiv ? ` — ${esc(F.ciclu_motiv)}` : ""}; date din ${esc(F.sursa_hazard || "serviciul administrația apelor live")}.
     <b>Sursă:</b> ${esc(F.sursa)}, interogat ${esc(F.data)}. Pentru o decizie de cumpărare, cere certificatul de urbanism și avizul de gospodărire a apelor.`;
 }
 
@@ -476,7 +476,7 @@ function renderSun() {
   hb.setAttribute("aria-valuenow", hour); hb.setAttribute("aria-valuetext", hour + ":00");
   paintHours();
   $("#when").textContent = `${LUNI[month]} · ${String(hour).padStart(2, "0")}:00`;
-  $("#attr").textContent = `satelit Esri ${D.insorire.imgDate} · umbră: casă de ${H_UMBRA} m`;
+  $("#attr").textContent = `satelit  ${D.insorire.imgDate} · umbră: casă de ${H_UMBRA} m`;
   const sun = sunAt(month, hour * 60), up = sun.alt > 0, di = dayInfo(month), dirs = ["N", "NE", "E", "SE", "S", "SV", "V", "NV"];
   $("#now").innerHTML = [["Înălțimea soarelui", up ? (sun.alt / RAD).toFixed(1) + "°" : "sub orizont"],
     ["Azimut", up ? `${(sun.az / RAD).toFixed(0)}° ${dirs[Math.round(sun.az / RAD / 45) % 8]}` : "—"],
@@ -520,7 +520,7 @@ function renderUrb() {
   $("#upl").innerHTML = U.planse.length ? `<thead><tr><th>CF</th><th>Suprafață</th><th>Distanță</th><th>Planșa</th></tr></thead><tbody>` +
     U.planse.map(p => `<tr><td>${esc(p.cf)}</td><td>${nf(p.arie_mp)} m²</td><td>${p.dist_m ? nf(p.dist_m) + " m" : "aici"}</td><td style="text-align:left;font-family:var(--font);font-size:12px">${esc(p.plansa)}</td></tr>`).join("") + `</tbody>`
     : `<tbody><tr><td>Nicio parcelă din planșele PUZ vectorizate în raza de ${U.raza_planse_m} m.</td></tr></tbody>`;
-  $("#unote").innerHTML = `<b>Surse:</b> UAT — ${esc(U.uat_sursa)}; adresă — ${esc(adr.sursa || "—")}; PUG — fișe Fabrica (${esc(P.data || "—")}); PUZ, AC, CU — registrele primăriilor, APM și CJ Timiș ; parcele — planșele PUZ vectorizate. Potrivirea actelor se face pe numele străzii, pentru că adresele nu au coordonate; verifică numărul și CF-ul în actul original. Actualizat ${esc(U.data)}.`;
+  $("#unote").innerHTML = `<b>Surse:</b> UAT — ${esc(U.uat_sursa)}; adresă — ${esc(adr.sursa || "—")}; PUG — fișe  (${esc(P.data || "—")}); PUZ, AC, CU — registrele primăriilor, APM și CJ Timiș ; parcele — planșele PUZ vectorizate. Potrivirea actelor se face pe numele străzii, pentru că adresele nu au coordonate; verifică numărul și CF-ul în actul original. Actualizat ${esc(U.data)}.`;
 }
 
 function renderVec() {
@@ -613,7 +613,7 @@ function renderPV() {
 <script charset="utf-8" src="teren3d.js?v=1792869783"></script>
 <script charset="utf-8" src="actiuni.js?v=1792869783"></script>
 <script charset="utf-8" src="capitole_noi.js?v=1792869783"></script>
-<script charset="utf-8" src="harti_v79.js?v=2"></script>
+<script charset="utf-8" src="harti_v79.js?v=3"></script>
 <script charset="utf-8" src="g7.js?v=7"></script>  
 
 <script charset="utf-8" src="hero.js?v=1792869783"></script>
