@@ -21,6 +21,32 @@
   if (!hm && hint) { const i0 = lg("cc-adm-id"); if (i0 && !/^#[A-Za-z0-9_]/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search + "#" + i0); } catch (e) {} } }
   const F0 = window.fetch.bind(window);   // fetch-ul original: intrare.js îl învelește și îl ține până se termină schimbul QR (altfel blocaj)
 
+  /* ---------- instalare ca aplicație ---------- */
+  // manifestul dinamic (start_url cu #qr=…) se pune sincron, ca Chrome să evalueze criteriile PWA la încărcare
+  { const q0 = hm || lg("cc-adm-qr"); if (q0) manifest(q0); }
+  const standalone = () => { try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } };
+  let dip = null;   // evenimentul beforeinstallprompt (Android/Chrome)
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); dip = e; instaleaza(); });
+  addEventListener("appinstalled", () => { dip = null; document.getElementById("cc-tt-inst")?.remove(); document.getElementById("cc-tt-ios")?.remove(); });
+  function instaleaza() {   // buton vizibil „Instalează aplicația” în bară
+    const mk = () => { const b = document.getElementById("cc-tt-bar"); if (!b) return setTimeout(mk, 400); if (standalone() || !dip || document.getElementById("cc-tt-inst")) return;
+      const x = document.createElement("button"); x.id = "cc-tt-inst"; x.type = "button"; x.textContent = "Instalează aplicația";
+      x.style.cssText = "font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:#1a1e2a;color:#fffdf8;white-space:nowrap";
+      x.onclick = async () => { try { dip.prompt(); await dip.userChoice; } catch (e) {} dip = null; x.remove(); };
+      b.insertBefore(x, b.firstChild); };
+    mk();
+  }
+  const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function paneliOS() {   // iPhone nu poate instala automat: un panou cu pașii, o singură dată, doar în browser (nu în aplicația instalată)
+    if ((!iOS && !/[?&]ios=1/.test(location.search)) || standalone() || lg("cc-ios-panou") === "1") return;
+    const safari = !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
+    const mk = () => { if (document.getElementById("cc-tt-ios")) return; const d = document.createElement("div"); d.id = "cc-tt-ios"; d.setAttribute("role", "dialog");
+      d.style.cssText = "position:fixed;left:10px;right:10px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:9500;background:#fffdf8;color:#1a1e2a;border:1.5px solid #1a1e2a;border-radius:16px;padding:14px 16px;font:15px/1.45 -apple-system,system-ui,sans-serif;box-shadow:0 10px 30px -8px rgba(26,30,42,.45);max-width:520px;margin:0 auto";
+      d.innerHTML = `<b style="font-size:16px">Instalează aplicația pe iPhone</b><ol style="margin:8px 0 10px 18px;padding:0"><li>${safari ? "" : "Deschide linkul în <b>Safari</b>, apoi "}apasă <b>Partajează</b> <span aria-hidden="true">⎙</span> (bara de jos).</li><li>Alege <b>Adaugă pe ecranul principal</b>.</li><li>Apasă <b>Adaugă</b>. Aplicația se deschide apoi fără bara browserului.</li></ol><button type="button" style="font:700 14px -apple-system,system-ui,sans-serif;border:0;border-radius:10px;padding:9px 14px;background:#1a1e2a;color:#fffdf8">Am înțeles</button>`;
+      d.querySelector("button").onclick = () => { lg("cc-ios-panou", "1"); d.remove(); }; document.body.appendChild(d); };
+    document.body ? setTimeout(mk, 1500) : document.addEventListener("DOMContentLoaded", () => setTimeout(mk, 1500));
+  }
+
   /* ---------- stocare dublă: Cache + IndexedDB ---------- */
   const idb = () => new Promise((ok, no) => { try { const r = indexedDB.open("cc-adm", 1); r.onupgradeneeded = () => r.result.createObjectStore("k"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); } catch (e) { no(e); } });
   const idbGet = async k => { try { const d = await idb(); return await new Promise(ok => { const q = d.transaction("k").objectStore("k").get(k); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
@@ -28,6 +54,7 @@
   const cacheGet = async () => { try { const r = await (await caches.open("cc-cod")).match("/__stare"); return r ? await r.json() : null; } catch (e) { return null; } };
   const cachePut = async s => { try { const c = await caches.open("cc-cod"); if (s) await c.put("/__stare", new Response(JSON.stringify(s), { headers: { "Content-Type": "application/json" } })); else await c.delete("/__stare"); } catch (e) {} };
   const salveaza = async s => { await cachePut(s); await idbSet("sesiune", s); lg("cc-adm", "1"); };
+  window.CC_ADM_SALVEAZA = s => salveaza(s);   // folosit de mascare.js după ce codul de date fine e primit
   const sterge = async () => { await cachePut(null); await idbSet("sesiune", null); lg("cc-adm", null); lg("cc-adm-qr", null); try { await caches.delete("cc-date"); } catch (e) {} };
   const post = (b, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 8000); return F0(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b), signal: c.signal }).then(async r => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) })).finally(() => clearTimeout(t)); };
 
@@ -36,9 +63,9 @@
     const mk = () => {
       document.getElementById("cc-splash")?.remove(); document.getElementById("cc-tt-scan")?.remove();
       const d = document.createElement("div"); d.id = "cc-tt-scan";
-      d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#1c2534;color:#fff;display:flex;align-items:center;justify-content:center;padding:28px;font:16px/1.5 -apple-system,system-ui,sans-serif;text-align:center";
+      d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;display:flex;align-items:center;justify-content:center;padding:28px;font:16px/1.5 -apple-system,system-ui,sans-serif;text-align:center";
       d.innerHTML = `<div style="max-width:420px"><div style="font-size:44px">📷</div><h1 style="font:700 22px -apple-system,system-ui,sans-serif;margin:10px 0">${titlu}</h1><p style="margin:0 0 14px">${text}</p>
-<p style="margin:0;font-size:14px;color:#c9d1e3"><b>Android:</b> scanează cu aparatul foto sau Google Lens, deschide în Chrome.<br><b>iPhone:</b> scanează cu aparatul foto (nu cu altă aplicație) și deschide în Safari.</p></div>`;
+<p style="margin:0;font-size:14px;color:#3d4456"><b>Android:</b> scanează cu aparatul foto sau Google Lens, deschide în Chrome.<br><b>iPhone:</b> scanează cu aparatul foto (nu cu altă aplicație) și deschide în Safari.</p></div>`;
       document.body.appendChild(d);
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
@@ -48,7 +75,7 @@
   function manifest(qr) {
     try {
       const base = location.origin + location.pathname.replace(/[^/]*$/, "");
-      const m = { id: base, name: "Raportul casei · test", short_name: "raport test", description: "raportul proprietății, test pe telefon", start_url: base + "#qr=" + qr, scope: base, display: "standalone", orientation: "portrait", background_color: "#1c2534", theme_color: "#1c2534", lang: "ro",
+      const m = { id: base, name: "Raportul casei · test", short_name: "raport test", description: "raportul proprietății, test pe telefon", start_url: base + "#qr=" + qr, scope: base, display: "standalone", orientation: "portrait", background_color: "#f6f1e7", theme_color: "#f6f1e7", lang: "ro",
         icons: [{ src: base + "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" }, { src: base + "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" }, { src: base + "icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }] };
       const l = document.querySelector('link[rel="manifest"]'); if (l) l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" }));
     } catch (e) {}
@@ -99,21 +126,22 @@
     }
     bara(s);
     versiune();
+    instaleaza(); paneliOS();
   });
 
   function bara(s) {
     const mk = () => {
       if (document.getElementById("cc-tt-bar")) return;
       const b = document.createElement("div"); b.id = "cc-tt-bar";
-      b.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:9000;display:flex;gap:6px;align-items:center;background:rgba(20,26,38,.94);color:#fff;border-radius:12px;padding:6px 8px;font:600 12px -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35);max-width:560px;margin:0 auto";
+      b.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:9000;display:flex;gap:6px;align-items:center;background:rgba(255,253,248,.97);color:#1a1e2a;border:1.5px solid #1a1e2a;border-radius:12px;padding:6px 8px;font:600 12px -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(26,30,42,.3);max-width:560px;margin:0 auto";
       const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const cur = decodeURIComponent((location.hash || "").replace(/^#/, "")).split(".")[0];
-      b.innerHTML = `<span style="white-space:nowrap">${s.ca_client ? "👁 client" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
+      b.innerHTML = `<span style="white-space:nowrap">${s.ca_client ? "👁 client" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
 <button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Înapoi la Admin" : "Vezi ca client"}</button>
-<span id="cc-tt-v" style="color:#9aa3b8;font-weight:500"></span>`;
+<span id="cc-tt-v" style="color:#4a5063;font-weight:600"></span>`;
       document.body.appendChild(b);
       b.querySelector("#cc-tt-sel").onchange = e => { lg("cc-adm-id", e.target.value); location.hash = "#" + e.target.value; location.reload(); };
-      b.querySelector("#cc-tt-cl").onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };
+      b.querySelector("#cc-tt-cl").onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (1357, verificat pe server) deblochează datele complete în această vedere
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
     addEventListener("hashchange", () => { const h = decodeURIComponent(location.hash.replace(/^#/, "")).split(".")[0]; if (h) lg("cc-adm-id", h); });

@@ -9,7 +9,7 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const local = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-  const ADMIN = () => window.parent === window && ((local && !window.CC_CLIENT) || !!(window.CC_ADM && window.CC_ADM.adm && !window.CC_ADM.ca_client));   // v82.4.0: nivelul 2 (jeton Admin) sau local
+  const ADMIN = () => window.parent === window && ((local && !window.CC_CLIENT) || !!(window.CC_ADM && window.CC_ADM.adm && (!window.CC_ADM.ca_client || window.CC_ADM.n >= 2)));   // v82.4.0: nivelul 2 (jeton Admin) sau local
   const N = 12;
   const ETI = { anunturi: "anunțuri", contacte: "contacte", firme: "firme", persoane: "persoane", acte: "acte AC/CU", cf_nc: "CF / nr. cadastral" };
 
@@ -20,7 +20,7 @@
 .msk-cnt{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}.msk-cnt span{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:3px 10px;font-size:13px}
 .msk-cnt b{font-variant-numeric:tabular-nums}.msk h4{margin:14px 0 6px;font-size:15px}.msk table{border-collapse:collapse;width:100%;min-width:520px}
 .msk td,.msk th{border-bottom:1px solid #eee;padding:5px 6px;text-align:left;vertical-align:top}.msk .scroll{overflow-x:auto}
-.msk-adm{display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:2px 8px;font-size:12px;margin-bottom:6px}`;
+.msk-pin{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;padding:10px 12px;border:1.5px solid #1a1e2a;border-radius:10px;background:#fffdf8;color:#1a1e2a}.msk-pin input{font:700 16px var(--mono,monospace);letter-spacing:.2em;width:7.5em;padding:8px 10px;border:1px solid #8a90a3;border-radius:8px;background:#fff;color:#1a1e2a}.msk-pin button{font:700 14px var(--font,sans-serif);border:0;border-radius:8px;padding:9px 14px;background:#1a1e2a;color:#fffdf8}.msk-pin small{flex-basis:100%;color:#3d4456;min-height:14px}.msk-adm{display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:2px 8px;font-size:12px;margin-bottom:6px}`;
     document.head.appendChild(s);
   }
 
@@ -32,9 +32,10 @@
     return `<div class="msk-cnt">${Object.keys(ETI).filter(k => c[k] != null).map(k => `<span><b>${Number(c[k]).toLocaleString("ro-RO")}</b> ${ETI[k]}</span>`).join("")}</div>`;
   }
 
+  const pinForm = () => window.CC_ADM && window.CC_ADM.adm && window.CC_ADM.ca_client && window.CC_ADM.n < 2 ? `<div class="msk-pin"><label for="msk-pin">cod date fine</label><input id="msk-pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="····" aria-label="cod date fine"><button type="button" id="msk-pin-go">Deschide</button><small id="msk-pin-m">cu codul, datele fine se deschid complete</small></div>` : "";
   function client(j) {
     const c = j.contoare || {};
-    return `<p>Pentru această proprietate există date fine: ${esc(c.contacte ?? 0)} contacte, ${esc(c.firme ?? 0)} firme, ${esc(c.persoane ?? 0)} persoane, ${esc(c.acte ?? 0)} acte în zonă. Se văd primele caractere; restul se deschide la comandă.</p>`
+    return pinForm() + `<p>Pentru această proprietate există date fine: ${esc(c.contacte ?? 0)} contacte, ${esc(c.firme ?? 0)} firme, ${esc(c.persoane ?? 0)} persoane, ${esc(c.acte ?? 0)} acte în zonă. Se văd primele caractere; restul se deschide la comandă.</p>`
       + contoare(c)
       + t("Firme din zonă", (j.firme || []).slice(0, N).map(f => `<tr><td>${m(f, "denumire")}</td><td>${m(f, "telefon")}</td><td>${m(f, "adresa_text")}</td></tr>`))
       + t("Persoane", (j.persoane || []).slice(0, N).map(p => `<tr><td>${m(p, "nume")}</td><td>${esc(p.rol)}</td><td>${esc(p.n)}</td></tr>`))
@@ -69,6 +70,13 @@
     const div = document.createElement("div"); div.className = "msk"; div.innerHTML = V && V.contoare ? admin(V) : client(j);
     box.innerHTML = ""; box.appendChild(div); if (btn && !V) box.appendChild(btn);
     box.dataset.msk = V ? "admin" : "client"; ultim = box;
+    const go = box.querySelector("#msk-pin-go"); if (go) { const inp = box.querySelector("#msk-pin"), m = box.querySelector("#msk-pin-m");
+      const trimite = async () => { const pin = inp.value.trim(); if (!pin) { m.textContent = "scrie codul"; return; } go.disabled = true; m.textContent = "se verifică…";
+        try { const r = await fetch(window.CC_STARE ? window.CC_STARE.FN : "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: window.CC_ADM.token, pin }) }), j2 = await r.json();
+          if (!r.ok) { m.textContent = j2.error || "cod greșit"; go.disabled = false; return; }
+          window.CC_ADM.n = 2; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(window.CC_ADM); location.reload();
+        } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
+      go.onclick = trimite; inp.onkeydown = e => { if (e.key === "Enter") trimite(); }; }
   }
   const T0 = Date.now();
   setInterval(() => { porneste().catch(e => console.warn("mascare", e)); }, 900);

@@ -24,11 +24,10 @@
 .ov button{width:auto!important;max-width:100%;text-align:left!important;padding:2px 8px!important;min-height:0!important;font-size:12.5px!important;line-height:1.35!important;white-space:nowrap!important;border:0!important;box-shadow:0 1px 3px rgba(0,0,0,.45)!important}
 .ov button[aria-pressed="false"]{background:rgba(255,255,255,.88)!important}
 .ov button[disabled],.ov .hm-ch>span:not(.hm-base),.ov .hm-base button[aria-pressed="true"],.ov .tbase button[aria-pressed="true"]{display:none!important}
-.ov .ov-x{display:none!important}.ov.ov-des .ov-x{display:block!important}
+.ov .ov-extra{display:none!important}.ov.ov-all .ov-extra{display:inline-block!important}.ov .ov-x{display:none!important}.ov.ov-des .ov-x{display:block!important}
 .ov-mai{font-weight:700!important;background:#1a1e2a!important;color:#fff!important;border:0!important;border-radius:999px;cursor:pointer}
 
-.ov-lg{font-size:12px;line-height:1.25;max-height:48%;overflow:auto;padding:3px 5px;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 5px #fff;
- background:linear-gradient(#1a1e2a,#1a1e2a) 0 0/10px 2px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 0 0/2px 10px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 100% 0/10px 2px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 100% 0/2px 10px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 0 100%/10px 2px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 0 100%/2px 10px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 100% 100%/10px 2px no-repeat,linear-gradient(#1a1e2a,#1a1e2a) 100% 100%/2px 10px no-repeat}
+.ov-lg{font-size:12px;line-height:1.3;padding:0;background:none;border:0;box-shadow:none}
 .ov-lg,.ov-lg *{color:#10131c!important;font-weight:600}.hm-box>.ov-lg.bl,.hm-box>.ov-lg.br{bottom:34px}.ov-lg .scroll,.ov-lg table{font-size:12px}.ov-lg td,.ov-lg th{padding:0 4px!important;border:0!important;background:none!important}.ov-lg>*{margin:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;gap:1px 8px!important}.ov-lg *{background-color:transparent}
 .ov-lg .hm-lg{display:flex!important;flex-direction:column!important;align-items:flex-start!important;flex-wrap:nowrap!important}.ov-lg .lg{white-space:nowrap}
 .ov .g7-fc button[aria-pressed="true"]{display:none!important}
@@ -92,6 +91,15 @@
     const t = document.createElement("button"); t.type = "button"; t.className = "ov-mai ov-tog"; t.textContent = "straturi"; t.setAttribute("aria-expanded", "true");
     t.onclick = () => { const asc = b.classList.toggle("ov-str"); t.setAttribute("aria-expanded", String(!asc)); }; b.prepend(t);
   }
+  /* cel mult 3 butoane peste hartă; restul în „alte straturi” (Manu, 07.11.2026, regula v81) */
+  function limita(st) {
+    if (!st) return; const bt = $$("button", st).filter(x => !x.classList.contains("ov-mai") && getComputedStyle(x).display !== "none");
+    bt.forEach((x, i) => x.classList.toggle("ov-extra", i >= 3));
+    let a = st.querySelector(":scope > .ov-alte");
+    if (bt.length <= 3) { if (a) a.remove(); st.classList.remove("ov-all"); return; }
+    if (!a) { a = document.createElement("button"); a.type = "button"; a.className = "ov-mai ov-alte"; a.onclick = () => { const on = st.classList.toggle("ov-all"); a.textContent = on ? "mai puține straturi" : "alte straturi"; }; st.appendChild(a); }
+    a.textContent = st.classList.contains("ov-all") ? "mai puține straturi" : "alte straturi";
+  }
   /* butoanele interactive în stânga, datele și legenda în dreapta (Manu, 06.11.2026); se schimbă doar dacă harta e plină pe partea aceea */
   async function plaseaza(w, F) {
     const M = montare(w, F); if (!M || !M.getClientRects().length || M.getBoundingClientRect().width < 150) return;
@@ -105,9 +113,8 @@
     if (st) { straturi(st);
       if (!cS) afara(st);
       else { pe(st, cS.c); const q = st.getBoundingClientRect(); if (q.height > .92 * R.height || q.width > .7 * R.width) { afara(st); cS = null; } } }
-    if (lg) { const opus = (cS ? (cS.c[1] === "l" ? dr : sta) : dr).concat(cS ? sc.filter(x => x.c[1] === cS.c[1] && x.c !== cS.c) : []), jos = opus.find(x => x.ac <= MAX_ACOP);
-      if (!jos) afara(lg);
-      else { pe(lg, jos.c); const b = lg.getBoundingClientRect(); if (b.width > .5 * R.width && b.height > .3 * R.height || b.height > .5 * R.height) afara(lg); } }
+    if (lg) afara(lg);   /* v82.7.0: legenda sub hartă, nu peste ea (Manu, 07.11.2026) */
+    limita(st);
   }
   /* parcelele cadastrale apar doar pe harta construcțiilor din zonă (Manu, 03.11.2026) */
   function faraCadastru(a) { $$("button,label", a).forEach(b => { if (b.closest("#autorizatii")) return; if (b.dataset.k === "cad" || b.dataset.l === "cad" || /parcele cadastrale|strat cadastral/i.test(b.textContent || "")) b.remove(); }); }

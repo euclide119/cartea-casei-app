@@ -21,9 +21,12 @@
   const st = document.createElement("style"); st.id = "sg-stil"; st.textContent = css; (document.head || document.documentElement).appendChild(st);
 
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  /* culoare continuă și vie: roșu → portocaliu → chihlimbar → verde-lămâie → verde */
-  const PCT = [[0, 356, 82, 50], [0.28, 20, 92, 50], [0.5, 42, 95, 49], [0.72, 84, 66, 44], [1, 142, 62, 38]];
-  const col = p => { let k = 0; while (k < PCT.length - 2 && p > PCT[k + 1][0]) k++; const a = PCT[k], b = PCT[k + 1], t = clamp((p - a[0]) / (b[0] - a[0]), 0, 1), L = i => a[i] + (b[i] - a[i]) * t; return `hsl(${(L(1) % 360).toFixed(0)} ${L(2).toFixed(0)}% ${L(3).toFixed(0)}%)`; };
+  /* paletă fină, fără ocru/oliv: coral → portocaliu cald → galben-miere luminos → lămâie proaspătă → verde de iarbă de primăvară.
+     Galbenul rămâne luminos (L ≥ 56 %), ca să nu iasă măsliniu; trecerea spre verde se face prin lămâie, nu prin kaki. */
+  const PCT = [[0, -2, 70, 60], [0.30, 22, 82, 58], [0.50, 42, 88, 60], [0.70, 86, 58, 56], [1, 118, 50, 50]];
+  const hsl = p => { let k = 0; while (k < PCT.length - 2 && p > PCT[k + 1][0]) k++; const a = PCT[k], b = PCT[k + 1], t = clamp((p - a[0]) / (b[0] - a[0]), 0, 1), L = i => a[i] + (b[i] - a[i]) * t; return [((L(1) % 360) + 360) % 360, L(2), L(3)]; };
+  /* g = cât de aproape e linia de accent (0–1): lângă accent culoarea e puțin mai vie și mai luminoasă, departe se dezsaturează ușor → degradeul urmează punctul îngroșat */
+  const col = (p, g) => { const c = hsl(p), gg = g == null ? 1 : g; return `hsl(${c[0].toFixed(0)} ${(c[1] * (0.82 + 0.18 * gg)).toFixed(0)}% ${Math.min(72, c[2] + 4 * gg + (1 - gg) * 3).toFixed(0)}%)`; };
 
   function pune(el) {
     if (el.dataset.sg) return;
@@ -33,7 +36,7 @@
     const w = el.getBoundingClientRect().width || 200, mic = el.getBoundingClientRect().height < 9 && el.closest(".pp-t");
     if (mic) el.classList.add("sg-mic");
     const N = clamp(Math.round(w / 4.5), 30, 90), t = [], inalt = mic ? 12 : 26;
-    for (let k = 0; k < N; k++) { const s = document.createElement("s"); s.dataset.p = ((k + 0.5) / N).toFixed(4); s.style.background = col((k + 0.5) / N); t.push(s); el.appendChild(s); }
+    for (let k = 0; k < N; k++) { const s = document.createElement("s"); s.dataset.p = ((k + 0.5) / N).toFixed(4); t.push(s); el.appendChild(s); }
     const v = document.createElement("b"); v.className = "sg-v"; el.appendChild(v);
     el.tabIndex = 0; el.setAttribute("role", "slider"); el.setAttribute("aria-valuemin", 0); el.setAttribute("aria-valuemax", 100); el.setAttribute("aria-valuenow", Math.round(pct)); el.setAttribute("aria-label", "scor, apropiat de " + Math.round(pct) + " din 100");
     const SIG = 0.075;   // lățimea „clopotului”, din lungimea barei
@@ -45,7 +48,8 @@
         const gg = Math.max(g, ga * 0.9);
         s.style.height = Math.round(inalt * (0.28 + 0.72 * gg)) + "px";
         s.style.flexGrow = (1 + 3 * gg).toFixed(2);
-        s.style.opacity = p <= lim ? 1 : (0.3 + 0.6 * g);
+        s.style.opacity = p <= lim ? 1 : (0.4 + 0.55 * g);
+        s.style.background = col(p, gg);
       });
     }
     let activ = false;

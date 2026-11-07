@@ -54,7 +54,7 @@ self.addEventListener("fetch", e => {
   const m = r.match(/^p\/(.+)$/);
   if (m || r === "piata_istoric.json") {
     const f = m ? decodeURIComponent(m[1]) : r;
-    e.respondWith(stare().then(s => s ? date(`${FN}?t=${encodeURIComponent(s.token)}&f=${encodeURIComponent(f)}${s.adm && s.ca_client ? "&n=1" : ""}`, s, `https://cc.local/d/${s.ca_client ? 1 : 0}/${f}`) : new Response("cere codul raportului", { status: 401 })));
+    e.respondWith(stare().then(s => s ? date(`${FN}?t=${encodeURIComponent(s.token)}&f=${encodeURIComponent(f)}${s.adm && s.n < 2 ? "&n=1" : ""}`, s, `https://cc.local/d/${s.n < 2 ? 1 : 2}/${f}`) : new Response("cere codul raportului", { status: 401 })));
     return;
   }
   e.respondWith(retea(e.request));

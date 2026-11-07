@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<!doctype html><html><head><meta charset=utf8><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,noai,noimageai"><meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,noai,noimageai"><meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="color-scheme" content="light"><meta name="theme-color" content="#f6f1e7"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"></head><body>
 <title>Raport _ Cartea Casei</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -12,9 +12,7 @@
   --hz10: #dc2626; --hz100: #f58220; --hz1000: #e2b100; --water: #008cff; --ok: #1f8a4c;
   --font: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #10121a; --panel: #181b25; --fg: #eceef5; --muted: #9aa1b5; --line: #2a2f3f; --ring: #ffffff; --accent: #ffb52e; --ok: #4cc47f; color-scheme: dark } }
-:root[data-theme="dark"] { --bg: #10121a; --panel: #181b25; --fg: #eceef5; --muted: #9aa1b5; --line: #2a2f3f; --ring: #ffffff; --accent: #ffb52e; --ok: #4cc47f; color-scheme: dark }
+/* v82.6.0: tema e mereu deschisă (fără adaptare la modul întunecat al telefonului); blocurile pentru dark au fost scoase */
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font); margin: 0 }
 .wrap { max-width: 820px; margin: 0 auto; padding-block: 22px 40px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -169,7 +167,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 </style>
 <link rel="stylesheet" id="std-css" href="standard.css?v=1792844547">
 
-<div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#1a1e2a;transition:opacity .4s;display:flex;align-items:center;justify-content:center"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:auto;max-height:100%;object-fit:contain;display:block"></div>
+<div id="cc-splash" style="position:fixed;inset:0;z-index:9999;background:#f6f1e7;transition:opacity .4s;display:flex;align-items:center;justify-content:center"><img src="deschidere.jpg" alt="Raportul Casei" style="width:100%;height:auto;max-height:100%;object-fit:contain;display:block"></div>
 <script charset="utf-8" src="v81_start.js?v=8201"></script>
 <script charset="utf-8" src="test_telefon.js?v=8240"></script>  
 <script charset="utf-8" src="intrare.js?v=8240"></script>
@@ -254,7 +252,7 @@ section { display: flex; flex-direction: column; gap: 16px }
 
 <script>window.__H0 = location.hash;</script>
 <script charset="utf-8" src="schema.js?v=82"></script>
-<script charset="utf-8" src="harta.js?v=82"></script>
+<script charset="utf-8" src="harta.js?v=8270"></script>
 <script charset="utf-8" src="grafice_plus.js?v=82"></script>
 <script charset="utf-8" src="vecinatate.js?v=82"></script>
 <script charset="utf-8" src="fise.js?v=82"></script>
@@ -598,7 +596,7 @@ function renderPV() {
 </script>
 <script charset="utf-8" src="verdict.js?v=82"></script>
 <script charset="utf-8" src="builder.js?v=82"></script>
-<script charset="utf-8" src="surse.js?v=82"></script>
+<script charset="utf-8" src="surse.js?v=8270"></script>
 <script charset="utf-8" src="interfata.js?v=82"></script>  
 <script charset="utf-8" src="negociere.js?v=82"></script>
 <script charset="utf-8" src="evaluare.js?v=82"></script>
@@ -632,12 +630,15 @@ function renderPV() {
 
 <script charset="utf-8" src="hero.js?v=82"></script>
 <script charset="utf-8" src="excelent.js?v=82"></script>
-<script charset="utf-8" src="harti_plasare.js?v=8230"></script>
+<script charset="utf-8" src="harti_plasare.js?v=8270"></script>
+<script charset="utf-8" src="legende_mobil.js?v=8270"></script>  
+
 <script charset="utf-8" src="pdf_export.js?v=8211"></script>
 <script charset="utf-8" src="raport_nou_ui.js?v=8220"></script>
 <script charset="utf-8" src="acordeon.js?v=82"></script>
 <script charset="utf-8" src="mascare.js?v=8241"></script>  
 <script charset="utf-8" src="numerotare.js?v=8230"></script>  
 <script charset="utf-8" src="bare_segment.js?v=8250"></script>  
+<script charset="utf-8" src="tema_deschisa.js?v=8260"></script>  
 
 </body></html>

@@ -13,10 +13,10 @@
   const LU = { res: "#f4ebd8", com: "#f3c8bd", ind: "#d8d0ea", grn: "#d2e8c3", agr: "#eaefcf", apa: "#b7d7f0", alt: "#e5e4df" };
   const LU_N = { res: "Zon\u0103 reziden\u021bial\u0103", com: "Zon\u0103 comercial\u0103", ind: "Zon\u0103 industrial\u0103", grn: "Verde, parcuri", agr: "Agricol", apa: "Ap\u0103", alt: "Alte zone" };
   const BL = { b: "#c84b31", c: "#e8a33d", r: "#edc88a", i: "#7a62a6", k: "#16868c", p: "#2c5c9c", a: "#b9b5ab", o: "#cdc9bf" };
-  const BL_N = { b: "Blocuri", c: "Case", r: "Locuin\u021be (tip neprecizat)", i: "Industrial, depozite", k: "Comercial, servicii", p: "Public (\u0219coli, spitale, cult)", a: "Anexe, garaje", o: "Altele (f\u0103r\u0103 tip \u00een OSM)" };
+  const BL_N = { b: "Blocuri", c: "Case", r: "Locuin\u021be", i: "Industrial, depozite", k: "Comercial, servicii", p: "Public", a: "Anexe, garaje", o: "Altele (f\u0103r\u0103 tip \u00een OSM)" };
   const PC = { sc: "#e4572e", gr: "#f3a712", li: "#b5338a", mg: "#2e933c", mc: "#0b7a75", fa: "#d62839", md: "#d62839", bn: "#3a6ea5", rs: "#a8763e", pk: "#4c9f38", sp: "#6f4e9c", tr: "#1d4ed8", cu: "#7d7d7d", ps: "#996515", mo: "#8e24aa", ut: "#546e7a", pm: "#8d6e63" };
   const PG = { sc: "\u0218", gr: "G", li: "L", mg: "M", mc: "C", fa: "F", md: "+", bn: "B", rs: "R", pk: "P", sp: "S", tr: "T", cu: "\u2020", ps: "@", mo: "\u25c6", ut: "\u26a1", pm: "\u25aa" };
-  const PN = { sc: "\u0218coal\u0103", gr: "Gr\u0103dini\u021b\u0103", li: "Liceu, colegiu, universitate", mg: "Magazin alimentar", mc: "Mall, centru comercial", fa: "Farmacie", md: "Medic, spital", bn: "Banc\u0103, bancomat", rs: "Restaurant, cafenea", pk: "Parc, loc de joac\u0103", sp: "Sport", tr: "Sta\u021bie de transport", cu: "L\u0103ca\u0219 de cult", ps: "Po\u0219t\u0103, easybox", mo: "Monument, sit arheologic", ut: "Utilit\u0103\u021bi (substa\u021bie, turn de ap\u0103)", pm: "Benzin\u0103rie, pia\u021b\u0103" };
+  const PN = { sc: "\u0218coal\u0103", gr: "Gr\u0103dini\u021b\u0103", li: "Liceu, colegiu, universitate", mg: "Magazin alimentar", mc: "Mall, centru comercial", fa: "Farmacie", md: "Medic, spital", bn: "Banc\u0103, bancomat", rs: "Restaurant, cafenea", pk: "Parc, loc de joac\u0103", sp: "Sport", tr: "Sta\u021bie de transport", cu: "L\u0103ca\u0219 de cult", ps: "Po\u0219t\u0103, easybox", mo: "Monument, sit arheologic", ut: "Utilit\u0103\u021bi", pm: "Benzin\u0103rie, pia\u021b\u0103" };
   const RD = [["#f0a43c", 6.4, "Magistral\u0103, drum principal"], ["#f6cf66", 5, "Drum secundar"], ["#ffffff", 3.8, "Drum ter\u021biar"], ["#ffffff", 2.6, "Strad\u0103"], ["#ffffff", 1.4, "Alee, serviciu"]];
   const AGC = { 0.10: "#7fc8a9", 0.15: "#b9d96f", 0.20: "#f2c14e", 0.25: "#ee8c3a", 0.30: "#d9534f", 0.35: "#a8325e", 0.40: "#6b2d8f" };
   const SEIS = { rosu: "#d62839", portocaliu: "#f08a24", verde: "#3d9a5b", gri: "#c9c5bb" };
@@ -139,10 +139,10 @@
         ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
         const IS = { "5": ["#0f9d58", 2.4, []], "10": ["#f29900", 2.0, [8 * px, 5 * px]], "15": ["#7b3fe4", 1.8, [1.5 * px, 3 * px]] }[m]; ctx.lineCap = "round"; ctx.strokeStyle = "#fff"; ctx.lineWidth = (IS[1] + 2) * px; ctx.setLineDash([]); ctx.globalAlpha = .7; ctx.stroke(); ctx.globalAlpha = 1; ctx.strokeStyle = IS[0]; ctx.lineWidth = IS[1] * px; ctx.setLineDash(IS[2]); ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = "butt";
         let ty = Infinity, tx = 0; for (let i = 0; i < a.length; i += 2) if (-a[i + 1] < ty) { ty = -a[i + 1]; tx = a[i]; }     // punctul cel mai de sus al zonei
-        label(ctx, m + " min pe jos", V.X(tx), V.Y(-ty) - 3 * px, 11 * px, true, { "5": "#0b7a44", "10": "#b86f00", "15": "#5b2db0" }[m]); });
+        label(ctx, m + " min", V.X(tx), V.Y(-ty) - 3 * px, 11 * px, true, { "5": "#0b7a44", "10": "#b86f00", "15": "#5b2db0" }[m]); });
     } else if (preset.rings && !off.rings) [[400, 5], [800, 10], [1200, 15]].forEach(([r, m]) => { if (r * V.s > Math.min(V.w, V.h) / 2.05) return;
       ctx.beginPath(); ctx.arc(V.X(0), V.Y(0), r * V.s, 0, 2 * Math.PI); ctx.strokeStyle = "rgba(20,20,30,.55)"; ctx.lineWidth = 1.2 * px; ctx.setLineDash([7 * px, 5 * px]); ctx.stroke(); ctx.setLineDash([]);
-      label(ctx, m + " min pe jos", V.X(0), V.Y(0) - r * V.s - 3 * px, 11 * px, true, "#222"); });
+      label(ctx, m + " min", V.X(0), V.Y(0) - r * V.s - 3 * px, 11 * px, true, "#222"); });
     // poligonul de relief (teren.py): cercul de 900 m pe plat (punctat) \u0219i zona real\u0103, deformat\u0103 de pant\u0103; la 150 m, punctele colorate arat\u0103 c\u00e2t urc\u0103 (maro) sau coboar\u0103 (verde) terenul
     if (preset.relief && H.rel && H.rel.poli) {
       const R = H.rel, a = R.poli, n = a.length / 2, Q = i => [V.X(a[(i % n) * 2]), V.Y(a[(i % n) * 2 + 1])];
@@ -223,20 +223,19 @@
     const out = [];
     if (preset.bld === "seism") out.push(sw(SEIS.rosu, "bloc P+3 sau mai mare, construit \u00eenainte de 1978"), sw(SEIS.portocaliu, "bloc P+3 sau mai mare, an necunoscut"), sw(SEIS.verde, "bloc P+3 sau mai mare, din 1978 sau mai nou"), sw("#e9b4a6", "bloc cu niveluri necunoscute"), sw("#9db7d8", "cl\u0103dire public\u0103"));
     else if (preset.bld === "class") BL_ORD.filter(c => !preset.only || preset.only.includes(c)).forEach(c => { if (H.comp.cladiri[c] > 0 || H.cl.some(a => a[0] === c)) out.push(sw(BL[c], BL_N[c])); });
-    else if (preset.comFocus) out.push(sw(LU.com, "zon\u0103 comercial\u0103 (OSM)"), sw(LU.ind, "zon\u0103 industrial\u0103 (OSM)"));
+    else if (preset.comFocus) out.push(sw(LU.com, "zon\u0103 comercial\u0103"), sw(LU.ind, "zon\u0103 industrial\u0103"));
     if (preset.lu === 1) ["res", "com", "ind", "grn", "apa"].forEach(z => { if (H.lu.some(a => a[0] === z) && !(preset.bld === "class" && ["res"].includes(z))) out.push(sw(LU[z], LU_N[z])); });
     (preset.poi || []).forEach(c => { if (H.poi.some(p => p[0] === c)) out.push(sw(PC[c], PN[c], 1)); });
-    if (preset.rings) out.push(H && H.iso ? `<span class="lg"><i style="border:2px solid #0f9d58;background:rgba(15,157,88,.12);border-radius:8px"></i>5 min pe jos</span><span class="lg"><i style="border:2px dashed #f29900;background:rgba(242,153,0,.08);border-radius:8px"></i>10 min</span><span class="lg"><i style="border:2px dotted #7b3fe4;background:rgba(123,63,228,.06);border-radius:8px"></i>15 min, pe str\u0103zile reale</span>`
-      : `<span class="lg"><i style="border:1.5px dashed #333;background:none;border-radius:50%"></i>5 / 10 / 15 minute pe jos, \u00een linie dreapt\u0103</span>`);
-    if (preset.relief) out.push(`<span class="lg"><i style="border:2px solid #ffb300;background:rgba(255,179,0,.25);border-radius:8px"></i>p\u00e2n\u0103 unde ajungi pe jos, dup\u0103 relief (func\u021bia Tobler)</span>`, `<span class="lg"><i style="border:1.5px dashed #333;background:none;border-radius:50%"></i>acela\u0219i timp pe teren plat (900 m)</span>`, sw("#8d6e63", "teren care urc\u0103 la 150 m", 1), sw("#4c9f38", "teren care coboar\u0103 la 150 m", 1), sw("#9a9a9a", "practic plat (sub 0,4 m)", 1));
+    /* v82.7.0: inelele de mers pe jos nu se mai explică în legendă; „5 min”, „10 min”, „15 min” stau pe contururi */
+    if (preset.relief) out.push(`<span class="lg"><i style="border:2px solid #ffb300;background:rgba(255,179,0,.25);border-radius:8px"></i>ajungi pe jos</span>`, `<span class="lg"><i style="border:1.5px dashed #333;background:none;border-radius:50%"></i>teren plat</span>`, sw("#8d6e63", "urcă", 1), sw("#4c9f38", "coboară", 1), sw("#9a9a9a", "plat", 1));
     if (preset.prot) out.push(`<span class="lg"><i style="border:1.5px dashed #8e24aa;background:rgba(142,36,170,.15);border-radius:50%"></i>zon\u0103 de protec\u021bie de ${preset.prot} m</span>`);
-    if (preset.util) out.push(`<span class="lg"><i style="border-top:2px dotted #e07b00;background:none;height:0"></i>linie electric\u0103 (OSM)</span>`);
+    if (preset.util) out.push(`<span class="lg"><i style="border-top:2px dotted #e07b00;background:none;height:0"></i>linie electric\u0103</span>`);
     if (preset.roads !== "off") out.push(`<span class="lg"><i style="background:${RD[0][0]}"></i>drum principal</span>`, `<span class="lg"><i style="background:${RD[1][0]}"></i>drum secundar</span>`);
     if (preset.rail || preset.roads === "all") out.push(`<span class="lg"><i style="background:repeating-linear-gradient(90deg,#555 0 5px,#fff 5px 9px);height:4px"></i>cale ferat\u0103</span>`);
     if (preset.rail) out.push(`<span class="lg"><i style="border-top:2px dotted #b5338a;background:none;height:0"></i>tramvai</span>`);
     if (preset.aut) [[1, "1\u20132"], [3, "3\u20135"], [6, "6\u201310"], [11, "11 sau mai multe"]].forEach(([n, t]) => out.push(`<span class="lg"><i style="background:${AUTC(n)};height:5px"></i>${t} autoriza\u021bii pe strad\u0103</span>`));
     out.push(`<span class="lg"><i style="background:#d9233c;border:2px solid #fff;box-shadow:0 0 0 1px #d9233c;border-radius:50%"></i>proprietatea</span>`);
-    const at = [CTX.sat.detaliu && `satelit ${CTX.sat.detaliu.meta.atribuire} (${CTX.sat.detaliu.meta.data || "?"})`, CTX.sat.recent && `${CTX.sat.recent.meta.atribuire} (${CTX.sat.recent.meta.data})`].filter(Boolean);
+    const at = [CTX.sat.detaliu && `satelit ${CTX.sat.detaliu.meta.atribuire}, ${CTX.sat.detaliu.meta.data || "?"}`, CTX.sat.recent && `${CTX.sat.recent.meta.atribuire}, ${CTX.sat.recent.meta.data}`].filter(Boolean);
     if (at.length) out.push(`<span class="lg" style="opacity:.8">\u00a9 OpenStreetMap \u00b7 ${esc(at.join(" \u00b7 "))}</span>`);
     return out.join("");
   }
