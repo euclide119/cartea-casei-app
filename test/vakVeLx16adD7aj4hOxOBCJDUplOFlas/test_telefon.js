@@ -17,6 +17,7 @@
   const hint = lg("cc-adm") === "1";
   if (!hm && !hint && !TEST) return;
   window.CC_TESTAPP = true;
+  const F0 = window.fetch.bind(window);   // fetch-ul original: intrare.js îl învelește și îl ține până se termină schimbul QR (altfel blocaj)
 
   /* ---------- stocare dublă: Cache + IndexedDB ---------- */
   const idb = () => new Promise((ok, no) => { try { const r = indexedDB.open("cc-adm", 1); r.onupgradeneeded = () => r.result.createObjectStore("k"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); } catch (e) { no(e); } });
@@ -26,7 +27,7 @@
   const cachePut = async s => { try { const c = await caches.open("cc-cod"); if (s) await c.put("/__stare", new Response(JSON.stringify(s), { headers: { "Content-Type": "application/json" } })); else await c.delete("/__stare"); } catch (e) {} };
   const salveaza = async s => { await cachePut(s); await idbSet("sesiune", s); lg("cc-adm", "1"); };
   const sterge = async () => { await cachePut(null); await idbSet("sesiune", null); lg("cc-adm", null); lg("cc-adm-qr", null); try { await caches.delete("cc-date"); } catch (e) {} };
-  const post = (b, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 8000); return fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b), signal: c.signal }).then(async r => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) })).finally(() => clearTimeout(t)); };
+  const post = (b, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 8000); return F0(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b), signal: c.signal }).then(async r => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) })).finally(() => clearTimeout(t)); };
 
   /* ---------- ecran „scanează din nou” ---------- */
   function ecran(titlu, text) {
@@ -114,7 +115,7 @@
 
   /* ---------- versiune: version.json în afara cache-ului ---------- */
   let v0 = null;
-  const citVer = async () => { try { const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+  const citVer = async () => { try { const r = await F0("version.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
   async function versiune() {
     const j = await citVer(); if (j) { v0 = j.versiune; const e = document.getElementById("cc-tt-v"); if (e) e.textContent = "v" + v0; }
     const verifica = async () => {
