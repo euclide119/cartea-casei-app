@@ -121,11 +121,12 @@
 
   /* ---------- versiune: version.json în afara cache-ului ---------- */
   let v0 = null;
+  const vcmp = (x, y) => { const p = String(x).split(".").map(Number), q = String(y).split(".").map(Number); for (let i = 0; i < 3; i++) { const d = (p[i] || 0) - (q[i] || 0); if (d) return d; } return 0; };
   const citVer = async () => { try { const r = await F0("version.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
   async function versiune() {
     const j = await citVer(); if (j) { v0 = j.versiune; const e = document.getElementById("cc-tt-v"); if (e) e.textContent = "v" + v0; }
     const verifica = async () => {
-      const n = await citVer(); if (!n || !v0 || n.versiune === v0) return;
+      const n = await citVer(); if (!n || !v0 || !(vcmp(n.versiune, v0) > 0)) return;   // doar o versiune mai nouă (CDN-ul poate servi o vreme și varianta veche: fără reîncărcări în plus)
       const d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#1f6b3d;color:#fff;text-align:center;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;font:700 14px -apple-system,system-ui,sans-serif";
       d.textContent = "versiune nouă v" + n.versiune + " · se actualizează…"; document.body.appendChild(d);
       try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
