@@ -9,7 +9,7 @@
   "use strict";
   if (window.parent !== window && /[?&]embed=1/.test(location.search)) return;
   const css = `
-.vb-t.sg{border:0!important;background:none!important;height:26px;display:flex;align-items:flex-end;gap:2px;padding:0;cursor:crosshair;touch-action:pan-y;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.vb-t.sg{border:0!important;background:none!important;height:26px;display:flex;align-items:flex-end;gap:1.5px;padding:0;cursor:crosshair;touch-action:pan-y;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .vb-t.sg s{display:block;text-decoration:none;flex:1 1 0;min-width:1px;border-radius:1px;transition:height .12s ease-out,flex-grow .12s ease-out,opacity .12s}
 .vb-t.sg.sg-mic{height:12px}.vb-t.sg.sg-mic s{border-radius:0}
 .vb-t.sg i{top:-9px!important;border-left-width:6px!important;border-right-width:6px!important;border-top-width:8px!important;pointer-events:none;z-index:2;transition:left .12s ease-out}
@@ -21,9 +21,9 @@
   const st = document.createElement("style"); st.id = "sg-stil"; st.textContent = css; (document.head || document.documentElement).appendChild(st);
 
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  /* culoare continuă: 0 → roșu (hue 4), 0,5 → chihlimbar (hue 38), 1 → verde (hue 140) */
-  const hue = p => p < 0.5 ? 4 + (38 - 4) * (p / 0.5) : 38 + (140 - 38) * ((p - 0.5) / 0.5);
-  const col = p => `hsl(${hue(p).toFixed(0)} ${p < 0.5 ? 76 : 62}% ${p < 0.5 ? 46 : 38}%)`;
+  /* culoare continuă și vie: roșu → portocaliu → chihlimbar → verde-lămâie → verde */
+  const PCT = [[0, 356, 82, 50], [0.28, 20, 92, 50], [0.5, 42, 95, 49], [0.72, 84, 66, 44], [1, 142, 62, 38]];
+  const col = p => { let k = 0; while (k < PCT.length - 2 && p > PCT[k + 1][0]) k++; const a = PCT[k], b = PCT[k + 1], t = clamp((p - a[0]) / (b[0] - a[0]), 0, 1), L = i => a[i] + (b[i] - a[i]) * t; return `hsl(${(L(1) % 360).toFixed(0)} ${L(2).toFixed(0)}% ${L(3).toFixed(0)}%)`; };
 
   function pune(el) {
     if (el.dataset.sg) return;
@@ -32,7 +32,7 @@
     el.dataset.sg = "1"; el.classList.add("sg");
     const w = el.getBoundingClientRect().width || 200, mic = el.getBoundingClientRect().height < 9 && el.closest(".pp-t");
     if (mic) el.classList.add("sg-mic");
-    const N = clamp(Math.round(w / 6), 24, 64), t = [], inalt = mic ? 12 : 26;
+    const N = clamp(Math.round(w / 4.5), 30, 90), t = [], inalt = mic ? 12 : 26;
     for (let k = 0; k < N; k++) { const s = document.createElement("s"); s.dataset.p = ((k + 0.5) / N).toFixed(4); s.style.background = col((k + 0.5) / N); t.push(s); el.appendChild(s); }
     const v = document.createElement("b"); v.className = "sg-v"; el.appendChild(v);
     el.tabIndex = 0; el.setAttribute("role", "slider"); el.setAttribute("aria-valuemin", 0); el.setAttribute("aria-valuemax", 100); el.setAttribute("aria-valuenow", Math.round(pct)); el.setAttribute("aria-label", "scor, apropiat de " + Math.round(pct) + " din 100");
@@ -43,9 +43,9 @@
         const p = +s.dataset.p, d = (p - c) / SIG, g = Math.exp(-d * d);
         const dg = (p - lim) / (SIG * 0.6), ga = Math.exp(-dg * dg);   // accent permanent la săgeată (mai îngust)
         const gg = Math.max(g, ga * 0.9);
-        s.style.height = Math.round(inalt * (0.34 + 0.66 * gg)) + "px";
-        s.style.flexGrow = (1 + 2.2 * gg).toFixed(2);
-        s.style.opacity = p <= lim ? 1 : (0.2 + 0.55 * g);
+        s.style.height = Math.round(inalt * (0.28 + 0.72 * gg)) + "px";
+        s.style.flexGrow = (1 + 3 * gg).toFixed(2);
+        s.style.opacity = p <= lim ? 1 : (0.3 + 0.6 * g);
       });
     }
     let activ = false;
@@ -58,6 +58,7 @@
     el.addEventListener("touchmove", e => { if (e.touches[0]) arata(dinX(e.touches[0].clientX)); }, { passive: true }); el.addEventListener("touchend", () => setTimeout(reset, 900));
     el.addEventListener("keydown", e => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return; e.preventDefault(); const c = clamp((activ ? parseFloat(v.style.left) / 100 : pct / 100) + (e.key === "ArrowRight" ? 0.05 : -0.05), 0, 1); arata(c); });
     el.addEventListener("blur", reset);
+    const mk = t[clamp(Math.floor(pct / 100 * N), 0, N - 1)]; if (mk) { mk.style.outline = "1.5px solid #1a1e2a"; mk.style.outlineOffset = "0"; mk.style.zIndex = 1; }
     deseneaza(pct / 100, pct);
   }
   const scan = () => document.querySelectorAll(".vb-t:not([data-sg])").forEach(pune);
