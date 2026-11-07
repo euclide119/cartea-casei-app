@@ -17,6 +17,8 @@
   const hint = lg("cc-adm") === "1";
   if (!hm && !hint && !TEST) return;
   window.CC_TESTAPP = true;
+  // proprietatea se așază SINCRON, înainte ca generic.js să citească adresa (altfel apare prezentarea generală): ultima aleasă, scrisă la schimbul QR
+  if (!hm && hint) { const i0 = lg("cc-adm-id"); if (i0 && !/^#[A-Za-z0-9_]/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search + "#" + i0); } catch (e) {} } }
   const F0 = window.fetch.bind(window);   // fetch-ul original: intrare.js îl învelește și îl ține până se termină schimbul QR (altfel blocaj)
 
   /* ---------- stocare dublă: Cache + IndexedDB ---------- */
@@ -83,7 +85,11 @@
     const bun = x => lista.some(p => p.id === x);
     if (hm || !bun(id0)) {   // curăță #qr=… și așază proprietatea (ultima aleasă sau prima din listă)
       const alege = bun(lg("cc-adm-id")) ? lg("cc-adm-id") : (s.id && bun(s.id) ? s.id : (lista[0] || {}).id);
-      if (alege) { try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} }
+      if (alege) { lg("cc-adm-id", alege); try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} }
+      if (hm) {   // după schimbul QR: o singură reîncărcare, cu adresa curată și proprietatea așezată din start
+        try { await navigator.serviceWorker.register("sw_cod.js"); await navigator.serviceWorker.ready; } catch (e) {}
+        location.reload(); return;
+      }
     }
     // primul acces: service worker-ul trebuie să controleze pagina înainte ca p/<id>/… să fie cerut; apoi o singură reîncărcare
     if ("serviceWorker" in navigator && !navigator.serviceWorker.controller) {
