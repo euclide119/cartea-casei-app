@@ -53,20 +53,22 @@
 
   async function json(u) { try { const r = await fetch(u, { cache: "no-cache" }); return r.ok ? await r.json() : null; } catch (e) { return null; } }
 
-  let facut = null;
+  let facut = null, ultim = null;
   async function porneste() {
+    if (ultim && !ultim.isConnected) { facut = null; ultim = null; }   // v82.4.0: acordeonul a refăcut DOM-ul cât s-a adus privat.json prin funcție: se redesenează
     const Dd = typeof D !== "undefined" ? D : null; if (!Dd || !Dd.id || facut === Dd.id) return;
-    const pr = $(".ac-pr"); if (!pr && !document.body.classList.contains("ac-gata") && Date.now() - T0 < 20000) return;
+    let pr = $(".ac-pr"); if (!pr && !document.body.classList.contains("ac-gata") && Date.now() - T0 < 20000) return;
     facut = Dd.id;
     const P = `p/${encodeURIComponent(Dd.id)}/`;
     const j = await json(P + "privat_mostra.json"); if (!j || !j.contoare) return;   // mostra veche (G7) sau lipsă: nu ating nimic
     css();
     const V = ADMIN() ? await json(P + "privat.json") : null;
+    pr = $(".ac-pr") || pr;   // nodul poate fi altul după așteptare
     let box = pr; if (!box) { box = document.createElement("section"); box.id = "cc-privat-msk"; box.innerHTML = "<h2>🔒 Date fine</h2>"; ($(".wrap") || document.body).appendChild(box); }
     const btn = box.querySelector(".ac-pr-btn");
     const div = document.createElement("div"); div.className = "msk"; div.innerHTML = V && V.contoare ? admin(V) : client(j);
     box.innerHTML = ""; box.appendChild(div); if (btn && !V) box.appendChild(btn);
-    box.dataset.msk = V ? "admin" : "client";
+    box.dataset.msk = V ? "admin" : "client"; ultim = box;
   }
   const T0 = Date.now();
   setInterval(() => { porneste().catch(e => console.warn("mascare", e)); }, 900);
