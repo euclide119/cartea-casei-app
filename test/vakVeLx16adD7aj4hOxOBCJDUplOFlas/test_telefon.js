@@ -125,15 +125,20 @@
   const citVer = async () => { try { const r = await F0("version.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
   async function versiune() {
     const j = await citVer(); if (j) { v0 = j.versiune; const e = document.getElementById("cc-tt-v"); if (e) e.textContent = "v" + v0; }
+    /* „există versiune nouă” se citește din funcție (Supabase, fără cache), nu de pe GitHub Pages: CDN-ul Pages ține fișierele până la 10 minute pe cale, cu sau fără ?t= */
+    const ultima = async () => { const s = window.CC_ADM; if (!s || !s.token) return null; try { const r = await F0(`${FN}?t=${encodeURIComponent(s.token)}&f=__versiune`, { cache: "no-store" }); return r.ok ? (await r.json()).versiune || null : null; } catch (e) { return null; } };
     const verifica = async () => {
-      const n = await citVer(); if (!n || !v0 || !(vcmp(n.versiune, v0) > 0)) return;   // doar o versiune mai nouă (CDN-ul poate servi o vreme și varianta veche: fără reîncărcări în plus)
+      const n = await ultima(); if (!n || !v0 || !(vcmp(n, v0) > 0)) return;   // doar o versiune mai nouă decât codul încărcat
+      let ult = null; try { ult = JSON.parse(sessionStorage.getItem("cc-tt-ult") || "null"); } catch (e) {}
+      if (ult && ult.v === n && Date.now() - ult.t < 150000) return;   // dacă CDN-ul servește încă codul vechi, se reîncearcă la următoarea verificare, nu într-o buclă
+      try { sessionStorage.setItem("cc-tt-ult", JSON.stringify({ v: n, t: Date.now() })); } catch (e) {}
       const d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99998;background:#1f6b3d;color:#fff;text-align:center;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;font:700 14px -apple-system,system-ui,sans-serif";
-      d.textContent = "versiune nouă v" + n.versiune + " · se actualizează…"; document.body.appendChild(d);
+      d.textContent = "versiune nouă v" + n + " · se actualizează…"; document.body.appendChild(d);
       try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
       setTimeout(() => location.reload(), 1200);
     };
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { verifica(); sesiune(); } });
-    setInterval(verifica, 180000); setInterval(sesiune, 300000);
+    setInterval(verifica, 60000); setInterval(sesiune, 300000); setTimeout(verifica, 4000);
   }
   async function sesiune() {   // jeton revocat sau expirat cât timp aplicația stă deschisă
     const s = window.CC_ADM; if (!s) return;
