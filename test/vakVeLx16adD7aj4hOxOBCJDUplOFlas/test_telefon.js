@@ -70,22 +70,22 @@
       document.getElementById("cc-splash")?.remove();
       const d = document.createElement("div"); d.id = "cc-tt-poarta"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "raportul pe telefon");
       d.style.cssText = "position:fixed;inset:0;z-index:99990;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
-      const AC = "#1d5fb0";   // albastrul din logo, text alb: contrast ≈ 6:1
-      const img = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:44vh;object-fit:cover">`;
-      const h1 = "font:800 24px/1.2 -apple-system,system-ui,sans-serif;margin:0 0 14px";
-      const tgt = iosUA ? "Safari" : "Chrome";
-      const hint = `<div id="cc-tt-pm" role="status" style="margin-top:14px;min-height:24px;font:600 17px -apple-system,system-ui,sans-serif;color:#1a1e2a"></div>`;
-      if (inApp) d.innerHTML = `${img}<div style="padding:20px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Deschide în ${tgt}</h1><div id="cc-tt-pm" role="status" style="font:600 17px -apple-system,system-ui,sans-serif;margin-bottom:14px">${iosUA ? "⋯ → Deschide în Safari" : "⋮ → Deschide în Chrome"}</div><button id="cc-tt-cp" type="button" style="font:700 16px -apple-system,system-ui,sans-serif;border:0;border-radius:12px;padding:13px 18px;background:${AC};color:#fff;width:100%">Copiază linkul</button></div>`;
-      else d.innerHTML = `${img}<div style="padding:20px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Raportul tău, pe telefon</h1>
-<label style="display:flex;gap:12px;align-items:center;margin:0 0 16px;font:600 16px -apple-system,system-ui,sans-serif"><input id="cc-tt-ck" type="checkbox" checked style="width:24px;height:24px;flex:none;margin:0;accent-color:${AC}"><span>Pe ecranul telefonului</span></label>
-<button id="cc-tt-go" type="button" style="font:700 17px -apple-system,system-ui,sans-serif;border:0;border-radius:12px;padding:14px 18px;background:${AC};color:#fff;width:100%">Deschide raportul</button>${hint}</div>`;
-      const hs = document.createElement("style"); hs.textContent = "#cl-home,#ac-cap,#cc-iesi,#cc-tt-bar,#cc-modv,#cc-tt-nou,.cc-cod{display:none!important}#cc-tt-go:disabled{opacity:.45}"; d.appendChild(hs);   // sub poartă nu se văd comenzile raportului
+      const AC = "#1d5fb0";   // albastrul din logo: bifa, textul și butonul au același accent și același stil (contrast ≈ 5,6:1 pe papirus, ≈ 6:1 text alb pe buton)
+      const F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
+      const img = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:46vh;object-fit:cover">`;
+      const col = "min-height:54%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:48px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box";
+      const btn = `${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%`;
+      const hint = `<div id="cc-tt-pm" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#4a5063;text-align:center;min-height:20px"></div>`;
+      if (inApp) d.innerHTML = `${img}<div style="${col}"><button id="cc-tt-cp" type="button" style="${btn}">Copiază linkul</button><div id="cc-tt-pm" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#4a5063;text-align:center">${iosUA ? "⋯ → Deschide în Safari" : "⋮ → Deschide în Chrome"}</div></div>`;
+      else d.innerHTML = `${img}<div style="${col}"><label style="display:flex;gap:14px;align-items:center;${F};color:${AC}"><input id="cc-tt-ck" type="checkbox" checked style="width:24px;height:24px;flex:none;margin:0;accent-color:${AC}"><span>Pe ecranul telefonului</span></label><button id="cc-tt-go" type="button" style="${btn}">Deschide raportul</button>${hint}</div>`;
+      const hs = document.createElement("style"); hs.textContent = "#cl-home,#ac-cap,#cc-iesi,#cc-tt-bar,#cc-modv,#cc-tt-nou,.cc-cod{display:none!important}#cc-tt-go:disabled{opacity:.5}"; d.appendChild(hs);   // sub poartă nu se văd comenzile raportului
       document.body.appendChild(d);
       const m = d.querySelector("#cc-tt-pm"), cpb = d.querySelector("#cc-tt-cp");
       if (cpb) cpb.onclick = () => copiaza(m);
       const ck = d.querySelector("#cc-tt-ck"), go = d.querySelector("#cc-tt-go"); if (!ck) return;
       ck.onchange = () => { go.disabled = !ck.checked; };
-      const instalat = () => { m.innerHTML = `Gata. Deschide raportul din ecranul telefonului. <a href="${location.origin + location.pathname.replace(/[^/]*$/, "")}" target="_blank" rel="noopener" style="color:${AC};font-weight:700">Deschide</a>`; go.style.display = "none"; ck.closest("label").style.display = "none"; };
+      const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : "")); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
+      const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (cod 1357 pentru raport, ca până acum)
       window.CC_TT_INSTALAT = instalat;
       go.onclick = async () => {
         if (!ck.checked) return;
