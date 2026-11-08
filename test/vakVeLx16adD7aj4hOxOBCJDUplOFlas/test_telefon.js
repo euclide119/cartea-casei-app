@@ -25,7 +25,8 @@
   // manifestul dinamic (start_url cu #qr=…) se pune sincron, ca Chrome să evalueze criteriile PWA la încărcare
   { const q0 = hm || lg("cc-adm-qr"); if (q0) manifest(q0); }
   const standalone = () => { if (/[?&]standalone=1/.test(location.search)) return true; try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } };
-  let dip = null;   // evenimentul beforeinstallprompt (Android/Chrome)
+  let dip = window.__bip || null;   // evenimentul beforeinstallprompt, prins cât mai devreme de scriptul inline din <head> (index.html)
+  addEventListener("cc-bip", () => { dip = window.__bip || dip; if (dip) instaleaza(); });
   addEventListener("beforeinstallprompt", e => { e.preventDefault(); dip = e; instaleaza(); });
   addEventListener("appinstalled", () => { dip = null; document.getElementById("cc-tt-inst")?.remove(); document.getElementById("cc-tt-ios")?.remove(); if (window.CC_TT_INSTALAT) window.CC_TT_INSTALAT(); });
   function instaleaza() {   // buton vizibil „Instalează aplicația” în bară
@@ -59,45 +60,47 @@
   const GATE = mobil && !standalone() && !(eLocal && !/[?&]gate=1/.test(location.search));
   window.CC_TT_GATE = GATE;
   function copiaza(m) {
-    const ok = () => { m.textContent = "Linkul e copiat. Deschide-l în " + (iosUA ? "Safari" : "Chrome") + "."; };
-    const fb = () => { try { const t = document.createElement("textarea"); t.value = location.href; t.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); ok(); } catch (e) { m.textContent = "Nu am putut copia; ține apăsat pe adresa din bara browserului și copiaz-o."; } };
+    const ok = () => { m.textContent = "Linkul e copiat"; };
+    const fb = () => { try { const t = document.createElement("textarea"); t.value = location.href; t.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); ok(); } catch (e) { m.textContent = "Copiază adresa din bara browserului"; } };
     try { navigator.clipboard.writeText(location.href).then(ok, fb); } catch (e) { fb(); }
   }
   function poarta() {
     const mk = () => {
       if (document.getElementById("cc-tt-poarta")) return;
       document.getElementById("cc-splash")?.remove();
-      const d = document.createElement("div"); d.id = "cc-tt-poarta"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "instalează aplicația");
+      const d = document.createElement("div"); d.id = "cc-tt-poarta"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "raportul pe telefon");
       d.style.cssText = "position:fixed;inset:0;z-index:99990;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
-      const btn = "font:700 16px -apple-system,system-ui,sans-serif;border:0;border-radius:12px;padding:13px 18px;background:#1a1e2a;color:#fffdf8;width:100%";
-      const h1 = "font:800 22px/1.25 -apple-system,system-ui,sans-serif;margin:0 0 8px";
-      const img = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:38vh;object-fit:cover">`;
-      const cp = `<button id="cc-tt-cp" type="button" style="font:600 14px -apple-system,system-ui,sans-serif;background:none;border:0;color:#1a1e2a;text-decoration:underline;padding:12px 0">Nu merge? Copiază linkul și deschide-l în ${iosUA ? "Safari" : "Chrome"}</button>`;
-      if (inApp) d.innerHTML = `${img}<div style="padding:18px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Deschide linkul în ${iosUA ? "Safari" : "Chrome"}</h1><p style="margin:0 0 14px">Raportul se instalează din browserul telefonului, nu din aplicația în care ai deschis linkul (Facebook, Instagram, WhatsApp, Gmail…).</p><button id="cc-tt-cp" type="button" style="${btn}">Copiază linkul</button><div id="cc-tt-pm" role="status" style="margin-top:12px;min-height:22px;font-size:15px"></div></div>`;
-      else d.innerHTML = `${img}<div style="padding:18px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Instalează aplicația ca să deschizi raportul</h1><p style="margin:0 0 14px;color:#3d4456">Raportul se deschide doar din aplicația de pe ecranul telefonului: îl ai mereu la îndemână și de acolo comanzi mai departe.</p>
-<label style="display:flex;gap:12px;align-items:flex-start;margin:0 0 14px;font-weight:600"><input id="cc-tt-ck" type="checkbox" style="width:26px;height:26px;flex:none;margin:0"><span>Vreau raportul pe ecranul telefonului, cu acces la comenzi noi</span></label>
-<button id="cc-tt-go" type="button" disabled style="${btn};opacity:.45">Instalează aplicația</button><div id="cc-tt-pm" role="status" style="margin-top:12px;min-height:22px;font-size:15px"></div>${cp}</div>`;
-      const hs = document.createElement("style"); hs.textContent = "#cl-home,#ac-cap,#cc-iesi,#cc-tt-bar,#cc-modv,#cc-tt-nou,.cc-cod{display:none!important}"; d.appendChild(hs);   // sub poartă nu se văd comenzile raportului
+      const AC = "#1d5fb0";   // albastrul din logo, text alb: contrast ≈ 6:1
+      const img = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:44vh;object-fit:cover">`;
+      const h1 = "font:800 24px/1.2 -apple-system,system-ui,sans-serif;margin:0 0 14px";
+      const tgt = iosUA ? "Safari" : "Chrome";
+      const hint = `<div id="cc-tt-pm" role="status" style="margin-top:14px;min-height:24px;font:600 17px -apple-system,system-ui,sans-serif;color:#1a1e2a"></div>`;
+      if (inApp) d.innerHTML = `${img}<div style="padding:20px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Deschide în ${tgt}</h1><div id="cc-tt-pm" role="status" style="font:600 17px -apple-system,system-ui,sans-serif;margin-bottom:14px">${iosUA ? "⋯ → Deschide în Safari" : "⋮ → Deschide în Chrome"}</div><button id="cc-tt-cp" type="button" style="font:700 16px -apple-system,system-ui,sans-serif;border:0;border-radius:12px;padding:13px 18px;background:${AC};color:#fff;width:100%">Copiază linkul</button></div>`;
+      else d.innerHTML = `${img}<div style="padding:20px 18px calc(28px + env(safe-area-inset-bottom))"><h1 style="${h1}">Raportul tău, pe telefon</h1>
+<label style="display:flex;gap:12px;align-items:center;margin:0 0 16px;font:600 16px -apple-system,system-ui,sans-serif"><input id="cc-tt-ck" type="checkbox" checked style="width:24px;height:24px;flex:none;margin:0;accent-color:${AC}"><span>Pe ecranul telefonului</span></label>
+<button id="cc-tt-go" type="button" style="font:700 17px -apple-system,system-ui,sans-serif;border:0;border-radius:12px;padding:14px 18px;background:${AC};color:#fff;width:100%">Deschide raportul</button>${hint}</div>`;
+      const hs = document.createElement("style"); hs.textContent = "#cl-home,#ac-cap,#cc-iesi,#cc-tt-bar,#cc-modv,#cc-tt-nou,.cc-cod{display:none!important}#cc-tt-go:disabled{opacity:.45}"; d.appendChild(hs);   // sub poartă nu se văd comenzile raportului
       document.body.appendChild(d);
-      const m = d.querySelector("#cc-tt-pm"), cpb = d.querySelector("#cc-tt-cp"); cpb.onclick = () => copiaza(m);
+      const m = d.querySelector("#cc-tt-pm"), cpb = d.querySelector("#cc-tt-cp");
+      if (cpb) cpb.onclick = () => copiaza(m);
       const ck = d.querySelector("#cc-tt-ck"), go = d.querySelector("#cc-tt-go"); if (!ck) return;
-      ck.onchange = () => { go.disabled = !ck.checked; go.style.opacity = ck.checked ? 1 : .45; };
-      const instalat = () => { m.innerHTML = `<b>Aplicația e instalată.</b> Deschide raportul din ecranul telefonului.<br><a href="${location.origin + location.pathname.replace(/[^/]*$/, "")}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-weight:700;color:#1a1e2a">Încearcă deschiderea aplicației</a>`; go.style.display = "none"; ck.closest("label").style.display = "none"; };
+      ck.onchange = () => { go.disabled = !ck.checked; };
+      const instalat = () => { m.innerHTML = `Gata. Deschide raportul din ecranul telefonului. <a href="${location.origin + location.pathname.replace(/[^/]*$/, "")}" target="_blank" rel="noopener" style="color:${AC};font-weight:700">Deschide</a>`; go.style.display = "none"; ck.closest("label").style.display = "none"; };
       window.CC_TT_INSTALAT = instalat;
       go.onclick = async () => {
         if (!ck.checked) return;
-        if (iosUA) {   // iPhone: instalarea automată nu există; pași vizuali, cu săgeată spre butonul Partajează
+        if (iosUA) {   // iPhone: un singur rând vizual + săgeată spre Partajează
           const ipad = /iPad/.test(UAs) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-          m.innerHTML = `<ol style="margin:0 0 0 20px;padding:0;font-size:16px"><li style="margin-bottom:6px">Apasă <b>Partajează</b> <span aria-hidden="true" style="font-size:20px">⎙</span> ${ipad ? "(sus, în dreapta)" : "(jos, în mijlocul barei Safari)"}.</li><li style="margin-bottom:6px">Alege <b>Adaugă pe ecranul principal</b>.</li><li>Apasă <b>Adaugă</b>, apoi deschide raportul din ecranul telefonului.</li></ol>${/CriOS|FxiOS|EdgiOS/.test(UAs) ? `<p style="margin:10px 0 0;font-weight:600">Pentru cel mai simplu drum, deschide linkul în Safari.</p>` : ""}`;
-          if (!document.getElementById("cc-tt-sag")) { const s = document.createElement("div"); s.id = "cc-tt-sag"; s.setAttribute("aria-hidden", "true"); s.style.cssText = ipad ? "position:fixed;top:6px;right:18px;z-index:99991;text-align:center;font:700 13px -apple-system,system-ui,sans-serif;color:#1a1e2a" : "position:fixed;left:0;right:0;bottom:calc(6px + env(safe-area-inset-bottom));z-index:99991;text-align:center;font:700 13px -apple-system,system-ui,sans-serif;color:#1a1e2a"; s.innerHTML = ipad ? `<svg width="34" height="40" viewBox="0 0 34 40"><path d="M17 38 V8 M6 18 L17 6 L28 18" stroke="#1a1e2a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><div>Partajează</div>` : `<div>Partajează</div><svg width="34" height="40" viewBox="0 0 34 40" style="animation:cc-ttb 1s ease-in-out infinite alternate"><path d="M17 2 V32 M6 22 L17 34 L28 22" stroke="#1a1e2a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><style>@keyframes cc-ttb{to{transform:translateY(6px)}}@media (prefers-reduced-motion:reduce){#cc-tt-sag svg{animation:none!important}}</style>`; d.appendChild(s); }
+          m.textContent = ipad ? "⎙ (sus) → Adaugă pe ecranul principal" : "⎙ → Adaugă pe ecranul principal";
+          if (!document.getElementById("cc-tt-sag")) { const s = document.createElement("div"); s.id = "cc-tt-sag"; s.setAttribute("aria-hidden", "true"); s.style.cssText = ipad ? "position:fixed;top:6px;right:18px;z-index:99991;color:#1a1e2a" : "position:fixed;left:0;right:0;bottom:calc(6px + env(safe-area-inset-bottom));z-index:99991;text-align:center;color:#1a1e2a"; s.innerHTML = ipad ? `<svg width="30" height="36" viewBox="0 0 34 40"><path d="M17 38 V8 M6 18 L17 6 L28 18" stroke="#1a1e2a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` : `<svg width="30" height="36" viewBox="0 0 34 40" style="animation:cc-ttb 1s ease-in-out infinite alternate"><path d="M17 2 V32 M6 22 L17 34 L28 22" stroke="#1a1e2a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><style>@keyframes cc-ttb{to{transform:translateY(6px)}}@media (prefers-reduced-motion:reduce){#cc-tt-sag svg{animation:none!important}}</style>`; d.appendChild(s); }
           return;
         }
-        if (dip) {   // Android/Chrome/Edge/Samsung: dialogul nativ (cere o atingere de confirmare)
-          go.disabled = true; m.textContent = "se deschide fereastra de instalare…";
-          try { dip.prompt(); const r = await dip.userChoice; dip = null; if (r && r.outcome === "accepted") { setTimeout(instalat, 1200); } else { m.textContent = "Ai refuzat instalarea. Bifează și apasă din nou când vrei."; go.disabled = false; } } catch (e) { dip = null; m.textContent = "Fereastra de instalare nu s-a putut deschide."; go.disabled = false; }
+        if (dip) {   // Android/Chrome/Edge/Samsung: dialogul nativ (cere o atingere de confirmare); refuzul rămâne tăcut
+          const p = dip; dip = null; window.__bip = null; go.disabled = true;
+          try { p.prompt(); const r = await p.userChoice; if (r && r.outcome === "accepted") setTimeout(instalat, 1200); else go.disabled = false; } catch (e) { go.disabled = false; }
           return;
         }
-        m.innerHTML = `<ol style="margin:0 0 0 20px;padding:0"><li style="margin-bottom:6px">Deschide meniul browserului (cele trei puncte).</li><li style="margin-bottom:6px">Alege <b>Instalează aplicația</b> sau <b>Adaugă pe ecranul principal</b>.</li><li>Deschide apoi raportul din ecranul telefonului.</li></ol><p style="margin:10px 0 0">Dacă opțiunea lipsește, folosește linkul copiat în <b>Chrome</b>.</p>`;
+        m.textContent = "⋮ → Instalează aplicația";   // promptul nu e disponibil: doar indiciul vizual, un singur rând
       };
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
