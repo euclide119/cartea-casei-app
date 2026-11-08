@@ -74,7 +74,7 @@
       const trimite = async () => { const pin = inp.value.trim(); if (!pin) { m.textContent = "scrie codul"; return; } go.disabled = true; m.textContent = "se verifică…";
         try { const r = await fetch(window.CC_STARE ? window.CC_STARE.FN : "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: window.CC_ADM.token, pin }) }), j2 = await r.json();
           if (!r.ok) { m.textContent = j2.error || "cod greșit"; go.disabled = false; return; }
-          window.CC_ADM.n = 2; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(window.CC_ADM); location.reload();
+          window.CC_ADM.n = 2; if (j2.token) window.CC_ADM.token = j2.token; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(window.CC_ADM); location.reload();
         } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
       go.onclick = trimite; inp.onkeydown = e => { if (e.key === "Enter") trimite(); }; }
   }

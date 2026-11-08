@@ -11,7 +11,7 @@
   "use strict";
   if (window.parent !== window) return;
   const FN = "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod";
-  const TEST = /\/test\//.test(location.pathname);
+  const TEST = /\/test\//.test(location.pathname) || /[?&]test=1/.test(location.search);
   const lg = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v)); } catch (e) { return null; } };
   const hm = (location.hash.match(/qr=(ad_[A-Za-z0-9_-]+)/) || [])[1] || "";
   const hint = lg("cc-adm") === "1";
@@ -65,8 +65,15 @@
       const d = document.createElement("div"); d.id = "cc-tt-scan";
       d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;display:flex;align-items:center;justify-content:center;padding:28px;font:16px/1.5 -apple-system,system-ui,sans-serif;text-align:center";
       d.innerHTML = `<div style="max-width:420px"><div style="font-size:44px">📷</div><h1 style="font:700 22px -apple-system,system-ui,sans-serif;margin:10px 0">${titlu}</h1><p style="margin:0 0 14px">${text}</p>
-<p style="margin:0;font-size:14px;color:#3d4456"><b>Android:</b> scanează cu aparatul foto sau Google Lens, deschide în Chrome.<br><b>iPhone:</b> scanează cu aparatul foto (nu cu altă aplicație) și deschide în Safari.</p></div>`;
+${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><input id="cc-tt-cod" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="cod raport" aria-label="cod raport" style="font:700 18px ui-monospace,Menlo,monospace;letter-spacing:.15em;width:8em;padding:10px 12px;border:1.5px solid #1a1e2a;border-radius:10px;background:#fff;color:#1a1e2a"><button id="cc-tt-cod-go" type="button" style="font:700 15px -apple-system,system-ui,sans-serif;border:0;border-radius:10px;padding:11px 16px;background:#1a1e2a;color:#fffdf8">Intră cu cod</button><div id="cc-tt-cod-m" role="status" style="flex-basis:100%;min-height:18px;font-size:14px;color:#9a2a1f"></div></div>` : ""}<p style="margin:0;font-size:14px;color:#3d4456"><b>Android:</b> scanează cu aparatul foto sau Google Lens, deschide în Chrome.<br><b>iPhone:</b> scanează cu aparatul foto (nu cu altă aplicație) și deschide în Safari.</p></div>`;
       document.body.appendChild(d);
+      const go = d.querySelector("#cc-tt-cod-go"); if (go) { const inp = d.querySelector("#cc-tt-cod"), m = d.querySelector("#cc-tt-cod-m");
+        const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul raportului"; return; } go.disabled = true; m.textContent = "se verifică…";
+          try { const r = await post({ actiune: "cod_test", cod }); if (!r.ok || !r.j.token) { m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
+            const lista = r.j.lista || [], id0 = lista[0] && lista[0].id; await salveaza({ adm: 1, c: 1, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id: id0, lista });
+            const alege = (lg("cc-adm-id") && lista.some(p => p.id === lg("cc-adm-id"))) ? lg("cc-adm-id") : id0; if (alege) { lg("cc-adm-id", alege); try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} } location.reload();
+          } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
+        go.onclick = intra; inp.onkeydown = e => { if (e.key === "Enter") intra(); }; }
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
   }
@@ -136,12 +143,12 @@
       b.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:9000;display:flex;gap:6px;align-items:center;background:rgba(255,253,248,.97);color:#1a1e2a;border:1.5px solid #1a1e2a;border-radius:12px;padding:6px 8px;font:600 12px -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(26,30,42,.3);max-width:560px;margin:0 auto";
       const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const cur = decodeURIComponent((location.hash || "").replace(/^#/, "")).split(".")[0];
-      b.innerHTML = `<span style="white-space:nowrap">${s.ca_client ? "👁 client" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
-<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Înapoi la Admin" : "Vezi ca client"}</button>
+      b.innerHTML = `<span style="white-space:nowrap">${s.c || s.ca_client ? "👁 client" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
+${s.c ? "" : `<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Înapoi la Admin" : "Vezi ca client"}</button>`}
 <span id="cc-tt-v" style="color:#4a5063;font-weight:600"></span>`;
       document.body.appendChild(b);
       b.querySelector("#cc-tt-sel").onchange = e => { lg("cc-adm-id", e.target.value); location.hash = "#" + e.target.value; location.reload(); };
-      b.querySelector("#cc-tt-cl").onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (1357, verificat pe server) deblochează datele complete în această vedere
+      const cl = b.querySelector("#cc-tt-cl"); if (cl) cl.onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (1357, verificat pe server) deblochează datele complete în această vedere
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
     addEventListener("hashchange", () => { const h = decodeURIComponent(location.hash.replace(/^#/, "")).split(".")[0]; if (h) lg("cc-adm-id", h); });
