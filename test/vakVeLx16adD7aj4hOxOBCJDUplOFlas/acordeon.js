@@ -16,7 +16,7 @@
     { t: "Prețul", p: "Cât costă tranzacția până la capăt; evaluarea față de piață e în datele fine.", s: ["costuri"] },
     { t: "Cronologia locului", p: "Cum s-a schimbat locul de-a lungul anilor, de la primele hărți până acum.", s: ["cronologie"] },
     { t: "De discutat între părți", p: "Ce merită clarificat cu cealaltă parte înainte de semnare.", s: ["negociere"] },
-    { t: "🔒 Date fine · la comandă", p: "Documente și analize în plus pentru această proprietate: câteva sunt deschise, restul se deschid la comandă.", s: ["g7_sinteza", "g7_cu", "g7_privat", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
+    { t: "🔒 Date fine · la comandă", p: "Documente și analize în plus pentru această proprietate: câteva sunt deschise, restul se deschid la comandă.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
   ];
   const PRIV = new Set();
   /* ce conțin datele fine, lista lui Manu din 02.11.2026; se arată și când modulele nu sunt deschise */
