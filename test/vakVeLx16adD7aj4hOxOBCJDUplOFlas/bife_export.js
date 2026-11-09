@@ -56,9 +56,9 @@
             if (c1.matches(".cards")) { [...c1.children].forEach(x => { if (viz(x) && !x.matches(SARI) && cuv(x) + x.querySelectorAll("svg,img,canvas").length > 0) adauga(x, "card"); }); return; }
             if (c1.matches(".cr-l")) { $$(":scope > .cr-e", c1).forEach(x => { if (viz(x)) adauga(x, "card"); }); return; }
             if (c1.matches(CARD)) { adauga(c1, "card"); return; }
-            if (c1.matches(FIGC) || c1.matches("svg,canvas") || (c1.matches("img") && c1.getBoundingClientRect().width >= 150)) { if (c1.getBoundingClientRect().width >= 80 || c1.classList.contains("bf-ascuns")) adauga(c1, "fig"); return; }
+            if (c1.matches(FIGC) || c1.matches("svg,canvas") || (c1.matches("img") && (c1.classList.contains("bf-ascuns") || c1.getBoundingClientRect().width >= 150))) { if (c1.getBoundingClientRect().width >= 80 || c1.classList.contains("bf-ascuns")) adauga(c1, "fig"); return; }
             /* o grilă de carduri (copii cu aceeași clasă, fiecare cu text): fiecare copil e o fereastră */
-            { const cl = x => String(x.className.baseVal ?? x.className).replace(/\bac-n2b?\b/g, "").replace(/\s+/g, " ").trim(), kids = [...c1.children].filter(x => viz(x) && !x.matches(SARI));
+            { const cl = x => String(x.className.baseVal ?? x.className).replace(/\b(ac-n2b?|bf-off|bf-ascuns)\b/g, "").replace(/\s+/g, " ").trim(), kids = [...c1.children].filter(x => viz(x) && !x.matches(SARI));
               if (kids.length >= 2 && !c1.matches("ul,ol,table,tbody,.scroll") && kids.every(k => k.tagName === kids[0].tagName && cl(k) && cl(k) === cl(kids[0]) && cuv(k) >= 3)) { kids.forEach(k => adauga(k, "card")); return; } }
             if (c1.querySelector(FIGC + ",svg[role=img],canvas,.cards,.box,.rc,.hero,img")) { umbla(c1); return; }
             if (c1.matches("table,.scroll,ul,ol,p") || cuv(c1) >= 3) {
@@ -247,6 +247,13 @@ body.bf-sel .ac-h{cursor:default}
     const m = $('#ac-mod button[data-m="Raport"]'); if (m && m.getAttribute("aria-pressed") !== "true" && !a.__bifeRaport) { a.__bifeRaport = 1; m.click(); }
     a.caps().forEach(c => { if (c.privat || c.el.classList.contains("ac-gol")) return; c.s.forEach(id => { const s = document.getElementById(id); if (s && s.dataset.acAre === "1") { if (!s.classList.contains("ac-lung") && !c.mai.dataset.on) s.classList.add("ac-lung"); if (stab < 4 && window.CC_LENES) { try { window.CC_LENES.arata(s); } catch (e) {} } } }); });
   }
+  /* conținutul se construiește la derulare (încărcare întârziată): o singură trecere rapidă prin pagină, la început, ca structura (și cheile) să fie aceeași indiferent cât a derulat omul */
+  let baleiat = 0;
+  async function baleiaza() {
+    baleiat = 1; const y0 = scrollY, h = () => document.documentElement.scrollHeight;
+    try { for (let y = 0; y < h(); y += Math.round(innerHeight * .8)) { scrollTo(0, y); await new Promise(r => setTimeout(r, 140)); } await new Promise(r => setTimeout(r, 400)); } catch (e) {}
+    scrollTo(0, y0); baleiat = 2; stab = 0; lastN = -1;
+  }
   let SELD = null, SELP = false;
   async function incarcaSel() {
     if (SELP) return; SELP = true;
@@ -270,7 +277,9 @@ body.bf-sel .ac-h{cursor:default}
     css(); document.body.classList.add(SEL ? "bf-sel" : "bf");
     mentine();
     if (SEL) incarcaSel();
+    if (baleiat === 1) return;
     scaneaza();
+    if (baleiat === 0 && stab >= 2) { baleiaza(); return; }
     if (EL.length !== lastN) { lastN = EL.length; stab = 0; } else stab++;
     if (!pregatit) { pregatit = true; incarca(); }
     if (SEL) { aplicaSel(); return; }
