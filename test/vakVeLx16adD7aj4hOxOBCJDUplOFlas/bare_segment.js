@@ -1,6 +1,7 @@
 /* Raportul casei · bara de scor segmentată și interactivă (v82.5.0, 07.11.2026, cerut de Manu: „bare mai întrepătrunse, cu linii mici verticale, fine, interactive, cu îngroșare în locul săgeții”).
    Modul nou, peste `.vb-t` (bara cu săgeată din vecinatate.js, folosită la capitole și la secțiuni): fără schimbarea datelor sau a săgeții.
    · 30–60 de linii verticale fine, culoare continuă roșu → chihlimbar → verde (după poziția fiecărei linii);
+   · v82.10.0: liniile au lățime egală și poziție fixă; îngroșarea e doar vizuală (scaleX), ca săgeata să cadă exact peste linia marcată;
    · liniile până la săgeată sunt pline, cele de după sunt estompate; în jurul săgeții liniile se îngroașă și cresc (clopot);
    · hover / atingere / deget tras: accentul urmărește cursorul și arată valoarea din acel punct („63 %”); la ieșire revine la săgeată;
    · tastatură: bara are focus, săgețile stânga/dreapta mută accentul; fără animații pentru cine cere „reduce motion”;
@@ -10,7 +11,7 @@
   if (window.parent !== window && /[?&]embed=1/.test(location.search)) return;
   const css = `
 .vb-t.sg{border:0!important;background:none!important;height:26px;display:flex;align-items:flex-end;gap:1.5px;padding:0;cursor:crosshair;touch-action:pan-y;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.vb-t.sg s{display:block;text-decoration:none;flex:1 1 0;min-width:1px;border-radius:1px;transition:height .12s ease-out,flex-grow .12s ease-out,opacity .12s}
+.vb-t.sg s{display:block;text-decoration:none;flex:1 1 0;min-width:1px;border-radius:1px;transform-origin:50% 100%;transition:transform .12s ease-out,opacity .12s}
 .vb-t.sg.sg-mic{height:12px}.vb-t.sg.sg-mic s{border-radius:0}
 .vb-t.sg i{top:-9px!important;border-left-width:6px!important;border-right-width:6px!important;border-top-width:8px!important;pointer-events:none;z-index:2;transition:left .12s ease-out}
 .vb-t.sg b.sg-v{position:absolute;top:-24px;transform:translateX(-50%);font:700 12px/1 var(--mono,monospace);color:#1a1e2a;background:#fff;border:1px solid #1a1e2a;border-radius:6px;padding:3px 6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:3}
@@ -47,7 +48,7 @@
         const dg = (p - lim) / (SIG * 0.6), ga = Math.exp(-dg * dg);   // accent permanent la săgeată (mai îngust)
         const gg = Math.max(g, ga * 0.9);
         s.style.height = Math.round(inalt * (0.28 + 0.72 * gg)) + "px";
-        s.style.flexGrow = (1 + 3 * gg).toFixed(2);
+        s.style.transform = "scaleX(" + (1 + 1.1 * gg).toFixed(2) + ")";   // v82.10.0: îngroșare vizuală, liniile rămân egale și pe loc (fără flex-grow)
         s.style.opacity = p <= lim ? 1 : (0.4 + 0.55 * g);
         s.style.background = col(p, gg);
       });
@@ -62,7 +63,8 @@
     el.addEventListener("touchmove", e => { if (e.touches[0]) arata(dinX(e.touches[0].clientX)); }, { passive: true }); el.addEventListener("touchend", () => setTimeout(reset, 900));
     el.addEventListener("keydown", e => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return; e.preventDefault(); const c = clamp((activ ? parseFloat(v.style.left) / 100 : pct / 100) + (e.key === "ArrowRight" ? 0.05 : -0.05), 0, 1); arata(c); });
     el.addEventListener("blur", reset);
-    const mk = t[clamp(Math.floor(pct / 100 * N), 0, N - 1)]; if (mk) { mk.style.outline = "1.5px solid #1a1e2a"; mk.style.outlineOffset = "0"; mk.style.zIndex = 1; }
+    const ix = clamp(Math.round(pct / 100 * N - 0.5), 0, N - 1), mk = t[ix]; ar.style.left = ((ix + 0.5) / N * 100).toFixed(2) + "%"; if (mk) {   // săgeata se așază pe centrul liniei marcate (≤ 1/2 pas de linia exactă)
+    mk.style.outline = "1.5px solid #1a1e2a"; mk.style.outlineOffset = "0"; mk.style.zIndex = 1; }
     deseneaza(pct / 100, pct);
   }
   const scan = () => document.querySelectorAll(".vb-t:not([data-sg])").forEach(pune);
