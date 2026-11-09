@@ -2,6 +2,7 @@
    ceasul cu starea zi / amurg / noapte, bara celor 24 de ore colorat?, orele de zi ?i de noapte pe luna aleas?, preseturile 21 dec / 20 mar / 21 iun,
    butoanele ?Mi?c? ora? ?i ?Mi?c? lunile?, graficul zi / noapte pe tot anul ?i pragul de 1,5 h de soare direct la 21 decembrie.
    Se monteaz? singur ?n #insorire, dup? coloanele cu cifre; se actualizeaz? c?nd se schimb? luna sau ora (?nvele?te renderSun din index.html).
+   v82.10.0: buton de play rotund pe poză (pornește/oprește animația orelor), controalele și barele lunilor/orelor imediat sub poză, vizibile din prima.
    Calcul astronomic (SunCalc, ca ?n pagin?): f?r? umbrele cl?dirilor reale. Nu modific? nimic din capitolul existent. */
 (function () {
   const sec = document.getElementById("insorire");
@@ -22,9 +23,12 @@
 .ip-clock b{font:700 28px/1 var(--mono);letter-spacing:-.02em}
 .ip-st{font:600 12px var(--font);padding:3px 10px;border-radius:99px;color:#fff}
 .ip-ch{display:flex;flex-wrap:wrap;gap:6px}
-#ip-ctl{position:absolute;left:8px;top:8px;z-index:3;background:none;padding:0;margin:0;max-width:60%}#ip-ctl .ip-ch{flex-direction:column;align-items:flex-start;gap:3px}
-#ip-ctl .ip-ch button{font:700 12.5px var(--font);padding:2px 8px;background:rgba(255,255,255,.88);color:#1a1e2a;border:0;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+#ip-ctl{margin:10px 0 6px;padding:0;background:none}#ip-ctl .ip-ch{gap:8px}
+#ip-ctl .ip-ch button{font:600 13.5px var(--font);padding:7px 12px;min-height:36px;background:#fff;color:#1a1e2a;border:1px solid #c9c3b6}
 #ip-ctl .ip-ch button[aria-pressed="true"]{background:#f2b04a;color:#1a1e2a;border-color:#f2b04a}
+#ip-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:68px;height:68px;border-radius:50%;border:2px solid #fff;background:rgba(26,30,42,.82);color:#fff;font:700 28px/1 var(--font);display:flex;align-items:center;justify-content:center;padding:0 0 0 4px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.5);transition:opacity .2s}
+#hours .nlab{color:#fff!important}
+#ip-play.on{padding:0;opacity:.38;font-size:24px}#ip-play.on:hover,#ip-play.on:focus-visible{opacity:1}
 .ip-ch button{font:500 12.5px var(--font);padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
 .ip-ch button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .ip-24{display:flex;height:30px;border-radius:6px;overflow:hidden;border:1px solid var(--line);position:relative}
@@ -95,9 +99,14 @@
     box.querySelectorAll("button[data-m]").forEach(b => b.onclick = () => { opre\u0219te(); month = +b.dataset.m; renderSun(); });
     box.querySelectorAll("button[data-p]").forEach(b => b.onclick = () => { const k = b.dataset.p; if (joc && joc.k === k) { opre\u0219te(); deseneaza(); return; } opre\u0219te();
       joc = { k, t: setInterval(() => { if (k === "ora") { hour = (hour + 1) % 24; } else { month = ORDINE[(ORDINE.indexOf(month) + 1) % 12]; } renderSun(); }, k === "ora" ? 450 : 900) }; deseneaza(); });
-    // butoanele stau imediat sub imaginea interactivă și plutesc până se termină secțiunea
-    let ctl = document.getElementById("ip-ctl"); if (!ctl) { ctl = document.createElement("div"); ctl.id = "ip-ctl"; const bx = sec.querySelector(".box"); if (bx) bx.appendChild(ctl); else sec.firstElementChild.after(ctl);   /* butoanele stau pe poză, nu în bară: lunile și orele vin imediat sub ea */ }
+    // v82.10.0 (Manu, 09.11.2026): butonul de play stă pe poză, centrat; presetările, „Mișcă ora” și „Mișcă lunile” stau imediat sub poză, apoi barele lunilor și orelor, înaintea coloanelor cu cifre
+    const bx = sec.querySelector(".box");
+    let ctl = document.getElementById("ip-ctl"); if (!ctl) { ctl = document.createElement("div"); ctl.id = "ip-ctl"; ctl.className = "ac-k1"; if (bx) bx.after(ctl); else sec.firstElementChild.after(ctl); }
     const ch = box.querySelector(".ip-ch"); if (ch) ctl.replaceChildren(ch);
+    let pl = document.getElementById("ip-play"); if (!pl && bx) { pl = document.createElement("button"); pl.id = "ip-play"; pl.type = "button"; bx.appendChild(pl);
+      pl.onclick = () => { if (joc) { oprește(); deseneaza(); } else { const b = document.querySelector('#ip-ctl button[data-p="ora"]'); if (b) b.click(); } }; }
+    if (pl) { pl.classList.toggle("on", !!joc); pl.textContent = joc ? "\u23f8" : "\u25b6"; pl.setAttribute("aria-label", joc ? "Oprește animația" : "Pornește animația soarelui"); }
+    ["months", "hours"].forEach(id => { const e = document.getElementById(id); if (e) e.classList.add("ac-k1"); });   /* lunile și orele rămân vizibile din prima (acordeon.js: ac-k1) */
   }
 
   const orig = renderSun;

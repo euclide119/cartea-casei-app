@@ -26,9 +26,13 @@ span.pzc{border:0!important;background:none!important;padding:2px 4px!important;
 .h79-f figcaption{padding:8px 12px;font:12.5px/1.4 var(--font);color:var(--muted);background:var(--panel)}
 .h79-pin{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;background:#ff3b5c;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .h79-gol{font:13px/1.5 var(--font);color:var(--muted)}
+/* v82.10.0 (Manu, 09.11.2026): la inundații se văd toate straturile (și apa care băltește), nu doar 3 + „alte straturi” */
+.h79 .ov-st .ov-extra{display:inline-block!important}.h79 .ov-st .ov-alte{display:none!important}
 @media print{#g7_istoric,#g7_juridic,#g7_extras,#g7_comercial,#g7_tehnic,#g7_utilitati,#g7_pug,#g7_proiecte,#g7_preturi,#g7_afis,#g7_privat,#evaluare,#proiecte,nav [data-t^="g7_"],#cc-serv-nav,#surse,#stare{display:none!important}.hm-ch,.g7-ch,.pzchips,.h79-ctl{position:static}}`;
   document.head.appendChild(st);
 
+  /* v82.10.0: toate straturile bifate din prima; „fără date” = stratul nu există pentru proprietate (ape, apă care băltește), „nu sunt zone” = hartă oficială fără zone pe perioada aceea.
+     Din 10 proprietăți din p/, X.balta lipsește la 9 (8 fără straturi de inundații, 1 cu straturi dar fără extra); există doar la g7_parcela. */
   /* ---------- inundații: 10 / 100 / 1000 de ani, râuri și ploi intense, pe satelit și pe planșa regiunii ---------- */
   const COL = { 10: "#dc2626", 100: "#f58220", 1000: "#facc15" };
   let gata = null;
@@ -45,17 +49,17 @@ span.pzc{border:0!important;background:none!important;padding:2px 4px!important;
     /* fiecare hartă are butoanele ei, imediat sub imagine: ce bifezi se vede pe harta de deasupra (Manu, 03.11.2026) */
     w.innerHTML = `<div class="h79-g">${[["loc", "Pe satelit, 3 × 3 km în jurul parcelei"], ["reg", "Planșa regiunii, 70 × 70 km, satelit"]].map(([z, c]) => {
       const are = (t, p) => ALL.some(s => s.z === z && s.t === t && (p == null || s.p === p));
-      return `<figure class="h79-f" data-fz="${z}"><div data-z="${z}"><img src="${P}${O.baza[z]}" alt="${c}"><span class="h79-pin"></span></div>
-        <div class="h79-ctl" role="group" aria-label="straturile hărții">${O.perioade.map(p => { const ok = ["F", "P"].some(t => are(t, String(p))); return `<button type="button" data-p="${p}" aria-pressed="${ok && String(p) === "100"}"${ok ? "" : " disabled"}><i style="background:${COL[p]}"></i>o dată la ${p} de ani${ok ? "" : ": nu sunt zone"}</button>`; }).join("")}
-          ${TIP.map(([k, t]) => { const ok = are(k); return `<button type="button" data-t="${k}" aria-pressed="${ok}"${ok ? "" : " disabled"}>${CUL[k] ? `<i style="background:${CUL[k]}"></i>` : ""}${t}${ok ? "" : ": nu sunt zone"}</button>`; }).join("")}</div>
+      return `<figure class="h79-f${z === "reg" ? " ac-d2" : ""}" data-fz="${z}"><div data-z="${z}"><img src="${P}${O.baza[z]}" alt="${c}"><span class="h79-pin"></span></div>
+        <div class="h79-ctl" role="group" aria-label="straturile hărții">${O.perioade.map(p => { const ok = ["F", "P"].some(t => are(t, String(p))); return `<button type="button" data-p="${p}" aria-pressed="${ok}"${ok ? "" : " disabled"}><i style="background:${COL[p]}"></i>o dată la ${p} de ani${ok ? "" : ": nu sunt zone"}</button>`; }).join("")}
+          ${TIP.map(([k, t]) => { const ok = are(k), fd = k === "A" || k === "B"; return `<button type="button" data-t="${k}" aria-pressed="${ok}"${ok ? "" : " disabled"}>${CUL[k] ? `<i style="background:${CUL[k]}"></i>` : ""}${t}${ok ? "" : fd ? ": fără date" : ": nu sunt zone"}</button>`; }).join("")}</div>
         <figcaption>${c}</figcaption></figure>`; }).join("")}</div>
-      <p class="h79-gol">Zonele pentru 10, 100 și 1000 de ani sunt cele oficiale (hărțile de hazard). Apa care băltește e o <b>estimare din relief</b> (rezoluție 30 m): arată adânciturile în care apa de ploaie nu are scurgere; nu e hartă oficială.</p>`;
+      <p class="h79-gol ac-d2">Zonele pentru 10, 100 și 1000 de ani sunt cele oficiale (hărțile de hazard). Apa care băltește e o <b>estimare din relief</b> (rezoluție 30 m): arată adânciturile în care apa de ploaie nu are scurgere; nu e hartă oficială.</p>`;
     vechi.after(w);
     ALL.forEach(s => { const c = w.querySelector(`[data-z="${s.z}"]`), i = document.createElement("img"); i.className = "l"; i.alt = ""; if (window.CC_LENES && document.body.classList.contains("ac")===false||!window.CC_ACORDEON||!window.CC_ACORDEON.oprit()) i.dataset.lz = P + s.fn; else i.src = P + s.fn; i.dataset.t = s.t; i.dataset.p = s.p; c.insertBefore(i, c.querySelector(".h79-pin")); });
     w.querySelectorAll("figure").forEach(f => {
-      const stare = { t: { F: true, P: true, A: true, B: true }, p: { 10: false, 100: true, 1000: false } };
+      const stare = { t: { F: true, P: true, A: true, B: true }, p: { 10: true, 100: true, 1000: true } };   /* v82.10.0 (Manu, 09.11.2026): toate straturile pornesc bifate și se pot debifa, inclusiv apa care băltește */
       const apl = () => f.querySelectorAll("img.l").forEach(i => { const on = i.dataset.p === "x" ? stare.t[i.dataset.t] : stare.t[i.dataset.t] && stare.p[i.dataset.p]; i.style.opacity = on ? 1 : 0; });
-      f.querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); if (b.dataset.p) stare.p[b.dataset.p] = on; else stare.t[b.dataset.t] = on; apl(); });
+      f.querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); if (b.dataset.p) stare.p[b.dataset.p] = on; else stare.t[b.dataset.t] = on; if (on && window.CC_LENES) window.CC_LENES.arata(f); apl(); });
       apl();
     });
   }

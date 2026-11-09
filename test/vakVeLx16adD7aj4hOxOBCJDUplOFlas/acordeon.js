@@ -215,6 +215,8 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
     function umbla(p) {
       [...p.children].forEach(el => {
         if (!vizibil(el) || el.matches(".rc-cap,.ac-pr,.ov")) return;
+        if (el.matches(".ac-k1")) return;                                      // v82.10.0: element marcat de modul „rămâne din prima” (balanța argumentelor), nu intră în limita de cuvinte/figuri
+        if (el.matches(".ac-d2")) { el.classList.add("ac-n2"); return; }        // v82.10.0: element marcat de modul „la mai mult” (fricile, antecontractul)
         if (el.matches(".hero,.verd,.vh,.cards,.hx-k,.g7-sint,.g7-k,.g7-ord,h1,h2,.rc")) return;   // calculatorul de costuri rămâne întreg, cu bifele și calculele (Manu, 06.11.2026)
         if (el.matches(RAND)) return;
         /* listele lungi de evenimente (cronologia): primele 4 din prima, restul la „mai mult” (Manu, 06.11.2026) */
@@ -243,7 +245,7 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
     const are = S.some(s => s.classList.contains("ac-n2") || s.querySelector(".ac-n2"));
     c.are2 = are; c.mai.classList.toggle("ac-vad", are && CAPS.indexOf(c) === deschis);
     S.forEach(s => { $$("h3", s).forEach(h => { const u = h.nextElementSibling; if (!h.closest(".ac-n2") && !h.classList.contains("ac-n2") && u && !vizibil(u)) h.classList.add("ac-n2"); }); });
-    S.forEach(s => { $$("div", s).reverse().forEach(b => { if (b.closest(".ov,.hero")) return; if (!vizibil(b) || b.classList.contains("ac-n2")) return; const are = (b.innerText || "").trim() || [...b.querySelectorAll(FIG + ",input,iframe,button")].some(vizibil); if (!are) b.classList.add("ac-n2"); }); });
+    S.forEach(s => { $$("div", s).reverse().forEach(b => { if (b.closest(".ov,.hero,.ac-k1")) return;   /* v82.10.0: nici părțile din interiorul unui element ac-k1 (segmentele barei de ore, cu text ascuns) nu se marchează „goale” */ if (!vizibil(b) || b.classList.contains("ac-n2")) return; const are = (b.innerText || "").trim() || [...b.querySelectorAll(FIG + ",input,iframe,button")].some(vizibil); if (!are) b.classList.add("ac-n2"); }); });
     S.forEach(s => window.CC_PLASARE && window.CC_PLASARE.tot(s));
     try { window.CC_CONTRAST && window.CC_CONTRAST(); } catch (e) {}
   }
@@ -276,7 +278,7 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
   /* „pdf și cereri” apar abia după ce s-au deschis toate capitolele; butonul de comandă le arată și mai devreme */
   const CHEIE = () => "cc-parcurs:" + (typeof D !== "undefined" && D ? D.id : "");
   function parcurs(i) { let v = []; try { v = JSON.parse(sessionStorage.getItem(CHEIE())) || []; } catch (e) {} if (i != null && !v.includes(i)) { v.push(i); try { sessionStorage.setItem(CHEIE(), JSON.stringify(v)); } catch (e) {} }
-    const gata = tot || CAPS.every((c, k) => c.privat || c.el.classList.contains("ac-gol") || v.includes(k)); document.body.classList.toggle("ac-gata", gata); }
+    const gata = tot || CAPS.every((c, k) => c.privat || (c.el && c.el.classList.contains("ac-gol")) || v.includes(k))   /* v82.10.0: pe rețea lentă un capitol poate să nu aibă încă cardul */; document.body.classList.toggle("ac-gata", gata); }
   function stare(i, on) {
     if (on) parcurs(i);
     const c = CAPS[i]; c.el.classList.toggle("ac-des", on); c.el.querySelector(".ac-h").setAttribute("aria-expanded", on);
@@ -312,7 +314,9 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
     }
     if (i === 0) document.body.classList.add("ac-cl");
     c.mai.dataset.on = "1"; plat(i, true);
-    sectiuni(c).forEach(s => { s.classList.add("ac-lung"); if (window.CC_PLASARE) window.CC_PLASARE.tot(s); });
+    sectiuni(c).forEach(s => { s.classList.add("ac-lung"); if (window.CC_LENES) window.CC_LENES.arata(s); if (window.CC_PLASARE) window.CC_PLASARE.tot(s); });
+    /* v82.10.0: ce apare la „mai mult” trebuie să se încarce efectiv (imagini cu data-lz / data-lzh, inclusiv straturile hărților create după deschidere) */
+    setTimeout(() => { if (window.CC_LENES && c.mai.dataset.on) sectiuni(c).forEach(s => window.CC_LENES.arata(s)); }, 900);
     c.mai.textContent = "mai puțin";
     scrollBy(0, c.mai.getBoundingClientRect().top - y0);
     c.mai.classList.add("ac-sus");

@@ -1,4 +1,5 @@
-/* Raport în creștere — capitolul „Frici și negociere (antecontract)".
+/* v82.10.0 (Manu, 09.11.2026): la deschidere apare întâi balanța argumentelor (pentru cumpărător, pentru vânzător, în ambele sensuri, cu forța fiecăruia); fricile și antecontractul vin la „mai mult” (ac-k1 = rămâne la nivelul 1, ac-d2 = trece la nivelul 2; acordeon.js).
+   Raport în creștere — capitolul „Frici și negociere (antecontract)".
    Din datele proprietății (D, global din index.html) scoate: (1) fricile obișnuite ale cumpărătorului și ale vânzătorului, cu ce arată datele aici;
    (2) pârghiile de preț: ce argument are cumpărătorul ca să coboare prețul, ce argument are vânzătorul ca să-l urce, cât de tare e fiecare;
    (3) ce se scrie în antecontract. Textele de lege sunt din Codul civil (legislatie/texte/L287_2009.txt, consolidat la 03.05.2026).
@@ -143,15 +144,15 @@
       `<span class="ng-w"><span class="ng-dir ${dir[x.dir][1]}">${dir[x.dir][0]}</span><span class="ng-tm">interval</span><b class="ng-pc">${nf(x.pct[0], 1)}–${nf(x.pct[1], 1)}%</b>${pretRef ? `<span class="ng-tm">${eur(pretRef * x.pct[0] / 100)}–${eur(pretRef * x.pct[1] / 100)}</span>` : ""}${dots(x.w)}</span></div>`;
     const jos = L.filter(x => x.dir === "j"), sus = L.filter(x => x.dir === "s"), mix = L.filter(x => x.dir === "n");
     sec.innerHTML = `<div><h2>Negociere și antecontract: puncte de discuție</h2><p class="lead">Ce îi îngrijorează pe oameni la o tranzacție, ce arată datele despre această proprietate și ce puncte de discuție poate aduce fiecare parte, înainte de antecontract. Argumentele sunt fapte din raport cu sursă; nu sunt o evaluare și nu sunt o concluzie juridică.</p></div>
-      <div class="ng-sec"><h3>Ce îngrijorează cumpărătorul: puncte de discuție</h3><div class="ng-two">${Fr.B.map(fear).join("")}</div></div>
-      <div class="ng-sec"><h3>Ce îngrijorează vânzătorul: puncte de discuție</h3><div class="ng-two">${Fr.S.map(fear).join("")}</div></div>
-      <div class="ng-sec keep"><h3>Oportunități de negociere pe proprietatea asta</h3>
+      <div class="ng-sec keep ac-k1" id="ng-balanta"><h3>Oportunități de negociere pe proprietatea asta</h3>
         <div class="ng-two">${totBloc(Tj, "Interval total, pentru cumpărător", "Oportunități de a ajunge la un preț mai jos.")}${totBloc(Ts, "Interval total, pentru vânzător", "Oportunități de a susține un preț mai sus.")}</div>
         <p class="ng-lg">Fiecare element are o notă: cât la sută din preț poate muta negocierea, ca marjă orientativă (ipoteză E, calibrată pe forța argumentului; se verifică la prima tranzacție reală). ${dots(3)} forță mare · ${dots(1)} forță mică. Prețul de referință: ${pretRef ? eur(pretRef) + (ref.cerut ? " (cel cerut)" : " (estimarea din capitolul Estimare valoare)") : "completează fișa din capitolul Estimare valoare ca să vezi sumele în euro"}.</p>
         <div class="ng-two"><div><b>Pentru cumpărător: ce poate duce prețul mai jos</b>${jos.length ? jos.map(lev).join("") : '<p class="ng-lg">Datele noastre nu dau un argument tare aici.</p>'}</div>
         <div><b>Pentru vânzător: ce poate susține prețul mai sus</b>${sus.length ? sus.map(lev).join("") : '<p class="ng-lg">Datele noastre nu dau un argument tare aici.</p>'}</div></div>
         ${mix.length ? `<div><b>Argumente în ambele sensuri</b>${mix.map(lev).join("")}</div>` : ""}</div>
-      <div class="ng-sec"><h3>Ce intră în antecontract</h3><ul class="ng-u">
+      <div class="ng-sec ac-d2"><h3>Ce îngrijorează cumpărătorul: puncte de discuție</h3><div class="ng-two">${Fr.B.map(fear).join("")}</div></div>
+      <div class="ng-sec ac-d2"><h3>Ce îngrijorează vânzătorul: puncte de discuție</h3><div class="ng-two">${Fr.S.map(fear).join("")}</div></div>
+      <div class="ng-sec ac-d2"><h3>Ce intră în antecontract</h3><ul class="ng-u">
         <li><b>Ce e un antecontract.</b> Promisiunea de a contracta trebuie să conțină toate clauzele fără de care contractul n-ar putea fi executat; la neexecutare ai daune-interese sau, la promisiunea de vânzare, o hotărâre care ține loc de contract, cu prescripție de 6 luni de la data la care contractul trebuia încheiat (Cod civil art. 1.279, 1.669).</li>
         <li><b>Banii dați la semnare.</b> Spune clar ce sunt: arvună (art. 1.544–1.546), clauză penală (art. 1.538) sau avans (art. 1.670: fără stipulație contrară, sumele sunt avans din preț).</li>
         <li><b>Notarea în CF.</b> Antecontractul se poate nota dacă promitentul e titular în CF și antecontractul prevede termenul de încheiere (art. 906): protejează cumpărătorul.</li>
@@ -159,7 +160,7 @@
         <li><b>Termen și penalități.</b> Data contractului final și ce se întâmplă la întârziere.</li>
         <li><b>Predarea și starea.</b> Ce se predă, în ce stare; ce a văzut cumpărătorul. Vânzătorul garantează evicțiunea și viciile (art. 1.672).</li></ul>
         <div class="ng-tm">Temei: Codul civil (Legea 287/2009), text consolidat la 03.05.2026, copiat în legislatie/texte/L287_2009.txt. Fraza de pe pagină e rezumatul nostru al textului, nu textul.</div></div>
-      <p class="ng-lg">Serviciu privat de analiză. Raportul constată fapte; concluziile juridice le semnează doar avocatul partener. Înainte de semnare, antecontractul se citește cu avocatul sau cu notarul.</p>`;
+      <p class="ng-lg ac-d2">Serviciu privat de analiză. Raportul constată fapte; concluziile juridice le semnează doar avocatul partener. Înainte de semnare, antecontractul se citește cu avocatul sau cu notarul.</p>`;
     last = D.id;
   }
 
@@ -184,7 +185,8 @@
   }
   function porneste() {
     css(); montaj();
-    setInterval(() => { try { montaj(); deepLink('negociere'); { const pr = JSON.stringify(window.RIC_EV_PRET || {}); if (pr !== lastPr) { lastPr = pr; if (typeof D !== 'undefined' && D) randare(); } } if (typeof D !== "undefined" && D && D.id !== last) randare(); } catch (e) { console.warn("negociere", e); } }, 800);
+    setInterval(() => { try { const cn = document.getElementById("cc2-neg"); if (cn && !cn.classList.contains("ac-d2")) cn.classList.add("ac-d2");   /* v82.10.0: blocul client „de discutat între părți” (capitole_client.js: riscuri + balanță scurtă) trece la „mai mult”, ca balanța argumentelor să fie prima */
+      montaj(); deepLink('negociere'); { const pr = JSON.stringify(window.RIC_EV_PRET || {}); if (pr !== lastPr) { lastPr = pr; if (typeof D !== 'undefined' && D) randare(); } } if (typeof D !== "undefined" && D && D.id !== last) randare(); } catch (e) { console.warn("negociere", e); } }, 800);
   }
   window.RIC_NEG = { parghii, frici, randare };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", porneste); else porneste();

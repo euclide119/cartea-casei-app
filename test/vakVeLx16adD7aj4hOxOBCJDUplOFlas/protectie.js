@@ -1,6 +1,6 @@
 /* Raport _ Cartea Casei - protecție la copiere (v80.0, cerută de Manu 02.11.2026). Doar pe linkul client.
    Imaginile și hărțile nu se descarcă (fără clic dreapta, fără tragere), captura de ecran e îngreunată, iar singurul export e „Tipărește în PDF”, cu datele minime.
-   Excepție: imaginea de satelit fără straturi (butonul „Descarcă imaginea satelit”). Limită sinceră: o captură făcută cu telefonul sau cu altă cameră nu se poate opri dintr-o pagină web. */
+   Din v82.10.0 nu mai există nicio excepție: butonul „Descarcă imaginea satelit” (cc-dlsat) a fost scos, la cererea lui Manu (09.11.2026); se montează doar protecția. Limită sinceră: o captură făcută cu telefonul sau cu altă cameră nu se poate opri dintr-o pagină web. */
 (function () {
   "use strict";
   if (!window.CC_CLIENT) return;
@@ -22,12 +22,5 @@ html.cc-ascuns body{visibility:hidden!important}
   const ascunde = ms => { document.documentElement.classList.add("cc-ascuns"); setTimeout(() => document.documentElement.classList.remove("cc-ascuns"), ms); };
   addEventListener("keyup", e => { if (e.key === "PrintScreen") { try { navigator.clipboard.writeText(" "); } catch (x) {} ascunde(1600); } });
   document.addEventListener("visibilitychange", () => { document.documentElement.classList.toggle("cc-ascuns", document.hidden); });
-  /* imaginea de satelit fără straturi: singura descărcare permisă */
-  setInterval(() => {
-    try {
-      const sec = document.getElementById("insorire"); if (!sec || sec.querySelector(".cc-dlsat") || typeof D === "undefined" || !D || !D.id) return;
-      const a = document.createElement("a"); a.className = "cc-dlsat"; a.setAttribute("data-dl-ok", ""); a.href = `p/${D.id}/sat_detaliu.jpg`; a.download = "satelit.jpg"; a.textContent = "Descarcă imaginea satelit (fără straturi)";
-      (sec.querySelector(".box") || sec.firstElementChild).after(a);
-    } catch (e) {}
-  }, 1500);
+  /* v82.10.0: scos doar montarea butonului „Descarcă imaginea satelit (fără straturi)” (setInterval care crea <a class="cc-dlsat">); regula CSS .cc-dlsat și excepția data-dl-ok rămân, nefolosite. */
 })();
