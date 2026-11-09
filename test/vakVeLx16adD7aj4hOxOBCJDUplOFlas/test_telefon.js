@@ -15,10 +15,18 @@
   const lg = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v)); } catch (e) { return null; } };
   const hm = (location.hash.match(/qr=(ad_[A-Za-z0-9_-]+)/) || [])[1] || "";
   const hint = lg("cc-adm") === "1";
+  /* v82.12.0 (modul opțional bife_export.js): #qr=…&r=<id>&bife=1 deschide direct raportul <id> și reține flagul; #…&sel=<cod> = instantaneu (doar pentru sesiunea curentă). Fără acești parametri, nimic nu se schimbă. */
+  const hp = (() => { try { return new URLSearchParams((location.hash || "").replace(/^#/, "")); } catch (e) { return new URLSearchParams(""); } })();
+  const R = /^[A-Za-z0-9_]{3,64}$/.test(hp.get("r") || "") ? hp.get("r") : "";
+  if (hp.get("bife") === "1") lg("cc-bife", "1"); else if (hp.get("bife") === "0") lg("cc-bife", null);
+  if (/^[a-z0-9]{10}$/.test(hp.get("sel") || "")) { try { sessionStorage.setItem("cc-sel", hp.get("sel")); } catch (e) {} }
+  if (R) lg("cc-adm-id", R);
+  const extraHash = () => { const sl = (() => { try { return sessionStorage.getItem("cc-sel") || ""; } catch (e) { return ""; } })(), b = lg("cc-bife") === "1", r = R || lg("cc-adm-id") || "";
+    return (b || sl) && r ? "&r=" + r + (b ? "&bife=1" : "") + (sl ? "&sel=" + sl : "") : ""; };
   if (!hm && !hint && !TEST) return;
   window.CC_TESTAPP = true;
   // proprietatea se așază SINCRON, înainte ca generic.js să citească adresa (altfel apare prezentarea generală): ultima aleasă, scrisă la schimbul QR
-  if (!hm && hint) { const i0 = lg("cc-adm-id"); if (i0 && !/^#[A-Za-z0-9_]/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search + "#" + i0); } catch (e) {} } }
+  if (!hm && hint) { const i0 = R || lg("cc-adm-id"); if (i0 && (R || !/^#[A-Za-z0-9_]/.test(location.hash))) { try { history.replaceState(null, "", location.pathname + location.search + "#" + i0); } catch (e) {} } }
   const F0 = window.fetch.bind(window);   // fetch-ul original: intrare.js îl învelește și îl ține până se termină schimbul QR (altfel blocaj)
 
   /* ---------- instalare ca aplicație ---------- */
@@ -149,7 +157,8 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
   function manifest(qr) {
     try {
       const base = location.origin + location.pathname.replace(/[^/]*$/, "");
-      const m = { id: base, name: "Raportul casei · test", short_name: "raport test", description: "raportul proprietății, test pe telefon", start_url: base + "#qr=" + qr, scope: base, display: "standalone", orientation: "portrait", background_color: "#f6f1e7", theme_color: "#f6f1e7", lang: "ro",
+      const sl0 = (() => { try { return sessionStorage.getItem("cc-sel") || ""; } catch (e) { return ""; } })();
+      const m = { id: sl0 ? base + "?s=" + sl0 : base, name: "Raportul casei · test", short_name: "raport test", description: "raportul proprietății, test pe telefon", start_url: base + "#qr=" + qr + extraHash(), scope: base, display: "standalone", orientation: "portrait", background_color: "#f6f1e7", theme_color: "#f6f1e7", lang: "ro",
         icons: [{ src: base + "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" }, { src: base + "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" }, { src: base + "icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }] };
       const l = document.querySelector('link[rel="manifest"]'); if (l) l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" }));
     } catch (e) {}

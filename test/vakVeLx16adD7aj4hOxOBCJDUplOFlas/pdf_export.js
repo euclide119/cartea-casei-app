@@ -3,6 +3,7 @@
    Fiecare pagină are sus antetul capitolului (poză, titlu, nota pe bară). Un capitol nou începe pe pagina curentă dacă mai e cel puțin o treime liberă.
    Hărțile apropiate ca formă stau câte două pe rând. Nu intră: butoane, câmpuri, indicii de click („atinge”, „treci cu mouse-ul”), nivelul 2, datele fine.
    Paginile sunt imagini (bloc cu bloc, fără să se rupă o hartă); QR spre raportul interactiv la aproximativ 3 pagini, unde e loc, și pe ultima. */
+/* bife_export.js (09.11.2026): trei cârlige minime, active doar cât window.CC_PDF_BIFE e setat de modulul bife: fără limita de 2 pagini pe capitol, fără rezumarea textelor lungi, tabelele bifate intră. Fără flag, comportament identic. */
 (function () {
   "use strict";
   const LIB = ["https://cdn.jsdelivr.net/npm/modern-screenshot@4.4.39/dist/index.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
@@ -55,8 +56,8 @@
       if (c.querySelector("img,svg[role=img],canvas")) { umbla(c); return; }
       const w = cuv(c); if (w < 3) return;
       if (c.matches(".verd,.cards,.g7-k,.g7-sint,.cc-scor")) { L.push({ el: c, p: 3 }); return; }
-      if (c.matches("table,.scroll")) return;
-      if (w <= TXT_CUV) L.push({ el: c, p: 1 }); else if (c.children.length > 1) umbla(c); else L.push({ txt: (c.textContent || "").replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/).slice(0, 2).join(" "), p: 1, cuib: s });
+      if (c.matches("table,.scroll") && !window.CC_PDF_BIFE) return;
+      if (w <= (window.CC_PDF_BIFE ? 9999 : TXT_CUV)) L.push({ el: c, p: 1 }); else if (c.children.length > 1) umbla(c); else L.push({ txt: (c.textContent || "").replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/).slice(0, 2).join(" "), p: 1, cuib: s });
     });
     umbla(s);
   }
@@ -195,7 +196,7 @@ body.cc-pdf .rc{grid-template-columns:minmax(0,1fr)!important}body.cc-pdf .rc .d
         let tot = L.filter(b => b.i && b.i.w > 1 && b.i.h > 1);
         /* cel mult 2 pagini pe capitol: se renunță întâi la text, apoi la figurile mai puțin relevante */
         const pagini = l => { let p = 1, y = 26; for (const b of l) { const h = dim(b).h + (b.cap ? 8 : 0); if (y + h > UTIL) { p++; y = 26; } y += h + 3; } return p; };
-        for (const pr of [1, 2, 3]) for (const b of tot.filter(x => x.p === pr).map((x, k) => [x, k]).sort((u, v) => (u[0].rel || 0) - (v[0].rel || 0) || v[1] - u[1]).map(u => u[0])) { if (pagini(tot) <= MAX_PAG) break; tot.splice(tot.indexOf(b), 1); }
+        for (const pr of [1, 2, 3]) for (const b of tot.filter(x => x.p === pr).map((x, k) => [x, k]).sort((u, v) => (u[0].rel || 0) - (v[0].rel || 0) || v[1] - u[1]).map(u => u[0])) { if (pagini(tot) <= (window.CC_PDF_BIFE ? 99 : MAX_PAG)) break; tot.splice(tot.indexOf(b), 1); }
         const titlu = b => b && b.el && b.el.matches("h1,h2,h3"); tot = tot.filter((b, k) => !titlu(b) || (tot[k + 1] && !titlu(tot[k + 1])));
         if (!tot.length) continue;
         P.capitol({ i: await pozaHtml(antetHtml(c)) }, tot); P.bloc(tot);
