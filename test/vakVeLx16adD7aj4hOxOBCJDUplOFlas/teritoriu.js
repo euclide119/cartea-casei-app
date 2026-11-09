@@ -15,6 +15,9 @@
       .tpan .tside .tsep { display: none }
       .tpan .tside .kv { align-self: start }
       .ist .ist-img { aspect-ratio: 16 / 10 }
+      .ist-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; width: 68px; height: 68px; border-radius: 50%; border: 2px solid #1a1e2a; background: rgba(255,255,255,.94); color: #1a1e2a; font: 700 26px/1 var(--font); display: flex; align-items: center; justify-content: center; padding: 0 0 0 4px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.35); transition: opacity .2s }
+      .ist-play.on { padding: 0; font-size: 22px; opacity: .45 } .ist-play.on:hover, .ist-play.on:focus-visible { opacity: 1 }
+      @media (prefers-reduced-motion: reduce) { .ist-play { transition: none } }
       .ist { grid-template-columns: minmax(0, 1fr) !important }
       .ist .tside { display: flex; flex-direction: column }
       .ist .ist-th { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)) }`;
@@ -207,10 +210,18 @@
       el.querySelectorAll(".ist-th button").forEach((t, k) => t.classList.toggle("on", L[k] === x)); };
     r.oninput = show; show();
     el.querySelectorAll(".ist-th button").forEach(t => t.onclick = () => { r.value = +t.dataset.i * 10; show(); });
-    let tm = null; const pb = el.querySelector("#tIstP");
-    pb.onclick = () => { if (tm) { clearInterval(tm); tm = null; pb.textContent = "▶ Rulează anii"; return; }
-      if (+r.value >= +r.max) r.value = 0; pb.textContent = "❚❚ Oprește";
-      tm = setInterval(() => { r.value = Math.min(+r.value + 1, +r.max); show(); if (+r.value >= +r.max) { clearInterval(tm); tm = null; pb.textContent = "▶ Rulează anii"; } }, 90); };
+    /* v82.10.1 (Manu, 09.11.2026): play pe hartă, centrat; ~1,5 s pe imagine (10 pași × 150 ms), la final se reia de la început, pauză la atingerea hărții.
+       Folosește doar lista L (data + fișier): se schimbă imaginile, nu butonul. Butonul din dreapta rămâne, sincron. */
+    let tm = null; const pb = el.querySelector("#tIstP"), box = el.querySelector(".ist-img");
+    const pl = document.createElement("button"); pl.type = "button"; pl.className = "ist-play"; box.appendChild(pl);
+    const eticheta = () => { const on = !!tm; pl.textContent = on ? "\u275a\u275a" : "\u25b6"; pl.classList.toggle("on", on); pl.setAttribute("aria-label", on ? "Oprește succesiunea anilor" : "Pornește succesiunea anilor"); pb.textContent = on ? "\u275a\u275a Oprește" : "\u25b6 Rulează anii"; };
+    const opreste = () => { if (tm) { clearInterval(tm); tm = null; } eticheta(); };
+    const porneste = () => { if (tm) return; if (+r.value >= +r.max) r.value = 0; let pauzaFinal = 0;
+      tm = setInterval(() => { if (+r.value >= +r.max) { if (++pauzaFinal >= 10) { r.value = 0; pauzaFinal = 0; show(); } return; } r.value = +r.value + 1; show(); }, 150); eticheta(); };
+    const comuta = () => tm ? opreste() : porneste();
+    pl.onclick = e => { e.stopPropagation(); comuta(); }; pb.onclick = comuta;
+    box.addEventListener("pointerdown", e => { if (tm && !e.target.closest(".ist-play")) opreste(); });   // pauză la atingere
+    r.addEventListener("pointerdown", opreste); el.querySelectorAll(".ist-th button").forEach(t => t.addEventListener("click", opreste)); eticheta();
   }
 
   window.TER = { mount, pdf, IND, semafor, istoric };

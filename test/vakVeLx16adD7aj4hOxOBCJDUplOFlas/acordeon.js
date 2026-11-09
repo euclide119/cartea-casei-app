@@ -60,7 +60,7 @@ body.ac:not(.ac-cl) #cl-final{position:fixed!important;left:-99999px!important;t
 section.ac-s.ac-asc{position:fixed!important;left:-99999px!important;top:0!important;width:min(936px,calc(100vw - 24px))!important;visibility:hidden!important;pointer-events:none}
 section.ac-s{display:block!important;padding:4px 0 14px!important}
 section.ac-s[hidden]{display:none!important}
-section.ac-s.ac-lung.ac-flat{display:contents!important}section.ac-s.ac-flat>*{grid-column:1/-1;min-width:0;margin-top:0!important}.ac-ct{font:700 12px/1.3 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#4a5063;border-top:1px solid #d9d6cf;padding-top:10px;margin-top:8px!important}section.ac-s:not(.ac-flat)>.ac-ct{display:none}
+section.ac-s.ac-lung.ac-flat{display:contents!important}section.ac-s.ac-flat>*{grid-column:1/-1;min-width:0}.ac-ct{font:700 12px/1.3 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#4a5063;border-top:1px solid #d9d6cf;padding-top:10px;margin-top:8px!important}section.ac-s:not(.ac-flat)>.ac-ct{display:none}
 section.ac-s:not(.ac-lung).ac-n2,section.ac-s:not(.ac-lung) .ac-n2{display:none!important}
 section.ac-s>*+*{margin-top:12px}
 section.ac-s .hero.hx{position:static!important;top:auto!important;height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;display:block!important;background:none!important;box-shadow:none!important;border:0!important;overflow:visible!important}
@@ -206,6 +206,7 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
 
   /* nivelul 1 / nivelul 2: se recalculează la deschidere și la tipărire; rezultatul depinde doar de structură */
   function nivel(c) {
+    if (c._hoist && c._hoist.length) puneLaLoc(c);
     if (c.privat) { c.are2 = false; return; }
     MAX_FIG = document.body.classList.contains("cc-pdf") ? 3 : 2;
     const S = sectiuni(c); S.forEach(s => window.CC_LENES && window.CC_LENES.arata(s)); let fig = 0, rest = MAX_CUV, peSect = 0, maxSect = MAX_FIG;
@@ -292,8 +293,50 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
   /* „mai mult” = continuarea capitolului, dedesubt (Manu, 06.11.2026): ce era deja citit rămâne pe loc, butonul rămâne unde era pe ecran,
      iar părțile de nivel 2 ale tuturor secțiunilor se așază sub el. Secțiunea devine display:contents doar cât e deschisă continuarea.
      „mai puțin” strânge doar continuarea; capitolul rămâne deschis. */
+  /* v82.10.1 (Manu, 09.11.2026): „mai mult” extinde doar dedesubt. Ce era vizibil înainte rămâne exact unde era (aceleași margini ca în secțiunea neaplatizată),
+     iar piesele ascunse care stau în interiorul unor elemente vizibile se mută, cât ține „mai mult”, direct în secțiune (după buton, prin order), cu un semn în locul lor; „mai puțin” le pune la loc. */
+  function ridica(c) {
+    c._hoist = [];
+    c.s.forEach(id => { const s = document.getElementById(id); if (!s) return;
+      $$(".ac-n2", s).forEach(x => { const p = x.parentElement; if (!p || p === s || p.closest(".ac-n2")) return;
+        if (!p.getClientRects().length && getComputedStyle(p).display !== "contents") return;          // părinte ascuns din alt motiv (ex. client): nu se scoate la vedere
+        const ph = document.createComment("ac-ph"); p.insertBefore(ph, x); s.appendChild(x); c._hoist.push([x, ph]); }); });
+  }
+  function puneLaLoc(c) {
+    if (c._hoist && c._hoist.length) c._hoist.forEach(([x, ph]) => { if (ph.parentNode) { ph.parentNode.insertBefore(x, ph); ph.remove(); } });
+    c._hoist = [];
+  }
+  function margini(c, on) {
+    c.s.forEach(id => { const s = document.getElementById(id); if (!s) return;
+      [...s.children].forEach(ch => { if (ch._acM) { ch.style.removeProperty("margin-top"); ch.style.removeProperty("margin-bottom"); delete ch._acM; } });
+      if (!on) return;
+      const k = [...s.children].filter(ch => !ch.classList.contains("ac-ct")), v = k.filter(ch => !ch.classList.contains("ac-n2") && ch.getClientRects().length);
+      v.forEach((ch, j) => { const idx = k.indexOf(ch); ch._acM = 1;
+        const gap = parseFloat(getComputedStyle(s.parentElement).rowGap) || 0;     // în .wrap elementele aplatizate primesc și gap-ul dintre elemente, pe care înainte îl avea doar între secțiuni
+        ch.style.setProperty("margin-top", ((idx > 0 ? 12 : 0) + (j === 0 ? 4 : -gap)) + "px", "important");     // exact ca înainte: section>*+*{12px} + padding-top 4px
+        if (j === v.length - 1) ch.style.setProperty("margin-bottom", "14px", "important"); });                // padding-bottom 14px al secțiunii
+    });
+  }
+  /* poziția absolută a fiecărui element de nivel 1 vizibil, ca să se poată verifica și corecta după aplatizare */
+  function pozitii(c) {
+    const m = new Map();
+    c.s.forEach(id => { const s = document.getElementById(id); if (!s) return;
+      [...s.children].forEach(ch => { if (!ch.classList.contains("ac-n2") && !ch.classList.contains("ac-ct") && ch.getClientRects().length) m.set(ch, ch.getBoundingClientRect().top + scrollY); }); });
+    return m;
+  }
+  /* după aplatizare, orice abatere de la poziția dinainte se scade din marginea de sus a elementului (și a celor de după), ca partea de deasupra butonului să nu se miște */
+  function corecteaza(c) {
+    if (!c._top0) return;
+    const L = [...c._top0.keys()].filter(e => e.isConnected && e.getClientRects().length).map(e => [e, e.getBoundingClientRect().top + scrollY]).sort((a, b) => a[1] - b[1]);
+    let acc = 0;
+    L.forEach(([e, t]) => { const d = (t - acc) - c._top0.get(e);
+      if (Math.abs(d) > .4) { const mt = parseFloat(getComputedStyle(e).marginTop) || 0; e.style.setProperty("margin-top", (mt - d) + "px", "important"); e._acM = 1; acc += d; } });
+    const dm = c.mai.getBoundingClientRect().top + scrollY - c._mai0;      // și butonul rămâne exact unde era
+    if (Math.abs(dm) > .4) c.mai.style.setProperty("margin-top", ((parseFloat(getComputedStyle(c.mai).marginTop) || 0) - dm) + "px", "important");
+  }
   function plat(i, on) {
     const c = CAPS[i];
+    if (on) { c._top0 = pozitii(c); c._mai0 = c.mai.getBoundingClientRect().top + scrollY; margini(c, true); ridica(c); } else { puneLaLoc(c); margini(c, false); delete c._top0; c.mai.style.removeProperty("margin-top"); }
     c.s.forEach((id, k) => { const s = document.getElementById(id); if (!s) return;
       if (on && s.classList.contains("ac-n2")) { setare(s, baza(i) + 60 + 2 * k); return; }
       setare(s, baza(i) + 3 + 2 * k); s.classList.toggle("ac-flat", on);
@@ -312,9 +355,10 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
       c.mai.textContent = "mai mult"; if (c.mai.getClientRects().length) scrollBy(0, c.mai.getBoundingClientRect().top - y0);
       dispatchEvent(new Event("resize")); return;
     }
-    if (i === 0) document.body.classList.add("ac-cl");
     c.mai.dataset.on = "1"; plat(i, true);
+    if (i === 0) document.body.classList.add("ac-cl");   /* după măsurarea pozițiilor: blocul final al clientului apare sub buton */
     sectiuni(c).forEach(s => { s.classList.add("ac-lung"); if (window.CC_LENES) window.CC_LENES.arata(s); if (window.CC_PLASARE) window.CC_PLASARE.tot(s); });
+    corecteaza(c);
     /* v82.10.0: ce apare la „mai mult” trebuie să se încarce efectiv (imagini cu data-lz / data-lzh, inclusiv straturile hărților create după deschidere) */
     setTimeout(() => { if (window.CC_LENES && c.mai.dataset.on) sectiuni(c).forEach(s => window.CC_LENES.arata(s)); }, 900);
     c.mai.textContent = "mai puțin";
