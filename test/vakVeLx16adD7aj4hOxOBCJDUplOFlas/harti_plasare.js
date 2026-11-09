@@ -29,7 +29,7 @@
 
 .ov-lg{font-size:12px;line-height:1.3;padding:0;background:none;border:0;box-shadow:none}
 .ov-lg,.ov-lg *{color:#10131c!important;font-weight:600}.hm-box>.ov-lg.bl,.hm-box>.ov-lg.br{bottom:34px}.ov-lg .scroll,.ov-lg table{font-size:12px}.ov-lg td,.ov-lg th{padding:0 4px!important;border:0!important;background:none!important}.ov-lg>*{margin:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;gap:1px 8px!important}.ov-lg *{background-color:transparent}
-.ov-lg .hm-lg{display:flex!important;flex-direction:column!important;align-items:flex-start!important;flex-wrap:nowrap!important}.ov-lg .lg{white-space:nowrap}
+.ov-lg .hm-lg{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important}.ov-lg .lg{white-space:nowrap}
 .ov .g7-fc button[aria-pressed="true"]{display:none!important}
 .ov-sub{margin-top:2px;font-size:11.5px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 4px #fff}.ov input[type=range].ov-sub{width:170px;max-width:100%}
 .ov.ov-afara{position:static!important;max-width:none!important;max-height:none!important;width:100%;padding:6px 0;flex-direction:row;flex-wrap:wrap;background:none;text-shadow:none;align-items:center}.ov.ov-afara .hm-ch,.ov.ov-afara .pzchips,.ov.ov-afara .g7-ch,.ov.ov-afara .h79-ctl,.ov.ov-afara .tbase,.ov.ov-afara .hm-base{flex-direction:row!important;flex-wrap:wrap!important}.ov.ov-afara button{width:auto!important}
@@ -108,8 +108,9 @@
     const pe = (b, c) => { b.classList.remove("bl", "br", "tl", "tr", "ov-afara"); b.classList.add(c); if (b.parentElement !== H) H.appendChild(b); };
     const afara = b => { b.classList.remove("bl", "br", "tl", "tr"); b.classList.add("ov-afara"); H.after(b); };
     const sta = sc.filter(x => x.c[1] === "l"), dr = sc.filter(x => x.c[1] === "r");
-    let cS = sta[0].ac <= MAX_ACOP ? sta[0] : dr[0].ac <= MAX_ACOP ? dr[0] : null;
-    w.dataset.ovColt = cS ? cS.c : "afara"; w.dataset.ovAcop = (cS || sc[0]).ac.toFixed(2);
+    if (!sc.length) return;   // v82.9.0: fără date de hartă (fără jeton) nu se calculează colțul
+    let cS = sta[0] && sta[0].ac <= MAX_ACOP ? sta[0] : dr[0] && dr[0].ac <= MAX_ACOP ? dr[0] : null;
+    w.dataset.ovColt = cS ? cS.c : "afara"; w.dataset.ovAcop = (+(cS || sc[0]).ac || 0).toFixed(2);
     if (st) { straturi(st);
       if (!cS) afara(st);
       else { pe(st, cS.c); const q = st.getBoundingClientRect(); if (q.height > .92 * R.height || q.width > .7 * R.width) { afara(st); cS = null; } } }

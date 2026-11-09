@@ -334,7 +334,7 @@
     const col = h => { const t = (h - zmin) / rg, a = [[0, [86, 160, 102]], [.5, [196, 186, 112]], [1, [156, 104, 72]]];
       let q = 0; while (q < a.length - 2 && t > a[q + 1][0]) q++; const [t0, c0] = a[q], [t1, c1] = a[q + 1], u = Math.max(0, Math.min(1, (t - t0) / (t1 - t0)));
       return c0.map((v, m) => v + (c1[m] - v) * u); };
-    const f = p => p.map(v => v.toFixed(1)).join(",");
+    const f = p => p.map(v => (+v || 0).toFixed(1)).join(",");
     let s = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="${esc(o.aria || "blocul de relief 3D, 1,5 \u00d7 1,5 km")}" style="display:block"><defs><marker id="bn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--fg)"/></marker></defs>`;
     // pere\u021bii din fa\u021b\u0103 (sud \u0219i vest), ca un paralelipiped
     const ws = [], ww = [];
@@ -367,7 +367,7 @@
     s += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - 44}" stroke="#1a1a1a" stroke-width="1.6"/><circle cx="${cx}" cy="${cy - 48}" r="6.5" fill="#ff3b5c" stroke="#fff" stroke-width="2"/><ellipse cx="${cx}" cy="${cy}" rx="5" ry="2.4" fill="#1a1a1a" opacity=".5"/>`;
     // nordul, scara \u0219i exagerarea
     { const a1 = 70, b1 = 64, a2 = a1 - 34 * c, b2 = b1 - 34 * sn; s += `<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" stroke="var(--fg)" stroke-width="1.4" marker-end="url(#bn)"/><text x="${a2 - 6}" y="${b2 - 2}" text-anchor="end" font-size="12" font-weight="700" fill="var(--fg)" style="font-family:var(--font)">N</text>`; }
-    s += `<text x="16" y="${Hh - 12}" font-size="13" fill="var(--muted)" style="font-family:var(--font)">1,5 \u00d7 1,5 km \u00b7 p\u0103tratul ro\u0219u: 300 \u00d7 300 m \u00b7 \u00een\u0103l\u021bimi exagerate de ${E}\u00d7 \u00b7 diferen\u021b\u0103 total\u0103 ${rg.toFixed(1).replace(".", ",")} m</text>`;
+    s += `<text x="16" y="${Hh - 12}" font-size="13" fill="var(--muted)" style="font-family:var(--font)">1,5 \u00d7 1,5 km \u00b7 p\u0103tratul ro\u0219u: 300 \u00d7 300 m \u00b7 \u00een\u0103l\u021bimi exagerate de ${E}\u00d7 \u00b7 diferen\u021b\u0103 total\u0103 ${(+rg || 0).toFixed(1).replace(".", ",")} m</text>`;
     return s + "</svg>";
   }
   /* izocronele cu ma\u0219ina (izocrone.py, Valhalla auto, f\u0103r\u0103 trafic): hart\u0103 SVG la scar\u0103 real\u0103 pe fundal stradal, 5 / 10 continuu, 15 punctat */
@@ -436,7 +436,7 @@
     const X = v => ox + (v - mnlo) * k * sc, Y = v => oy + (mxla - v) * sc;
     let s = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="${esc(o.aria || "harta localit\u0103\u021bilor urbane din jude\u021b, colorate dup\u0103 ag")}" style="display:block"><rect x="0" y="0" width="${W}" height="${Hh}" rx="8" fill="${BG}"/>${bb ? `<image href="${esc(o.img)}" x="0" y="0" width="${W}" height="${Hh}" preserveAspectRatio="none"/><rect width="${W}" height="${Hh}" fill="#fff" opacity=".18"/>` : ""}`;
     const placed = [];
-    pts.slice().sort((a, b) => b.ag - a.ag).forEach(p => { const x = X(p.coord[1]), y = Y(p.coord[0]), c = AGC[p.ag.toFixed(2) * 1] || "#999", r = 6.5 + (p.ag - .1) * 22;
+    pts.filter(p => p && Number.isFinite(p.ag) && p.coord && p.loc != null).sort((a, b) => b.ag - a.ag).forEach(p => { const x = X(p.coord[1]), y = Y(p.coord[0]), c = AGC[p.ag.toFixed(2) * 1] || "#999", r = 6.5 + (p.ag - .1) * 22;
       s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${p.ref ? "#111" : "#fff"}" stroke-width="${p.ref ? 2.4 : 1.4}" opacity=".96"/>`;
       const w = p.loc.length * 5.6, cand = [[x, y - r - 5, "middle"], [x, y + r + 12, "middle"], [x + r + 4, y + 3.5, "start"], [x - r - 4, y + 3.5, "end"]];
       const box = ([tx, ty, a]) => [a === "middle" ? tx - w / 2 : a === "start" ? tx : tx - w, ty - 10, w, 13];
