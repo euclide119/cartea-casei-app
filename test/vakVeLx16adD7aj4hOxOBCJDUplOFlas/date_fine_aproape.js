@@ -74,7 +74,7 @@
     facut = Dd.id + "|" + (arataAdmin ? 1 : 0) + "|" + (window.CC_PLATA ? 1 : 0);
     sec.hidden = false;
     sec.innerHTML = `<div><h2>Date fine din jurul proprietății</h2><p class="lead">Cele mai apropiate 20 de firme, certificate de urbanism, autorizații de construire și PUZ-uri, plus investițiile declarate pe comună. Fiecare rând are sursa, data sursei și gradul de încredere.</p></div><div class="dfa-corp"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
-    const corp = $(".dfa-corp", sec), adm = ADMIN() && !window.CC_CLIENT;
+    const corp = $(".dfa-corp", sec), adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);   // v82.13.0: Admin din aplicația de test e și el „client” pe adresa publicată; doar sesiunea cu cod (g) e client
     if (adm) {
       if (arataAdmin) {
         const J = await json(P + "date_fine_aproape.json");

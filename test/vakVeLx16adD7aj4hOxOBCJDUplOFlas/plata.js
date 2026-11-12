@@ -8,6 +8,10 @@
    Textul acordului: DE REVIZUIT DE AVOCAT înainte de lansare. Funcțiile server: ~/Drive/2 DD/tools/cartea_casei/supabase_functii/ (nedeployate). */
 (function () {
   "use strict";
+  /* CONFIGURARE · MOD GRATUIT (perioada de test, cerut de Manu 12.11.2026, TEMPORAR): true = nu se arată butonul de 499 RON și nimic din Stripe;
+     la Date fine apare „Acces gratuit în perioada de test”, bifa de acord și câmpul pentru codul de date fine (1357, verificat pe server prin acțiunea `privat`).
+     Pentru a reporni plata: false (codul Stripe de mai jos rămâne neschimbat). */
+  const CC_GRATUIT = true;
   const CFG = { pret_ron: 499, moneda: "RON", baza: "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/", versiune_acord: "2026-11-09-v1", gdpr: "gdpr_date_fine.html" };
   const TEXT_ACORD = "Sunt de acord cu prelucrarea datelor conform paginii GDPR și folosire date, mandatez adunarea datelor publice relevante pentru mine și cer livrarea imediată a serviciului digital, știind că îmi pierd dreptul de retragere.";
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -15,6 +19,7 @@
   const caAdmin = () => local && !!window.CC_CLIENT;          // Admin cu vederea „ca client”: singurul loc cu simulare
   const adminReal = () => local && !window.CC_CLIENT;
   let simulat = false, platit = false, ultimaStare = null;
+  const gSes = () => (window.CC_ADM && window.CC_ADM.g) ? window.CC_ADM : null;   // sesiune de client cu cod de intrare (gratuit)
 
   async function apel(nume, corp) {
     try {
@@ -27,6 +32,7 @@
 
   /* starea plății: din server (după webhook); simulare doar în Admin „ca client” */
   async function stare() {
+    if (CC_GRATUIT && gSes()) return gSes().n >= 2 ? { platit: true, configurat: true, gratuit: true } : { platit: false, configurat: true, gratuit: true };
     if (simulat && caAdmin()) return { platit: true, configurat: true, simulat: true };
     if (platit) return { platit: true, configurat: true };
     const r = await apel("plata_stare", { id: idProp() });
@@ -37,6 +43,9 @@
 
   /* datele complete, filtrate pe server pentru client (doar sursa_publica ONRC/AC/CU/PUZ); Admin „ca client” simulat: aceeași filtrare, în pagină */
   async function dateLivrate() {
+    if (CC_GRATUIT && gSes() && gSes().n >= 2) {   // jetonul n:2 deschide fișierul prin funcție; aceeași filtrare ca la plată (doar sursa_publica ONRC/AC/CU/PUZ)
+      try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; return filtruClient(await r.json()); } catch (e) { return null; }
+    }
     if (simulat && caAdmin()) {
       try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; return filtruClient(await r.json()); } catch (e) { return null; }
     }
@@ -99,8 +108,31 @@
   }
 
   /* blocul de deblocare: pret, acord (o singură bifă), buton; Admin „ca client” primește și simularea */
+  const ACORD_K = "cc-acord-df";
+  function montajGratuit(el, dupa) {
+    const g = gSes(), ok = (() => { try { return localStorage.getItem(ACORD_K) === CFG.versiune_acord; } catch (e) { return false; } })();
+    el.innerHTML = `<div class="pl"><h3>Date fine complete</h3>
+      <p><b>Acces gratuit în perioada de test.</b> Firme, administratori și asociați din registrul public, autorizații și certificate de urbanism cu beneficiari (din actele publice ale primăriilor), PUZ-uri și investiții declarate.</p>
+      <label class="pl-acc"><input type="checkbox" id="pl-acc"${ok ? " checked" : ""}><span>${esc(TEXT_ACORD)} <a href="${CFG.gdpr}" target="_blank" rel="noopener">GDPR și folosire date</a></span></label>
+      <div class="pl-cod" style="display:${ok ? "flex" : "none"};flex-direction:column;gap:10px">
+        <label for="pl-pin" style="font:700 15px var(--font)">Cod pentru date fine</label>
+        <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="12" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.2em;padding:12px 14px;border:2px solid #1d5fb0;border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box">
+        <button type="button" class="pl-go" id="pl-pin-go">Deschide Date fine</button></div>
+      ${local ? '<span class="pl-rev">textul acordului: de revizuit de avocat</span>' : ""}<p class="pl-msg" role="status"></p></div>`;
+    const acc = el.querySelector("#pl-acc"), cod = el.querySelector(".pl-cod"), msg = el.querySelector(".pl-msg");
+    acc.onchange = () => { cod.style.display = acc.checked ? "flex" : "none"; if (acc.checked) { try { localStorage.setItem(ACORD_K, CFG.versiune_acord); } catch (e) {} } };
+    el.querySelector("#pl-pin-go").onclick = async () => {
+      const pin = el.querySelector("#pl-pin").value.trim(); if (!acc.checked) { msg.textContent = "Bifează acordul."; return; } if (!pin) { msg.textContent = "Scrie codul pentru date fine."; return; }
+      if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul cu codul de intrare."; return; }
+      msg.textContent = "Se verifică…";
+      const r = await fetch(CFG.baza.replace("/functions/v1/", "/functions/v1/") + "raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: g.token, pin }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
+      if (!r.ok || !r.j.token) { msg.textContent = r.j.error || "Cod greșit."; return; }
+      g.n = 2; g.token = r.j.token; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(g); location.reload();
+    };
+  }
   function montaj(el, dupa, conf) {
     css();
+    if (CC_GRATUIT && gSes()) return montajGratuit(el, dupa);
     el.innerHTML = `<div class="pl"><h3>Deblochează datele complete</h3>
       <p>Firme, administratori și asociați din registrul public, autorizații și certificate de urbanism cu beneficiari (din actele publice ale primăriilor), PUZ-uri și investiții declarate. Preț: <b>${CFG.pret_ron} ${CFG.moneda}</b>, plată unică.</p>
       <label class="pl-acc"><input type="checkbox" id="pl-acc"><span>${esc(TEXT_ACORD)} <a href="${CFG.gdpr}" target="_blank" rel="noopener">GDPR și folosire date</a></span></label>
@@ -114,5 +146,6 @@
     if (conf === false && !caAdmin()) { go.disabled = true; acc.disabled = true; acc.onchange = null; go.onclick = null; el.querySelector(".pl-msg").textContent = "Plata nu e configurată încă."; }   // la Client real, fără chei: niciun buton de plată funcțional
     const sim = el.querySelector(".pl-sim"); if (sim) sim.onclick = () => { simulat = true; dupa && dupa(); };
   }
-  window.CC_PLATA = { pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
+  window.CC_GRATUIT = CC_GRATUIT;
+  window.CC_PLATA = { gratuit: CC_GRATUIT, pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
 })();
