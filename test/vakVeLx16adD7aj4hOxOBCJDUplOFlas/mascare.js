@@ -32,7 +32,7 @@
     return `<div class="msk-cnt">${Object.keys(ETI).filter(k => c[k] != null).map(k => `<span><b>${Number(c[k]).toLocaleString("ro-RO")}</b> ${ETI[k]}</span>`).join("")}</div>`;
   }
 
-  const pinForm = () => window.CC_ADM && window.CC_ADM.adm && window.CC_ADM.ca_client && window.CC_ADM.n < 2 ? `<div class="msk-pin"><label for="msk-pin">cod date fine</label><input id="msk-pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="····" aria-label="cod date fine"><button type="button" id="msk-pin-go">Deschide</button><small id="msk-pin-m">cu codul, datele fine se deschid complete</small></div>` : "";
+  const pinForm = () => window.CC_ADM && window.CC_ADM.adm && window.CC_ADM.ca_client && window.CC_ADM.n < 2 ? `<div class="msk-pin"><label for="msk-pin">🔒 cod DOM</label><input id="msk-pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="····" aria-label="cod date fine"><button type="button" id="msk-pin-go">Deschide</button><small id="msk-pin-m">cu codul, datele fine se deschid complete</small></div>` : "";
   function client(j) {
     const c = j.contoare || {};
     return pinForm() + `<p>Pentru această proprietate există date fine: ${esc(c.contacte ?? 0)} contacte, ${esc(c.firme ?? 0)} firme, ${esc(c.persoane ?? 0)} persoane, ${esc(c.acte ?? 0)} acte în zonă. Se văd primele caractere; restul se deschide la comandă.</p>`

@@ -65,9 +65,20 @@
     const X = a => (c + a[0] * sc).toFixed(1), Y = a => (c + a[1] * sc).toFixed(1);
     const poly = P.map(p => { const a = xy(p[0], p[1]); return X(a) + "," + Y(a); }).join(" ");
     const dots = pts.map(p => { const a = xy(p.lon, p.lat); const col = p.tip === "intravilan" ? "#1f6fd1" : "#b7791f"; return `<circle cx="${X(a)}" cy="${Y(a)}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1"><title>${esc(p.eur_mp)} €/mp · ${esc(p.mp)} mp · ${esc(p.dist_m)} m</title></circle>`; }).join("");
-    const rings = [250, 500].filter(r => r * sc < c).map(r => `<circle cx="${c}" cy="${c}" r="${r * sc}" fill="none" stroke="#9aa3b2" stroke-dasharray="4 4"/><text x="${c + r * sc - 4}" y="${c - 4}" font-size="11" text-anchor="end" fill="#5b6475">${r} m</text>`).join("");
+    const rings = [500, 1000, 2000].filter(r => r * sc < c).map(r => `<circle cx="${c}" cy="${c}" r="${r * sc}" fill="none" stroke="#9aa3b2" stroke-dasharray="4 4"/><text x="${c + r * sc - 4}" y="${c - 4}" font-size="11" text-anchor="end" fill="#5b6475">${r} m</text>`).join("");
     return `<svg class="roi-m" viewBox="0 0 ${W} ${W}" role="img" aria-label="Harta comparativelor">${rings}<polygon points="${poly}" fill="#d64545" fill-opacity=".6" stroke="#a01f1f" stroke-width="1.5"/>${dots}
 <g font-size="12" fill="#1b2230"><circle cx="14" cy="${W - 40}" r="5" fill="#1f6fd1"/><text x="24" y="${W - 36}">intravilan</text><circle cx="100" cy="${W - 40}" r="5" fill="#b7791f"/><text x="110" y="${W - 36}">extravilan / agricol</text><rect x="14" y="${W - 26}" width="12" height="8" fill="#d64545" fill-opacity=".6" stroke="#a01f1f"/><text x="32" y="${W - 18}">terenul (10.000 mp)</text></g></svg>`;
+  }
+
+  function mediiHtml(R) {
+    const M = R.medii; if (!M) return "";
+    const H = R.ipoteze, f = v => nf(v, 1), card = (t, o) => o && o.n ? `<div><b>${t}</b><br>medie <b>${f(o.medie)}</b> · mediană ${f(o.mediana)} · ${f(o.min)}–${f(o.max)} €/mp<br><span class="roi-n">${o.n} anunț${o.n === 1 ? "" : "uri"}</span></div>` : `<div><b>${t}</b><br>fără anunțuri</div>`;
+    const pc = (v, m) => m ? (v >= m ? "+" : "−") + nf(Math.abs(v / m - 1) * 100, 0) + " %" : "—";
+    const z = M.zona, p = M.piata, vm = (H.pret_min + H.pret_max) / 2;
+    return `<h3>Media zonei și a pieței (€/mp)</h3><div class="roi-c">
+${card("Zonă · parcele construibile (" + esc(z.descriere) + ")", z.intravilan)}${card("Zonă · teren de dezvoltat (agricol / extravilan)", z.extravilan)}
+${card("Piață · parcele construibile (" + esc(p.descriere) + ")", p.intravilan)}${card("Piață · teren de dezvoltat (agricol / extravilan)", p.extravilan)}</div>
+<p class="roi-n"><b>Ipotezele față de medii:</b> vânzare ${H.pret_min}–${H.pret_max} €/mp față de media construibilă a zonei: ${pc(H.pret_min, z.intravilan.medie)} … ${pc(H.pret_max, z.intravilan.medie)}, a pieței: ${pc(H.pret_min, p.intravilan.medie)} … ${pc(H.pret_max, p.intravilan.medie)}. Cumpărare ${H.pret_intrare} €/mp față de media terenului de dezvoltat a zonei: ${pc(H.pret_intrare, z.extravilan.medie)}, a pieței: ${pc(H.pret_intrare, p.extravilan.medie)}. <mark>!</mark> Prețuri cerute în anunțuri; la teren de dezvoltat numărul de anunțuri e mic.</p>`;
   }
 
   function monta(R) {
@@ -86,11 +97,12 @@
     sec.innerHTML = `<div class="roi-w">
 <h2>ROI · cumpărare cu realizare PUZ</h2>
 <p class="roi-n">Terenul unit (CF 419740 + CF 419748, 10.000 mp). Ipotezele sunt ale lui Manu (12.11.2026) și se pot modifica; câmpurile cu „!” sunt costuri neincluse în ipotezele inițiale. ${esc(R.vandabil_sursa)}.</p>
+${mediiHtml(R)}
 <div class="roi-in">${campuri.map(c => `<label class="${c[3]}"><span>${esc(c[1])}</span><input type="number" step="any" data-k="${c[0]}" value="${H[c[0]]}" inputmode="decimal"><small>${esc(c[2])}</small></label>`).join("")}</div>
 <div class="roi-k" id="roi-k"></div>
 <h3>Sensibilitate: profit și ROI total</h3><div class="roi-sc" id="roi-s"></div>
 <h3>Comparative din vecinătate</h3>
-<p class="roi-n">${esc(R.sursa_comparative)}. <mark>!</mark> La 500 m terenurile agricole/extravilane sunt puține (${sE.n} grup${sE.n === 1 ? "" : "uri"} de anunțuri după eliminarea dublurilor); extinderea la 1–2 km nu e făcută (neverificat).</p>
+<p class="roi-n">Anunțuri de teren din vecinătate, până la 2 km, câte unul pe proprietate; prețuri cerute, nu tranzacții. <mark>!</mark> Terenurile agricole/extravilane sunt puține (${sE.n}); valorile extreme pot fi prețuri scrise greșit în anunț: se citește mediana.</p>
 <div class="roi-c" id="roi-c"></div>
 <div id="roi-poz" class="roi-n"></div>
 ${harta(R)}

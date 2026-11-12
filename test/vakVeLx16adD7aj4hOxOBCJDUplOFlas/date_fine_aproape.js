@@ -42,24 +42,41 @@
   const sursa = r => `<span class="dfa-src">${esc(r.sursa_tip || (r.sursa && /^https?:/.test(r.sursa) ? "primărie" : r.sursa) || "")} · ${esc(String(r.data_sursei || "").slice(0, 10) || "dată necunoscută")} · încredere ${esc(r.incredere || "—")}</span>`;
   const tabel = (titlu, cap, rows, motiv) => `<h3>${titlu} <small>(${rows.length})</small></h3>` + (rows.length ? `<div class="scroll"><table><tr>${cap.map(c => `<th>${c}</th>`).join("")}</tr>${rows.join("")}</table></div>` : `<p class="dfa-gol">${esc(motiv)}</p>`);
   const MOTIV = "Nu avem rânduri pentru această categorie în Banca de Date; pozițiile pe parcelă există doar pentru județul Timiș.";
-  const admnm = (r, full) => { const A = r.administratori, L = Array.isArray(A) ? A : []; return L.map(a => full ? `${esc(a.nume)}${a.calitate ? " (" + esc(a.calitate) + ")" : ""}` : m(a, "nume")).join("; ") || `<span class="dfa-src">${esc((A && !Array.isArray(A) && A.motiv_gol) || (r.administratori_n === 0 ? "necunoscuți" : "necompletat în sursă"))}</span>`; };
+  const admnm = (r, full) => { const A = r.administratori, L = Array.isArray(A) ? A : []; const t = L.map(a => full ? `${esc(a.nume)}${a.calitate ? " (" + esc(a.calitate) + ")" : ""}` : m(a, "nume")).join("; ");
+    return t || (ADMIN() && !(window.CC_ADM && window.CC_ADM.g) && A && !Array.isArray(A) && A.motiv_gol ? `<span class="dfa-src">${esc(A.motiv_gol)}</span>` : "—"); };
 
+  /* v82.14.0 (Manu, 12.11.2026): „Depth of Market – Level 2” (DOM). Text simplu: fără surse, fără note tehnice, fără explicații despre câmpuri goale
+     (beneficiarul lipsă = „nedeclarat”). Clientul vede act, număr, dată, beneficiar, obiect, distanță; sursa, încrederea și data sursei doar în Admin.
+     Secțiuni: firme apropiate, cele mai apropiate CU / AC / PUZ, ultimele CU și AC din localitate, proiecte de infrastructură în lucru, CU și AC pe 200 m. */
+  const GOL = "Nu sunt înregistrări în zonă.";
+  const data = r => esc(String(r.data_act || r.data || "").slice(0, 10).split("-").reverse().join(".")) || "—";
+  const benef = (r, full, adm) => { const v = r.beneficiar; if (!full) return r.beneficiar_m || (v && v.valoare) ? m(r, "beneficiar") : "nedeclarat";
+    const t = v && typeof v === "object" ? v.valoare : v; return t ? esc(t) : "nedeclarat"; };
+  const obiect = (r, full) => full ? esc(String(r.tip_lucrare || r.obiect || "").replace(/\s+/g, " ").slice(0, 140)) : m(r, "tip_lucrare");
+  const act = r => `${esc(r.tip || "")} ${esc(r.numar || r.numar_hcl || "")}${r.an ? "/" + esc(r.an) : ""}`.trim();
+  const srcAdm = r => `<span class="dfa-src">${esc(String(r.sursa || r.sursa_tip || "").slice(0, 60))} · ${esc(String(r.data_sursei || "").slice(0, 10))} · ${esc(r.incredere || "")}</span>`;
   function randare(J, nivel) {
-    const full = nivel !== "ascuns", adm = ADMIN() && !window.CC_CLIENT;
+    const full = nivel !== "ascuns", adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);
     const fx = full ? (r, k) => val(r[k]) : m;
-    const c = { firme: (J.firme || []).length, cu: (J.cu || []).length, ac: (J.ac || []).length, puz: (J.puz || []).length, investitii: (J.investitii || []).length };
-    let h = `<div class="dfa-cnt">${[["firme", "firme"], ["cu", "certificate de urbanism"], ["ac", "autorizații de construire"], ["puz", "PUZ-uri"], ["investitii", "investiții declarate"]].map(([k, t]) => `<span><b>${c[k]}</b> ${t}</span>`).join("")}</div>`;
-    h += tabel("Cele mai apropiate firme", ["Firma", "CUI", "Adresa", "Dist.", "Administratori", "Telefon", "Sursă"],
-      (J.firme || []).map(r => `<tr><td>${fx(r, "denumire")}</td><td>${fx(r, "cui")}</td><td>${fx(r, "adresa")}</td><td>${dist(r)}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon")}</td><td>${sursa(r)}</td></tr>`), MOTIV);
-    const act = (r, k) => `<tr><td>${esc(r.tip || k)} ${esc(r.numar || r.numar_hcl || "")}/${esc(r.an || "")}</td><td>${fx(r, "adresa") || fx(r, "adresa_cf")}${r.cf || r.cf_m ? ` · CF ${fx(r, "cf")}` : ""}</td><td>${dist(r)}</td><td>${full ? esc(r.stadiu || "") : esc(r.stadiu || "")}</td><td>${r.beneficiar ? (full ? val(r.beneficiar) : m(r, "beneficiar")) : ""}</td><td>${full ? esc(String(r.tip_lucrare || "").slice(0, 120)) : m(r, "tip_lucrare")}</td><td>${sursa(r)}</td></tr>`;
+    const cap = c => adm && full ? [...c, "Sursă"] : c, cel = (r, h) => adm && full ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
+    const pd = (L, n) => (L || []).filter(r => r.distanta_m != null).slice().sort((x, y) => x.distanta_m - y.distanta_m).slice(0, n);
+    const rAct = (r, cuDist) => cel(r, `<tr><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}</tr>`);
+    let h = "";
+    h += tabel("Cele mai apropiate firme", cap(["Firma", "Administratori", "Telefon", "Distanță"]),
+      pd(J.firme, 20).map(r => cel(r, `<tr><td>${fx(r, "denumire")}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon") || "—"}</td><td>${dist(r)}</td></tr>`)), GOL);
     [["cu", "Cele mai apropiate certificate de urbanism"], ["ac", "Cele mai apropiate autorizații de construire"], ["puz", "Cele mai apropiate PUZ-uri"]].forEach(([k, t]) =>
-      h += tabel(t, ["Act", "Adresa / CF", "Dist.", "Stadiu", "Beneficiar", "Lucrare", "Sursă"], (J[k] || []).map(r => act(r, k.toUpperCase())), MOTIV));
-    h += tabel("Investiții declarate pe comună", ["Investiția", "Tip sursă", "Valoare", "Termen", "Stadiu", "Sursă"],
-      (J.investitii || []).map(r => `<tr><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(r.tip_sursa || "")}</td><td>${full ? val(r.valoare_lei) : ""}</td><td>${(full ? esc(typeof r.termen === "object" ? "" : r.termen) : (r.termen ? esc(r.termen) : "")) || "termen neprecizat"}</td><td>${esc(r.stadiu || "")}</td><td>${sursa(r)}</td></tr>`),
-      "Nu avem încă o listă de investiții declarate pentru această comună (se cere de la roboții de colectare).");
-    const d = (J.alte || {}).densitate; if (d) h += `<h3>Alte date: câte elemente sunt în jur</h3><p class="dfa-gol">${["AC", "CU", "PUZ", "firme"].filter(k => d[k]).map(k => `${k}: ${["500", "1000", "2000"].map(r => `${nf(d[k][r] ?? 0)} pe ${r} m`).join(", ")}`).join(" · ")}</p>`;
+      h += tabel(t, cap(["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), pd(J[k], 20).map(r => rAct(r, true)), GOL));
+    const L = J.localitate || {};
+    if (L.cu_ultime || L.ac_ultime) {
+      h += tabel(`Ultimele certificate de urbanism din ${esc(L.uat || "localitate")}`, cap(["Act", "Data", "Beneficiar", "Obiect"]), (L.cu_ultime || []).map(r => rAct(r, false)), GOL);
+      h += tabel(`Ultimele autorizații de construire din ${esc(L.uat || "localitate")}`, cap(["Act", "Data", "Beneficiar", "Obiect"]), (L.ac_ultime || []).map(r => rAct(r, false)), GOL);
+    }
+    const lucru = (J.investitii || []).filter(r => /lucr|execu|derul|început|inceput|contract|implement|în curs|in curs/i.test(`${typeof r.stadiu === "string" ? r.stadiu : ""} ${typeof r.termen === "string" ? r.termen : ""}`));
+    h += tabel("Proiecte de infrastructură în lucru", cap(["Ce", "Stadiu", "Termen", "Distanță"]),
+      lucru.map(r => cel(r, `<tr><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(typeof r.stadiu === "string" ? r.stadiu : "") || "în lucru"}</td><td>${esc(typeof r.termen === "string" && r.termen ? r.termen : "neprecizat")}</td><td>${r.distanta_m != null ? dist(r) : "în comună"}</td></tr>`)), "Nu sunt proiecte în lucru anunțate în comună.");
+    const raza = [...(J.cu || []), ...(J.ac || [])].filter(r => r.distanta_m != null && r.distanta_m <= 200).sort((x, y) => x.distanta_m - y.distanta_m);
+    h += tabel("Certificate de urbanism și autorizații pe o rază de 200 m", cap(["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), "Nu sunt certificate sau autorizații pe 200 m.");
     if (adm && J.investitii_lipsa && J.investitii_lipsa.length) h += `<details class="dfa-inv"><summary>lipsuri de colectare (doar Admin)</summary>${J.investitii_lipsa.map(x => `<p>${esc(typeof x === "string" ? x : JSON.stringify(x))}</p>`).join("")}</details>`;
-    else if (J.investitii_lipsa_n && adm) h += `<p class="dfa-inv">${J.investitii_lipsa_n} lipsuri de colectare la investiții (doar Admin).</p>`;
     return h;
   }
 
@@ -69,11 +86,19 @@
     const sec = $("#" + SEC); if (!sec) return;
     if (facut === Dd.id + "|" + (arataAdmin ? 1 : 0) + "|" + (window.CC_PLATA ? 1 : 0) && sec.querySelector(".dfa-corp")) return;
     const id = encodeURIComponent(Dd.id), P = `p/${id}/`;
+    /* sesiunea cu cod (modul gratuit), înainte de PIN: doar lacătul, acordul și câmpul pentru cod; nu se încarcă nimic din DOM */
+    const g0 = window.CC_ADM && window.CC_ADM.g, lacat = g0 ? window.CC_ADM.n < 2 : !ADMIN();
+    if (g0 && window.CC_ADM.n < 2 && window.CC_PLATA && window.CC_PLATA.gratuit) {
+      if (sec.dataset.dfaLacat === Dd.id && sec.querySelector(".pl")) return;
+      sec.dataset.dfaLacat = Dd.id; facut = null; sec.hidden = false;
+      sec.innerHTML = `<div><h2>🔒 Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul de pe card.</p></div><div class="dfa-pl"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
+      window.CC_PLATA.montaj($(".dfa-pl", sec), () => {}, true); return;
+    }
     const mostra = await json(P + "date_fine_aproape_mostra.json");
     if (!mostra) { sec.hidden = true; return; }
     facut = Dd.id + "|" + (arataAdmin ? 1 : 0) + "|" + (window.CC_PLATA ? 1 : 0);
     sec.hidden = false;
-    sec.innerHTML = `<div><h2>Date fine din jurul proprietății</h2><p class="lead">Cele mai apropiate 20 de firme, certificate de urbanism, autorizații de construire și PUZ-uri, plus investițiile declarate pe comună. Fiecare rând are sursa, data sursei și gradul de încredere.</p></div><div class="dfa-corp"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
+    sec.innerHTML = `<div><h2>${lacat ? "🔒 " : ""}Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății.</p></div><div class="dfa-corp"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
     const corp = $(".dfa-corp", sec), adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);   // v82.13.0: Admin din aplicația de test e și el „client” pe adresa publicată; doar sesiunea cu cod (g) e client
     if (adm) {
       if (arataAdmin) {
@@ -90,8 +115,8 @@
     const P2 = window.CC_PLATA, st = P2 ? await P2.stare() : { platit: false, configurat: false };
     if (st.platit) {
       const J = await P2.dateLivrate();
-      corp.innerHTML = (st.simulat ? '<span class="dfa-adm">simulare plată (test), nu e plată reală</span>' : "") + (J ? randare(J, "aratat_client") : '<p class="dfa-gol">Plata e confirmată, dar datele nu au putut fi încărcate acum. Reîncearcă peste un minut.</p>')
-        + `<p class="dfa-src">Date publice (ONRC, actele primăriilor). Nu le retransmite. <a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
+      corp.innerHTML = (st.simulat ? '<span class="dfa-adm">simulare (test)</span>' : "") + (J ? randare(J, "aratat_client") : '<p class="dfa-gol">Plata e confirmată, dar datele nu au putut fi încărcate acum. Reîncearcă peste un minut.</p>')
+        + `<p class="dfa-src">Nu retransmite aceste date.</p>`;
       return;
     }
     corp.innerHTML = randare(mostra, "ascuns") + '<div class="dfa-pl"></div>' + "";

@@ -16,7 +16,7 @@
     { t: "Prețul", p: "Cât costă tranzacția până la capăt; evaluarea față de piață e în datele fine.", s: ["costuri"] },
     { t: "Cronologia locului", p: "Cum s-a schimbat locul de-a lungul anilor, de la primele hărți până acum.", s: ["cronologie"] },
     { t: "De discutat între părți", p: "Ce merită clarificat cu cealaltă parte înainte de semnare.", s: ["negociere"] },
-    { t: "🔒 Date fine · la comandă", p: "Documente și analize în plus pentru această proprietate: câteva sunt deschise, restul se deschid la comandă.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
+    { t: "🔒 Depth of Market – Level 2", p: "Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
   ];
   const PRIV = new Set();
   /* ce conțin datele fine, lista lui Manu din 02.11.2026; se arată și când modulele nu sunt deschise */
@@ -379,7 +379,7 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
     const d = document.createElement("div"); d.className = "ac-pr"; d.style.display = "none"; setare(d, baza(CAPS.length - 1) + 1); c.pr = d;
     const bl = s => s ? `<span class="bl">${esc(s)}</span>` : "";
     /* nu scriem ce conțin sau pot conține datele fine; „contacte”, nu „nume și telefoane” (Manu, 06.11.2026) */
-    d.innerHTML = (j && j.randuri && j.randuri.length ? `<p>${esc(j.total)} de anunțuri în zonă. Trei sunt complete, restul se deschid la comandă.</p><button type="button" class="ac-pr-btn">Comand datele fine</button><div class="scroll" style="margin-top:12px"><table><tr><th>anunț</th><th>preț</th><th>€/mp</th><th>contact</th></tr>${j.randuri.map(r => `<tr><td>${esc(r.titlu)}${bl(r.titlu_m)}</td><td>${esc(r.pret)}</td><td>${esc(r.eur_mp || "—")}</td><td>${esc(r.nume)}${bl(r.nume_m)} ${esc(r.tel)}${bl(r.tel_m)}</td></tr>`).join("")}</table></div>` : `<p>Datele fine se pregătesc la comandă pentru această proprietate.</p><button type="button" class="ac-pr-btn">Comand datele fine</button>`)
+    d.innerHTML = (j && j.randuri && j.randuri.length ? `<p>${esc(j.total)} de anunțuri în zonă. Trei sunt complete, restul se deschid la comandă.</p><button type="button" class="ac-pr-btn">Comand DOM</button><div class="scroll" style="margin-top:12px"><table><tr><th>anunț</th><th>preț</th><th>€/mp</th><th>contact</th></tr>${j.randuri.map(r => `<tr><td>${esc(r.titlu)}${bl(r.titlu_m)}</td><td>${esc(r.pret)}</td><td>${esc(r.eur_mp || "—")}</td><td>${esc(r.nume)}${bl(r.nume_m)} ${esc(r.tel)}${bl(r.tel_m)}</td></tr>`).join("")}</table></div>` : `<p>Datele fine se pregătesc la comandă pentru această proprietate.</p><button type="button" class="ac-pr-btn">Comand DOM</button>`)
       ;
     d.querySelector(".ac-pr-btn").onclick = () => comanda("date_fine");
     $(".wrap").appendChild(d);

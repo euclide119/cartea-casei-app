@@ -61,7 +61,7 @@
       f.administratori = Array.isArray(f.administratori) ? f.administratori.filter(a => !pers(a)) : f.administratori;
       f.asociati = Array.isArray(f.asociati) ? f.asociati.filter(a => !pers(a)) : f.asociati;
       if (f.tip_camp_telefon === "persoana_fizica") { f.telefon = ""; }
-      if (f.tip_camp_denumire === "persoana_fizica") { f.denumire = "persoană fizică (PFA/II), nume doar în Admin"; }
+      if (f.tip_camp_denumire === "persoana_fizica") { f.denumire = "persoană fizică autorizată"; }
     });
     ["cu", "ac", "puz"].forEach(k => (j[k] || []).forEach(r => ["beneficiar", "firma_proiectant", "firma_proiectant_executant"].forEach(c => { if (r[c] && pers(r[c])) r[c] = Object.assign({}, sters); })));
     j.nivel = "aratat_client";
@@ -111,18 +111,18 @@
   const ACORD_K = "cc-acord-df";
   function montajGratuit(el, dupa) {
     const g = gSes(), ok = (() => { try { return localStorage.getItem(ACORD_K) === CFG.versiune_acord; } catch (e) { return false; } })();
-    el.innerHTML = `<div class="pl"><h3>Date fine complete</h3>
-      <p><b>Acces gratuit în perioada de test.</b> Firme, administratori și asociați din registrul public, autorizații și certificate de urbanism cu beneficiari (din actele publice ale primăriilor), PUZ-uri și investiții declarate.</p>
+    el.innerHTML = `<div class="pl"><h3>🔒 Depth of Market – Level 2</h3>
+      <p><b>Acces gratuit în perioada de test.</b> Firmele, actele de urbanism și proiectele din jurul proprietății.</p>
       <label class="pl-acc"><input type="checkbox" id="pl-acc"${ok ? " checked" : ""}><span>${esc(TEXT_ACORD)} <a href="${CFG.gdpr}" target="_blank" rel="noopener">GDPR și folosire date</a></span></label>
       <div class="pl-cod" style="display:${ok ? "flex" : "none"};flex-direction:column;gap:10px">
-        <label for="pl-pin" style="font:700 15px var(--font)">Cod pentru date fine</label>
+        <label for="pl-pin" style="font:700 15px var(--font)">🔒 Cod DOM (de pe card)</label>
         <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="12" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.2em;padding:12px 14px;border:2px solid #1d5fb0;border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box">
-        <button type="button" class="pl-go" id="pl-pin-go">Deschide Date fine</button></div>
+        <button type="button" class="pl-go" id="pl-pin-go">Deschide DOM</button></div>
       ${local ? '<span class="pl-rev">textul acordului: de revizuit de avocat</span>' : ""}<p class="pl-msg" role="status"></p></div>`;
     const acc = el.querySelector("#pl-acc"), cod = el.querySelector(".pl-cod"), msg = el.querySelector(".pl-msg");
     acc.onchange = () => { cod.style.display = acc.checked ? "flex" : "none"; if (acc.checked) { try { localStorage.setItem(ACORD_K, CFG.versiune_acord); } catch (e) {} } };
     el.querySelector("#pl-pin-go").onclick = async () => {
-      const pin = el.querySelector("#pl-pin").value.trim(); if (!acc.checked) { msg.textContent = "Bifează acordul."; return; } if (!pin) { msg.textContent = "Scrie codul pentru date fine."; return; }
+      const pin = el.querySelector("#pl-pin").value.trim(); if (!acc.checked) { msg.textContent = "Bifează acordul."; return; } if (!pin) { msg.textContent = "Scrie codul DOM."; return; }
       if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul cu codul de intrare."; return; }
       msg.textContent = "Se verifică…";
       const r = await fetch(CFG.baza.replace("/functions/v1/", "/functions/v1/") + "raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: g.token, pin }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
