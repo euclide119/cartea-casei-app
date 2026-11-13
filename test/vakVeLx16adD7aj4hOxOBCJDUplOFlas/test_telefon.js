@@ -87,7 +87,7 @@
       d.style.cssText = "position:fixed;inset:0;z-index:99990;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
       const AC = "#1d5fb0";   // albastrul din logo: bifa, textul și butonul au același accent și același stil (contrast ≈ 5,6:1 pe papirus, ≈ 6:1 text alb pe buton)
       const F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
-      const img = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:46vh;object-fit:cover">`;
+      const img = `<img src="${window.CC_COV || 'deschidere.jpg'}" alt="Raportul casei" style="display:block;width:100%;max-height:46vh;object-fit:cover">`;
       const col = "min-height:54%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:48px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box";
       const btn = `${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%`;
       const hint = `<div id="cc-tt-pm" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#4a5063;text-align:center;min-height:20px"></div>`;
@@ -169,7 +169,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const AC = "#1d5fb0", F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
       const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "cod de intrare");
       d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
-      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
+      d.innerHTML = `<img src="${window.CC_COV || 'deschidere.jpg'}" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
 <label for="cc-tt-ci" style="${F};color:${AC};text-align:center">Cod de intrare</label>
 <input id="cc-tt-ci" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="24" aria-label="cod de intrare" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.08em;width:100%;max-width:320px;box-sizing:border-box;padding:14px 16px;border:2px solid ${AC};border-radius:14px;background:#fff;color:#1a1e2a;text-align:center">
 <button id="cc-tt-cig" type="button" style="${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%">Deschide raportul</button>
@@ -194,7 +194,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     const mk = () => { document.getElementById("cc-splash")?.remove(); document.getElementById("cc-tt-scan")?.remove(); document.getElementById("cc-tt-poarta")?.remove();
       const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "alert");
       d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif";
-      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="padding:44px 36px;text-align:center"><div style="font:700 21px/1.35 -apple-system,system-ui,sans-serif;color:#9a2a1f">${text}</div><p style="margin:16px 0 0;color:#3d4456">Cardul se folosește pe un singur telefon. Pentru alt telefon cere un card nou.</p></div>`;
+      d.innerHTML = `<img src="${window.CC_COV || 'deschidere.jpg'}" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="padding:44px 36px;text-align:center"><div style="font:700 21px/1.35 -apple-system,system-ui,sans-serif;color:#9a2a1f">${text}</div><p style="margin:16px 0 0;color:#3d4456">Cardul se folosește pe un singur telefon. Pentru alt telefon cere un card nou.</p></div>`;
       document.body.appendChild(d); };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
   }
@@ -210,7 +210,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const AC = "#1d5fb0", F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
       const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "cod de intrare");
       d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
-      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
+      d.innerHTML = `<img src="${window.CC_COV || 'deschidere.jpg'}" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
 <label for="cc-tt-ci" style="${F};color:${AC};text-align:center">Cod de intrare</label>
 <input id="cc-tt-ci" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="24" aria-label="cod de intrare" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.08em;width:100%;max-width:320px;box-sizing:border-box;padding:14px 16px;border:2px solid ${AC};border-radius:14px;background:#fff;color:#1a1e2a;text-align:center">
 <button id="cc-tt-cig" type="button" style="${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%">Deschide rapoartele</button>
@@ -238,7 +238,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const AC = "#1d5fb0", F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
       const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "cod master");
       d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
-      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
+      d.innerHTML = `<img src="${window.CC_COV || 'deschidere.jpg'}" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
 <label for="cc-tt-ci" style="${F};color:${AC};text-align:center">Cod master</label>
 <input id="cc-tt-ci" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-label="cod master" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.08em;width:100%;max-width:320px;box-sizing:border-box;padding:14px 16px;border:2px solid ${AC};border-radius:12px;background:#fff;color:#1a1e2a;text-align:center">
 <button id="cc-tt-cig" type="button" style="${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%">Deschide rapoartele</button>

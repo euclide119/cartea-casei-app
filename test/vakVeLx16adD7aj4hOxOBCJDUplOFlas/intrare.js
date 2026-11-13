@@ -39,18 +39,19 @@ body.generic #generic .gn-cov{margin-top:48px}
   document.head.appendChild(st);
 
   /* ---------- ecranul de deschidere ---------- */
-  const inchide = () => { const s = document.getElementById("cc-splash"); if (!s || s.dataset.g) return; s.dataset.g = "1"; s.style.opacity = "0"; s.style.pointerEvents = "none"; setTimeout(() => s.remove(), 450); };
+  const inchide = () => { const s = document.getElementById("cc-splash"); if (!s || s.dataset.g) return; s.dataset.g = "1"; s.remove(); };   /* v82.24.9: fără estompare: coperta dispare dintr-o dată, când e gata */
   /* imaginea de deschidere după tipul proprietății (Manu, 02.11.2026): casa acum pentru Giarmata Vii, apartament și parcelă pentru rapoartele viitoare */
   (function () { const IMG = { casa: "deschidere.jpg", apartament: "deschidere_apartament.jpg", teren: "deschidere_parcela.jpg" }, PE_ID = { g7_parcela: "casa" };
     const id = (location.hash.replace("#", "").split(".")[0] || ""), tip = PE_ID[id] || (/^ap_|apartament/i.test(id) ? "apartament" : /parcela|teren/i.test(id) ? "teren" : "casa");
     const im = document.querySelector("#cc-splash img"); if (im && IMG[tip]) im.src = IMG[tip]; })();
   const t0 = Date.now();
+  const okAcum = () => (document.body.classList.contains("generic") && !(CLIENT && REMOTE && intrat)) || (typeof D !== "undefined" && D && D.id && document.querySelector("#rezumat .card, #rezumat .p2-cov"));
   const gata = setInterval(() => {
-    const ok = (document.body.classList.contains("generic") && !(CLIENT && REMOTE && intrat)) || (typeof D !== "undefined" && D && D.id && document.querySelector("#rezumat .card, #rezumat .p2-cov"));
+    const ok = okAcum();
     if ((ok && Date.now() - t0 > 1500) || Date.now() - t0 > (CLIENT && REMOTE && intrat ? 15000 : 6000)) { clearInterval(gata); inchide(); }
   }, 120);
   /* coperta stă cel mult 1,5 s și dispare la prima mișcare: mouse, derulare, zoom, atingere, tastă (Manu, 06.11.2026) */
-  ["wheel", "mousemove", "touchstart", "pointerdown", "keydown", "scroll", "gesturestart"].forEach(ev => window.addEventListener(ev, () => { if (Date.now() - t0 > 250) inchide(); }, { passive: true, capture: true }));
+  ["wheel", "mousemove", "touchstart", "pointerdown", "keydown", "scroll", "gesturestart"].forEach(ev => window.addEventListener(ev, () => { if (Date.now() - t0 > 250 && okAcum()) inchide(); }, { passive: true, capture: true }));
 
   /* ---------- denumirea după tip ---------- */
   const NUME = { teren: "Cartea Terenului", apartament: "Cartea Apartamentului", casa: "Cartea Casei" };

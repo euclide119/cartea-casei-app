@@ -31,6 +31,7 @@
   const st = document.createElement("style"); st.id = "cc-mobil-css";
   st.textContent = `html.cc-mobil{background:#d9d4c7}
 html.cc-mobil body{max-width:${W}px;margin:0 auto!important;min-height:100vh;box-shadow:0 0 0 1px #c9c3b3,0 8px 40px rgba(0,0,0,.18);overflow-x:hidden;position:relative}
+html.cc-mobil #cc-splash,html.cc-mobil #cc-tt-scan{left:max(0px,calc(50% - ${W / 2}px))!important;right:auto!important;width:min(${W}px,100%)!important}
 html.cc-mobil .cc-m-fix{left:max(0px,calc(50% - ${W / 2}px))!important;right:auto!important;width:min(${W}px,100%)!important;max-width:${W}px!important;box-sizing:border-box}
 @media print{html.cc-mobil body{max-width:none;box-shadow:none}}`;
   (document.head || document.documentElement).appendChild(st);
