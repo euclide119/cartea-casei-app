@@ -12,6 +12,7 @@
   const zi = s => s ? new Date(s).toLocaleString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
   const STARE = { activ: ["activ", "#1d5fb0"], legat: ["legat", "#1f6b3d"], blocat: ["blocat", "#9a2a1f"], expirat: ["expirat", "#6b6f7d"] };
   const baza = () => location.origin + location.pathname.replace(/[^/]*$/, "");
+  const NUME = { mosnita_a92_18_19: "Moșnița Veche · A92/1/18–19 · 10.000 mp" };   // catalogul are doar coordonate pentru acest raport
   let S = null, CAT = [];
   const api = async (actiune, b) => { const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune, token: S.token, ...(b || {}) }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "eroare " + r.status); return j; };
 
@@ -58,7 +59,7 @@
   async function tabel() {
     const t = document.getElementById("cq-t"); if (!t) return;
     let j; try { j = await api("lista"); } catch (e) { t.textContent = e.message; return; }
-    CAT = j.catalog || []; const et = Object.fromEntries(CAT.map(c => [c.id, c.eticheta || c.id]));
+    CAT = (j.catalog || []).map(c => /^-?\d+\.\d+, /.test(c.eticheta || "") && NUME[c.id] ? { ...c, eticheta: NUME[c.id] } : c); const et = Object.fromEntries(CAT.map(c => [c.id, c.eticheta || c.id]));
     const scurt = id => { const s = et[id] || id + " (nepublicat)"; return s.split(" · ")[0] + (s.includes("CF ") ? " · " + (s.match(/CF [^·]+/) || [""])[0].trim() : ""); };
     t.innerHTML = `<table><thead><tr><th>Destinatar</th><th>Rapoarte</th><th>Emis</th><th>Expiră</th><th>Stare</th><th>Prima logare</th><th>Ultima intrare</th><th>Intrări</th><th>Refuzuri</th><th>Acțiuni</th></tr></thead><tbody>${(j.carduri || []).map(c => {
       const st = STARE[c.stare] || [c.stare, "#555"];
