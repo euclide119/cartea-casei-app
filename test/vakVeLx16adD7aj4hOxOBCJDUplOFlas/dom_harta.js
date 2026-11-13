@@ -43,13 +43,16 @@
 .dhm .dhm-fis .ok{color:#17693a;font-weight:700}.dhm .dhm-fis .ex{color:#7a3b2e;font-weight:700}
 .dhm .dhm-fis button.cr{margin-top:6px;min-height:40px;padding:0 16px;border-radius:20px;border:0;background:#1f4fd8;color:#fff;font:700 13px system-ui;cursor:pointer}
 .dhm-cr{position:fixed;inset:0;z-index:1000;background:rgba(15,18,28,.55);display:flex;align-items:flex-end;justify-content:center}
-.dhm-cr .w{background:#fff;color:#1a1e2a;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px 14px 22px;font:14px/1.4 system-ui}
-.dhm-cr h3{margin:0 40px 2px 0;font:700 17px system-ui}.dhm-cr .x{position:sticky;float:right;top:0;width:40px;height:40px;border:0;background:#eef0f4;border-radius:20px;font-size:22px;cursor:pointer;color:#1a1e2a}
-.dhm-cr .f{display:flex;gap:6px;margin:10px 0}.dhm-cr .f button{min-height:38px;padding:0 12px;border-radius:19px;border:1px solid #c5cad6;background:#fff;color:#1a1e2a;font:600 13px system-ui;cursor:pointer}.dhm-cr .f button.on{background:#1a1e2a;color:#fff;border-color:#1a1e2a}
-.dhm-cr h5{margin:14px 0 4px;font:700 13px system-ui;color:#4a5160;border-bottom:1px solid #e1e4ec}
-.dhm-cr .r{padding:7px 0;border-bottom:1px solid #eef0f4}.dhm-cr .r b.t{display:inline-block;min-width:34px;text-align:center;border-radius:6px;padding:1px 6px;color:#fff;font-size:12px;margin-right:6px}
-.dhm-cr .tr{position:relative;height:8px;background:#eef0f4;border-radius:4px;margin:5px 0 2px}.dhm-cr .tr i{position:absolute;top:0;bottom:0;border-radius:4px}.dhm-cr .tr u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#d92d20}
-.dhm-cr .ok{color:#17693a;font-weight:700}.dhm-cr .ex{color:#7a3b2e;font-weight:700}.dhm-cr .n{font-size:12px;color:#4a5160;margin-top:12px}
+.dhm-cr .w{background:#fffaf3;color:#1a1e2a;width:min(620px,100%);max-height:94vh;overflow:auto;border-radius:14px 14px 0 0;padding:0 0 12px;font:11.5px/1.25 -apple-system,Segoe UI,sans-serif}
+.dhm-cr .hd{background:#ffe9cf;color:#7c2d12;font:700 12.5px system-ui;padding:8px 46px 8px 10px;position:sticky;top:0}
+.dhm-cr .x{position:absolute;right:6px;top:3px;width:36px;height:36px;border:0;background:none;font-size:22px;cursor:pointer;color:#7c2d12;z-index:2}
+.dhm-cr .f{display:flex;gap:5px;margin:6px 10px}.dhm-cr .f button{min-height:30px;padding:0 10px;border-radius:15px;border:1px solid #e9c9a3;background:#fff;color:#7c2d12;font:600 11px system-ui;cursor:pointer}.dhm-cr .f button.on{background:#9a3412;color:#fff;border-color:#9a3412}
+.dhm-cr h5{margin:8px 10px 3px;font-size:11.5px;color:#9a3412;font-weight:700}
+.dhm-cr svg{display:block;width:calc(100% - 20px);margin:0 10px;height:auto}.dhm-cr .lg{display:block;margin:2px 10px;color:#64748b;font-size:10px}
+.dhm-cr table{width:calc(100% - 20px);margin:0 10px;border-collapse:collapse;font-size:11.5px}.dhm-cr td,.dhm-cr th{padding:2px 5px;text-align:left;vertical-align:middle}.dhm-cr th{font-weight:600;color:#7c2d12;font-size:10.5px}.dhm-cr .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dhm-cr tr.z1>td{background:#fff3e0}.dhm-cr tr.z2>td{background:#fffaf3}
+.dhm-cr .ch{display:inline-block;font-weight:700;font-size:10.5px;border-radius:6px;padding:0 6px;color:#fff}
+.dhm-cr .n2{margin:8px 10px 0;font-size:10.5px;color:#64748b}
 #date_fine_aproape tr[data-i]{cursor:pointer;-webkit-tap-highlight-color:rgba(255,160,0,.25)}
 #date_fine_aproape tr.dfa-on{background:#fff3d6}
 #date_fine_aproape tr.dfa-np td:first-child::after,#date_fine_aproape tr:not([data-i]) td:first-child::after{content:" !";color:#a37b00;font-weight:700;font-size:11px}`;
@@ -271,20 +274,36 @@
     w.querySelector(".x").onclick = () => { w.remove(); M.hl = []; M.label = ""; M.dirty = true; };
     const cb = w.querySelector(".cr"); if (cb) cb.onclick = () => cronologie(k);
   }
+  /* Cronologie: componenta din harta mare (depozit-modul.js › axa + tabelul „Acte”): tabel cărămiziu-portocaliu (#ffe9cf / #fff3e0 / #7c2d12), bare fine pe o axă comună de timp (Gantt), linia roșie punctată = azi, rânduri compacte */
   function cronologie(k) {
     const V = P.v2, f = V.f[k]; if (!f) return;
-    const dd = s => Date.parse(s) || 0, azi = dd(V.data || "2026-11-13"), toate = f.acte.concat(f.puz.map(z => ({ t: "PUZ", d: String(z.d || "").slice(0, 10), n: z.h || "", o: z.o, st: "", sf: null })));
-    let a0 = Math.min(azi, ...toate.map(a => dd(a.d)).filter(Boolean)), a1 = Math.max(azi, ...toate.map(a => dd(a.sf || a.d)).filter(Boolean)); const span = Math.max(a1 - a0, 1);
-    const tc = { AC: "#1f8a4c", CU: "#1f4fd8", PUZ: "#7a4fc4" }, nv = f.acte.filter(a => a.st === "valabil").length, ne = f.acte.filter(a => a.st === "expirat").length;
+    const dd = s => Date.parse(s) || 0, azi = dd(V.data || "2026-11-13"), ZI = 864e5;
+    const toate = f.acte.map(a => ({ ...a })).concat(f.puz.map(z => ({ t: "PUZ", d: String(z.d || "").slice(0, 10), n: z.h || "", o: z.o, st: "", sf: null })));
+    const nv = f.acte.filter(a => a.st === "valabil").length, ne = f.acte.filter(a => a.st === "expirat").length;
     const ov = document.createElement("div"); ov.className = "dhm-cr"; let mod = "toate";
-    const rand = a => { const p0 = (dd(a.d) - a0) / span * 100, p1 = a.sf ? (dd(a.sf) - a0) / span * 100 : p0 + 1.2, col = a.st === "expirat" ? "#9aa1ad" : (tc[a.t] || "#1f8a4c");
-      return `<div class="r"><b class="t" style="background:${tc[a.t] || "#555"}">${esc(a.t)}</b><b>${esc(a.n)}</b> · ${dmy(a.d)} · ${a.t === "PUZ" ? "aprobat" : stAct(a)}<div>${esc(a.o || "—")}${a.b ? " · <i>" + esc(a.b) + "</i>" : ""}</div><div class="tr"><i style="left:${p0.toFixed(2)}%;width:${Math.max(1.2, p1 - p0).toFixed(2)}%;background:${col}"></i><u style="left:${((azi - a0) / span * 100).toFixed(2)}%" title="azi"></u></div></div>`; };
+    const COLT = { AC: "#f08a24", CU: "#3b82f6", PUZ: "#a855f7" };
+    function gantt(L) {
+      const vis = L.slice(0, 14); if (!vis.length) return "";
+      let t0 = Math.min(azi, ...vis.map(a => dd(a.d)).filter(Boolean)), t1 = Math.max(azi, ...vis.map(a => dd(a.sf || a.d)).filter(Boolean)); t0 -= 40 * ZI; t1 += 40 * ZI;
+      const W = 340, X0 = 62, sc = v => X0 + (v - t0) / (t1 - t0) * (W - X0 - 4), H = vis.length * 13 + 18;
+      let o = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cronologia actelor">`;
+      for (let y = new Date(t0).getUTCFullYear() + 1; y <= new Date(t1).getUTCFullYear(); y++) { const x = sc(Date.UTC(y, 0, 1)); o += `<line x1="${x}" x2="${x}" y1="2" y2="${H - 12}" stroke="#f1d9bd"/><text x="${x}" y="${H - 2}" font-size="8" text-anchor="middle" fill="#9a3412">${y}</text>`; }
+      vis.forEach((a, i) => {
+        const y = 3 + i * 13, s0 = dd(a.d); if (!s0) return; const e1 = a.sf ? dd(a.sf) : s0 + 20 * ZI, exp = a.st === "expirat", op = exp ? ".45" : "1";
+        o += `<text x="2" y="${y + 7}" font-size="8.5" fill="#1f2937">${esc(a.t)} ${esc(String(a.n).slice(0, 8))}/${esc(String(a.d).slice(2, 4))}</text>`;
+        if (a.t === "AC") { const m = Math.min(e1, s0 + 365 * ZI); o += `<rect x="${sc(s0)}" y="${y}" width="${Math.max(2, sc(m) - sc(s0))}" height="8" rx="2" fill="#f08a24" opacity="${op}"/>`; if (e1 > m) o += `<rect x="${sc(m)}" y="${y}" width="${Math.max(1, sc(e1) - sc(m))}" height="8" rx="2" fill="#86efac" opacity="${op}"/>`; }
+        else o += `<rect x="${sc(s0)}" y="${y}" width="${Math.max(2, sc(e1) - sc(s0))}" height="8" rx="2" fill="${COLT[a.t] || "#888"}" opacity="${op}"/>`;
+      });
+      return o + `<line x1="${sc(azi)}" x2="${sc(azi)}" y1="0" y2="${H - 12}" stroke="#dc2626" stroke-dasharray="2 2"/></svg>`;
+    }
     const desen = () => {
-      const L = toate.filter(a => mod === "toate" || (mod === "valabile" && a.st === "valabil") || (mod === "expirate" && a.st === "expirat")).sort((x, y) => dd(y.d) - dd(x.d)), ani = {}; for (const a of L) (ani[String(a.d).slice(0, 4)] = ani[String(a.d).slice(0, 4)] || []).push(a);
-      ov.querySelector(".w").innerHTML = `<button type="button" class="x" aria-label="Închide">×</button><h3>Cronologie · NC ${esc(k)}</h3><div class="s" style="color:#4a5160;font-size:12px">${f.dm != null ? "la " + f.dm + " m de teren · " : ""}${nv} valabile · ${ne} expirate · ${f.puz.length} PUZ · linia roșie = azi</div>
+      const L = toate.filter(a => mod === "toate" || (mod === "valabile" && a.st === "valabil") || (mod === "expirate" && a.st === "expirat")).sort((x, y) => dd(y.d) - dd(x.d));
+      const tab = L.map((a, i) => `<tr class="z${1 + i % 2}"><td><b>${esc(a.t)} ${esc(a.n)}</b></td><td class="n">${dmy(a.d)}</td><td class="n">${a.sf ? dmy(a.sf) + (a.ds ? "" : "†") : ""}</td><td>${a.t === "PUZ" ? '<span class="ch" style="background:#a855f7">aprobat</span>' : `<span class="ch" style="background:${a.st === "valabil" ? "#16a34a" : "#9ca3af"}">${a.st === "valabil" ? "valabil" : "expirat"}</span>`}</td></tr>`).join("");
+      ov.querySelector(".w").innerHTML = `<button type="button" class="x" aria-label="Închide">×</button><div class="hd">Cronologie · NC ${esc(k)} · ${toate.length} acte${f.dm != null ? " · la " + f.dm + " m" : ""}</div>
         <div class="f">${[["toate", "Toate " + toate.length], ["valabile", "Valabile " + nv], ["expirate", "Expirate " + ne]].map(([m, t]) => `<button type="button" data-m="${m}" class="${m === mod ? "on" : ""}">${t}</button>`).join("")}</div>
-        ${Object.keys(ani).sort().reverse().map(y => `<h5>${y} · ${ani[y].length} ${ani[y].length === 1 ? "act" : "acte"}</h5>` + ani[y].map(rand).join("")).join("") || '<p class="s">Niciun act în această categorie.</p>'}
-        <div class="n">${esc(V.reguli || "")} † = termen calculat, nu din sursă; „din sursă” = termenul din lista primăriei.</div>`;
+        <h5>Cronologie (CU → AC → valabilitate)</h5>${gantt(L)}<small class="lg">albastru = CU · portocaliu = AC (început lucrări) · verde = execuție · mov = PUZ · roșu punctat = azi · pale = expirate</small>
+        <h5>Acte</h5><table><thead><tr><th>Act</th><th class="n">Emis</th><th class="n">Valabil până</th><th>Stadiu</th></tr></thead><tbody>${tab || '<tr><td colspan="4">Niciun act în această categorie.</td></tr>'}</tbody></table>
+        <div class="n2">${esc(V.reguli || "")} † = termen calculat; fără † = din lista primăriei.</div>`;
       ov.querySelector(".x").onclick = () => ov.remove(); ov.querySelectorAll(".f button").forEach(b => b.onclick = () => { mod = b.dataset.m; desen(); });
     };
     ov.innerHTML = '<div class="w"></div>'; ov.addEventListener("click", e => { if (e.target === ov) ov.remove(); }); desen(); document.body.appendChild(ov);
@@ -322,5 +341,5 @@
     sec.querySelectorAll("tr[data-i]").forEach(tr => { if (tr.dataset.np) return; tr.dataset.np = "1"; if (!pozitii(tr.dataset.s, +tr.dataset.i).length) tr.classList.add("dfa-np"); });
   }
   setInterval(() => { try { ensure(); } catch (e) { console.warn("dom_harta", e); } }, 900);
-  window.CC_DOM_MAP = { aprinde, get stare() { return M; } };
+  window.CC_DOM_MAP = { aprinde, cronologie, get stare() { return M; } };
 })();
