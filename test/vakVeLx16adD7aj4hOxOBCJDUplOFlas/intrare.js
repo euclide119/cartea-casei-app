@@ -6,7 +6,7 @@
   const FN = "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod";
   const q = new URLSearchParams(location.search);
   const local = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-  if (window.parent !== window) { document.getElementById("cc-splash")?.remove(); return; }   // în aplicație, intrarea o face aplicația
+  if (window.parent !== window) { if (window.CC_COPERTA_INCHIDE) window.CC_COPERTA_INCHIDE(); return; }   // în aplicație, intrarea o face aplicația
   const CLIENT = !local || q.get("client") === "1";
   const REMOTE = !local || q.get("remote") === "1";   // datele vin prin funcție doar pe linkul public; local, ?client=1 doar arată interfața
   window.CC_CLIENT = CLIENT; window.CC_REMOTE = REMOTE;
@@ -37,13 +37,14 @@ body.generic .cc-cod{position:static!important;left:auto!important;right:auto!im
 body.generic #generic .gn-cov{margin-top:48px}
 #cc-iesi{position:fixed;right:14px;bottom:14px;z-index:60;font:600 12.5px var(--font);border:1px solid #c9ced8;background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer}`;
   document.head.appendChild(st);
+  { const sub = document.createElement("style"); sub.id = "cc-bife-discrete"; sub.textContent = ".cc-ab{font:400 12.5px/1.3 var(--font,system-ui)!important;padding:2px 4px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#6b7280!important;gap:6px!important}.cc-ab input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:#6b7280}.cc-ab-s{display:none!important}.cc-acc a{color:#6b7280!important}"; document.head.appendChild(sub); }   /* v82.25.0 (Manu): bifele „nu sunt robot” și „accept condițiile” mai subtile */
 
   /* ---------- ecranul de deschidere ---------- */
-  const inchide = () => { const s = document.getElementById("cc-splash"); if (!s || s.dataset.g) return; s.dataset.g = "1"; s.remove(); };   /* v82.24.9: fără estompare: coperta dispare dintr-o dată, când e gata */
+  const inchide = () => {};   /* v82.25.0: coperta (index.html) se închide singură, o dată, când raportul e desenat; nu la mișcare, nu după un timp */   /* v82.24.9: fără estompare: coperta dispare dintr-o dată, când e gata */
   /* imaginea de deschidere după tipul proprietății (Manu, 02.11.2026): casa acum pentru Giarmata Vii, apartament și parcelă pentru rapoartele viitoare */
   (function () { const IMG = { casa: "deschidere.jpg", apartament: "deschidere_apartament.jpg", teren: "deschidere_parcela.jpg" }, PE_ID = { g7_parcela: "casa" };
     const id = (location.hash.replace("#", "").split(".")[0] || ""), tip = PE_ID[id] || (/^ap_|apartament/i.test(id) ? "apartament" : /parcela|teren/i.test(id) ? "teren" : "casa");
-    const im = document.querySelector("#cc-splash img"); if (im && IMG[tip]) im.src = IMG[tip]; })();
+    void IMG; void tip; })();   /* v82.25.0: aceeași copertă (poza cu avionul) la toate rapoartele: poza nu se mai schimbă după tip */
   const t0 = Date.now();
   const okAcum = () => (document.body.classList.contains("generic") && !(CLIENT && REMOTE && intrat)) || (typeof D !== "undefined" && D && D.id && document.querySelector("#rezumat .card, #rezumat .p2-cov"));
   const gata = setInterval(() => {
@@ -94,16 +95,19 @@ body.generic #generic .gn-cov{margin-top:48px}
       loc.appendChild(w); const c = w.querySelector("input[type=checkbox]"), h = w.querySelector("input[name=site]"), s = w.querySelector(".cc-ab-s"), t0 = Date.now(); let p = null, om = false;
       c.addEventListener("click", e => { om = e.isTrusted; if (!c.checked) { p = null; s.textContent = ""; return; }
         if (!om) { c.checked = false; return; }
-        s.textContent = "se verifică…"; p = dovada().then(d => { s.textContent = "verificat ✓"; return d; }, () => { s.textContent = "verificare eșuată; bifează din nou"; c.checked = false; return null; }); });
-      return { ok: async () => { if (!c.checked || !p || Date.now() - t0 < 1200) return null; const d = await p; return d ? { ...d, h: h.value } : null; } };
+        p = dovada().catch(() => dovada()).catch(() => null); });   /* v82.25.0: verificarea e tăcută (fără „se verifică” / „verificat”) */
+      const nou = () => { p = c.checked ? dovada().catch(() => dovada()).catch(() => null) : null; };
+      return { ok: async () => { if (!c.checked || !p || Date.now() - t0 < 1200) return null; const d = await p; nou(); return d ? { ...d, h: h.value } : null; },   /* v82.25.0: după fiecare folosire se pregătește alta, deci a doua încercare nu mai dă „verificarea a fost folosită” */
+        nou };
     }
   };
   const stab = document.createElement("style"); stab.textContent = `.cc-ab span{white-space:nowrap}#cc-ab,#cc-acw{flex-basis:100%;display:flex;justify-content:center}.cc-acc a{color:#1f4fb0;text-decoration:underline}.cc-ab{position:relative;display:inline-flex;align-items:center;gap:8px;font:600 14px var(--font);padding:7px 11px;border:1px solid #c9ced8;border-radius:10px;background:#fff;color:#1a1e2a;cursor:pointer}.cc-ab input[type=checkbox]{width:24px;height:24px;margin:0}.cc-ab-s{font:600 13px var(--font);font-style:normal;color:#4a5063}`; document.head.appendChild(stab);
   async function intra(corp, msg, ab) {
     const dv = await ab.ok(); if (!dv) { msg.textContent = "bifează „nu sunt robot”"; return false; }
-    msg.textContent = "se deschide raportul…";
+    msg.textContent = "";
     try {
-      const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...corp, antibot: dv }) }), j = await r.json();
+      let r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...corp, antibot: dv }) }), j = await r.json();
+      if (!r.ok && /verificarea/.test(j.error || "")) { const d2 = await ab.ok(); if (d2) { r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...corp, antibot: d2 }) }); j = await r.json(); } }   // v82.25.0
       if (!r.ok) { msg.textContent = j.error || "codul nu mai e valabil"; return false; }
       await stare({ id: j.id, titlu: j.titlu, tip: j.tip, token: j.token, n: 1, cod: corp.cod ? String(corp.cod).toUpperCase() : "" });
       try { sessionStorage.setItem(K_INTRAT, "1"); } catch (e) {}
@@ -122,6 +126,8 @@ body.generic #generic .gn-cov{margin-top:48px}
     const m = w.querySelector("#cc-m"), go = w.querySelector("#cc-go"), inp = w.querySelector("#cc-in"), ab = window.CC_ANTIBOT.monteaza(w.querySelector("#cc-ab"));
     const merge = () => { if (!REMOTE) { m.textContent = "local nu se verifică codul: folosește adresa publică"; return; }
       if (inp && inp.value.replace(/[^A-Za-z0-9]/g, "").length < 6) { m.textContent = "scrie codul raportului"; return; }
+      const cm = inp ? inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
+      if (cm && !/^CC/.test(cm) && cm.length >= 8 && window.CC_MASTER_INTRA) { go.disabled = true; m.textContent = ""; window.CC_MASTER_INTRA(cm).then(x => { if (x && x.ok) return; go.disabled = false; m.textContent = (x && x.error) || "codul nu e valid"; }); return; }   // v82.25.0: codul master (10 caractere) intră direct
       if (!w.querySelector("#cc-acc").checked) { m.textContent = "bifează „accept condițiile de utilizare”"; return; }
       go.disabled = true; intra(jt ? { actiune: "qr", qr: jt } : { actiune: "cod", cod: inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "") }, m, ab).then(ok => { if (!ok) go.disabled = false; }); };
     go.onclick = merge; if (inp) inp.onkeydown = e => { if (e.key === "Enter") merge(); };

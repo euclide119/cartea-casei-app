@@ -152,7 +152,7 @@
 ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><input id="cc-tt-cod" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="cod raport" aria-label="cod raport" style="font:700 18px ui-monospace,Menlo,monospace;letter-spacing:.15em;width:8em;padding:10px 12px;border:1.5px solid #1a1e2a;border-radius:10px;background:#fff;color:#1a1e2a"><button id="cc-tt-cod-go" type="button" style="font:700 15px -apple-system,system-ui,sans-serif;border:0;border-radius:10px;padding:11px 16px;background:#1a1e2a;color:#fffdf8">Intră cu cod</button><div id="cc-tt-cod-m" role="status" style="flex-basis:100%;min-height:18px;font-size:14px;color:#9a2a1f"></div></div>` : ""}<p style="margin:0;font-size:14px;color:#3d4456"><b>Android:</b> scanează cu aparatul foto sau Google Lens, deschide în Chrome.<br><b>iPhone:</b> scanează cu aparatul foto (nu cu altă aplicație) și deschide în Safari.</p></div>`;
       document.body.appendChild(d);
       const go = d.querySelector("#cc-tt-cod-go"); if (go) { const inp = d.querySelector("#cc-tt-cod"), m = d.querySelector("#cc-tt-cod-m");
-        const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul raportului"; return; } go.disabled = true; m.textContent = "se verifică…";
+        const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul raportului"; return; } go.disabled = true; m.textContent = "";
           try { const r = await post({ actiune: "cod_test", cod }); if (!r.ok || !r.j.token) { m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
             const lista = r.j.lista || [], id0 = lista[0] && lista[0].id; await salveaza({ adm: 1, c: 1, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id: id0, lista });
             const alege = (lg("cc-adm-id") && lista.some(p => p.id === lg("cc-adm-id"))) ? lg("cc-adm-id") : id0; if (alege) { lg("cc-adm-id", alege); try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} } location.reload();
@@ -176,7 +176,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
 <div id="cc-tt-cim" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#9a2a1f;text-align:center;min-height:20px">${msg || ""}</div></div>`;
       document.body.appendChild(d);
       const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
-      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de intrare"; return; } go.disabled = true; m.textContent = "se verifică…";
+      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de intrare"; return; } go.disabled = true; m.textContent = "";
         try { const r = await post({ actiune: "cod_gratuit", cod, id }); if (!r.ok || !r.j.token) { m.textContent = r.status === 404 ? "raportul nu mai e disponibil" : (r.j.error || "codul nu e valid"); go.disabled = false; return; }
           await salveaza({ adm: 1, c: 1, g: 1, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id, lista: r.j.lista || [] });
           lg("cc-adm-g", id); lg("cc-adm-id", id); try { history.replaceState(null, "", location.pathname + location.search + "#" + id); } catch (e) {} location.reload();
@@ -217,7 +217,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
 <div id="cc-tt-cim" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#9a2a1f;text-align:center;min-height:20px">${msg || ""}</div></div>`;
       document.body.appendChild(d);
       const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
-      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de intrare"; return; } go.disabled = true; m.textContent = "se verifică…";
+      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de intrare"; return; } go.disabled = true; m.textContent = "";
         try { const r = await post({ actiune: "card_cod", card: k, cod, disp: await dispGet(k), inst: standalone() ? 1 : 0 });
           if (!r.ok || !r.j.token) { if (r.j.stare === "alt_dispozitiv" || r.j.stare === "blocat" || r.j.stare === "expirat") { mesajCard((r.j.error || "Cardul nu mai e valabil") + "."); return; } m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
           if (r.j.disp) await dispSet(k, r.j.disp);
@@ -245,7 +245,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
 <div id="cc-tt-cim" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#9a2a1f;text-align:center;min-height:20px">${msg || ""}</div></div>`;
       document.body.appendChild(d);
       const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
-      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul master"; return; } go.disabled = true; m.textContent = "se verifică…";
+      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul master"; return; } go.disabled = true; m.textContent = "";
         try { const r = await post({ actiune: "cod_master", cod }); if (!r.ok || !r.j.token) { m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
           const lista = r.j.lista || [], id0 = (lista.find(p => p.id === lg("cc-adm-id")) || lista[0] || {}).id;
           await salveaza({ adm: 1, c: 1, g: 1, m: 1, n: 2, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Master", id: id0, lista });
@@ -255,6 +255,13 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
   }
+  /* v82.25.0: codul master scris în câmpul obișnuit de pe copertă (intrare.js) intră pe același drum ca ecranul „Cod master” */
+  window.CC_MASTER_INTRA = async cod => {
+    try { const r = await post({ actiune: "cod_master", cod }); if (!r.ok || !r.j.token) return { error: (r.j && r.j.error) || "codul nu e valid" };
+      const lista = r.j.lista || [], id0 = (lista.find(p => p.id === lg("cc-adm-id")) || lista[0] || {}).id;
+      await salveaza({ adm: 1, c: 1, g: 1, m: 1, n: 2, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Master", id: id0, lista });
+      lg("cc-adm-id", id0); try { history.replaceState(null, "", location.pathname + location.search + "#" + id0); } catch (e) {} location.reload(); return { ok: true };
+    } catch (e) { return { error: "nu s-a putut verifica; încearcă din nou" }; } };
   /* „vezi ca QR X” (Admin): jeton de previzualizare pentru cardul X; sesiunea Admin se păstrează și se reia din bandă */
   window.CC_PREVIZ = async cardId => {
     const s = window.CC_ADM; if (!s || !s.token || s.c || s.k || s.pv || s.m) return { error: "doar Adminul poate previzualiza un card" };
