@@ -288,6 +288,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
         if (!navigator.serviceWorker.controller) await new Promise(res => { navigator.serviceWorker.addEventListener("controllerchange", res, { once: true }); setTimeout(res, 2500); });
         if (!sessionStorage.getItem("cc-tt-rel")) { sessionStorage.setItem("cc-tt-rel", "1"); location.reload(); return; } } catch (e) {}
     }
+    { const h = decodeURIComponent((location.hash || "").replace(/^#/, "")).split(".")[0], c = lista.find(p => p.id === h); if (c && c.eticheta) document.title = c.eticheta + " · Raportul casei"; }   // v82.15.1: numele din catalog (ex. „G7 – Maule”) în titlul aplicației
     bara(s);
     versiune();
     instaleaza(); paneliOS(); butonNou();
