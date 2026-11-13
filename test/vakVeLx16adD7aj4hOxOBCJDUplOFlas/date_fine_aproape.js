@@ -12,7 +12,7 @@
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const ADMIN = () => window.parent === window && ((local && !window.CC_CLIENT) || !!(window.CC_ADM && window.CC_ADM.adm && (!window.CC_ADM.ca_client || window.CC_ADM.n >= 2)));
   const SEC = "date_fine_aproape";
-  let arataAdmin = false, facut = null;
+  let arataAdmin = false, arataSurse = false, facut = null;   // v82.14.2: sursele doar la „i”, nici în Admin implicit
 
   function css() {
     if ($("#dfa-css")) return;
@@ -40,7 +40,7 @@
   const val = v => v == null ? "" : (typeof v === "object" ? (v.gol || v.valoare === "" ? (ADMIN() && !(window.CC_ADM && window.CC_ADM.g) && v.motiv_gol ? `<span class="dfa-src">${esc(v.motiv_gol)}</span>` : "—") : esc(v.valoare)) : esc(v));
   const dist = r => r.distanta_m != null ? nf(r.distanta_m) + " m" : "—";
   const sursa = r => `<span class="dfa-src">${esc(r.sursa_tip || (r.sursa && /^https?:/.test(r.sursa) ? "primărie" : r.sursa) || "")} · ${esc(String(r.data_sursei || "").slice(0, 10) || "dată necunoscută")} · încredere ${esc(r.incredere || "—")}</span>`;
-  const tabel = (titlu, cap, rows, motiv) => `<h3>${titlu} <small>(${rows.length})</small></h3>` + (rows.length ? `<div class="scroll"><table><tr>${cap.map(c => `<th>${c}</th>`).join("")}</tr>${rows.join("")}</table></div>` : `<p class="dfa-gol">${esc(motiv)}</p>`);
+  const tabel = (titlu, cap, rows) => !rows.length ? "" : `<h3>${titlu} <small>(${rows.length})</small></h3><div class="scroll"><table><tr>${cap.map(c => `<th>${c}</th>`).join("")}</tr>${rows.join("")}</table></div>`;   // v82.14.2: secțiune fără date = nu apare
   const MOTIV = "Nu avem rânduri pentru această categorie în Banca de Date; pozițiile pe parcelă există doar pentru județul Timiș.";
   const admnm = (r, full) => { const A = r.administratori, L = Array.isArray(A) ? A : []; const t = L.map(a => full ? `${esc(a.nume)}${a.calitate ? " (" + esc(a.calitate) + ")" : ""}` : m(a, "nume")).join("; ");
     return t || (ADMIN() && !(window.CC_ADM && window.CC_ADM.g) && A && !Array.isArray(A) && A.motiv_gol ? `<span class="dfa-src">${esc(A.motiv_gol)}</span>` : "—"); };
@@ -58,7 +58,7 @@
   function randare(J, nivel) {
     const full = nivel !== "ascuns", adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);
     const fx = full ? (r, k) => val(r[k]) : m;
-    const cap = c => adm && full ? [...c, "Sursă"] : c, cel = (r, h) => adm && full ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
+    const cap = c => adm && full && arataSurse ? [...c, "Sursă"] : c, cel = (r, h) => adm && full && arataSurse ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
     const pd = (L, n) => (L || []).filter(r => r.distanta_m != null).slice().sort((x, y) => x.distanta_m - y.distanta_m).slice(0, n);
     const rAct = (r, cuDist) => cel(r, `<tr><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}</tr>`);
     let h = "";
@@ -103,8 +103,9 @@
     if (adm) {
       if (arataAdmin) {
         const J = await json(P + "date_fine_aproape.json");
-        corp.innerHTML = `<span class="dfa-adm">🔓 Admin: date complete (cod 1357), nu se publică</span> <button type="button" class="dfa-btn" data-a="ascunde">Ascunde</button>` + (J ? randare(J, "arati_admin") : '<p class="dfa-gol">date_fine_aproape.json lipsește pentru această proprietate.</p>');
+        corp.innerHTML = `<span class="dfa-adm">🔓 Admin: date complete (cod 1357), nu se publică</span> <button type="button" class="dfa-btn" data-a="ascunde">Ascunde</button> <button type="button" class="dfa-btn" data-a="surse" title="surse">i</button>` + (J ? randare(J, "arati_admin") : '<p class="dfa-gol">date_fine_aproape.json lipsește pentru această proprietate.</p>');
         corp.querySelector('[data-a="ascunde"]').onclick = () => { arataAdmin = false; facut = null; porneste(); };
+        corp.querySelector('[data-a="surse"]').onclick = () => { arataSurse = !arataSurse; facut = null; porneste(); };
       } else {
         corp.innerHTML = `<span class="dfa-adm">Nivel ascuns (valorile sensibile sunt mascate)</span> <button type="button" class="dfa-btn" data-a="arata">Arată</button>` + randare(mostra, "ascuns");
         corp.querySelector('[data-a="arata"]').onclick = () => { const c = window.prompt("Cod Admin:"); if (c === "1357") { arataAdmin = true; facut = null; porneste(); } };
