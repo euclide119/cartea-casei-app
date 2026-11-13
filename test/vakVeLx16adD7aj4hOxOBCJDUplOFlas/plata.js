@@ -160,6 +160,10 @@
         q("#pl-ct-go").onclick = go; ct.onkeydown = e => { if (e.key === "Enter") go(); }; }
     };
     ecran("alege");
+    /* un singur loc de cod în fereastra DOM: titlul dublat și linkul de sub lacăt (date_fine_aproape.js) și vechiul câmp G7 „cod de 4 cifre / nu sunt robot” (g7.js) nu se mai văd cât lacătul e închis */
+    try { const sec = el.closest("section"); if (sec) { const t = sec.querySelector(":scope > div:first-child"); if (t && !t.contains(el)) t.style.display = "none"; const f = sec.querySelector(":scope > .dfa-foot"); if (f) f.style.display = "none"; } } catch (e) {}
+    document.body.classList.add("cc-dom-lacat");
+    if (!document.getElementById("pl-css-lacat")) { const st = document.createElement("style"); st.id = "pl-css-lacat"; st.textContent = "body.cc-dom-lacat section:has(#g7cod){display:none!important}"; document.head.appendChild(st); }
     window.CC_DOM_COMANDA = () => { ecran("comanda"); try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {} };
   }
   /* butonul „Comand DOM” din lista de anunțuri (acordeon.js) duce la același ecran „Comandă DOM” din lacăt; după cod dispare (o singură cale de comandă) */
