@@ -116,13 +116,13 @@ body.generic #generic .gn-cov{margin-top:48px}
     const cov = document.querySelector("#generic .gn-cov"); if (!cov) return;   // v82.24.1: coperta (poza de la început) se așază întâi; linia „Deschide raportul” vine după ea
     const jt = QR0;
     const w = document.createElement("div"); w.className = "cc-cod";
-    w.innerHTML = `${jt ? "" : `<input id="cc-in" placeholder="CC-XXXXXX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="codul raportului">`}<button type="button" id="cc-go">Deschide raportul</button><div id="cc-ab"></div><div id="cc-acw"><label class="cc-ab cc-acc"><input type="checkbox" id="cc-acc" aria-label="accept condițiile de utilizare"><span>accept <a href="conditii.html" target="_blank" rel="noopener">condițiile de utilizare</a> și GDPR</span></label></div><small id="cc-m">${jt ? "Bifează și deschide raportul." : "Scrie codul raportului sau scanează codul QR."}</small>`;
+    w.innerHTML = `${jt ? "" : `<input id="cc-in" placeholder="CC-XXXXXX" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="codul raportului">`}<button type="button" id="cc-go">Deschide raportul</button><div id="cc-ab"></div><div id="cc-acw"><label class="cc-ab cc-acc"><input type="checkbox" id="cc-acc" aria-label="accept condițiile de utilizare"><span>accept <a href="conditii.html" target="_blank" rel="noopener">condițiile de utilizare</a> și GDPR</span></label></div><small id="cc-m">${jt ? "Bifează și deschide raportul." : "Scrie codul raportului sau scanează codul QR."}</small>`;
     cov.after(w);   // v82.24.1 (cerere Manu 13.11.2026): coperta de sus în jos = 2 rânduri libere, poza, 3 rânduri libere, linia „Deschide raportul” cu câmpul de cod; nu mai e lipită jos/sub poză
     const m = w.querySelector("#cc-m"), go = w.querySelector("#cc-go"), inp = w.querySelector("#cc-in"), ab = window.CC_ANTIBOT.monteaza(w.querySelector("#cc-ab"));
     const merge = () => { if (!REMOTE) { m.textContent = "local nu se verifică codul: folosește adresa publică"; return; }
       if (inp && inp.value.replace(/[^A-Za-z0-9]/g, "").length < 6) { m.textContent = "scrie codul raportului"; return; }
       if (!w.querySelector("#cc-acc").checked) { m.textContent = "bifează „accept condițiile de utilizare”"; return; }
-      go.disabled = true; intra(jt ? { actiune: "qr", qr: jt } : { actiune: "cod", cod: inp.value.trim() }, m, ab).then(ok => { if (!ok) go.disabled = false; }); };
+      go.disabled = true; intra(jt ? { actiune: "qr", qr: jt } : { actiune: "cod", cod: inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "") }, m, ab).then(ok => { if (!ok) go.disabled = false; }); };
     go.onclick = merge; if (inp) inp.onkeydown = e => { if (e.key === "Enter") merge(); };
   }
   setInterval(camp, 400);
