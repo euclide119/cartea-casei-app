@@ -259,6 +259,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       if (s.e && s.e <= Date.now()) { await sterge(); s = null; motiv = "sesiunea a expirat"; }
       else { try { const r = await post({ actiune: "admin_verifica", token: s.token, deschis: s.k ? 1 : undefined }, 4000); if (r.status === 401) { await sterge(); s = null; motiv = r.j.error || "sesiunea a fost revocată"; } } catch (e) { /* offline: se folosește ce e în cache */ } }
     } else if (hint) motiv = "sesiunea lipsește de pe acest telefon (iPhone șterge datele unei aplicații nefolosite o săptămână)";
+    if (s && s.token && (!s.g || s.k)) { try { const r = await F0(`${FN}?t=${encodeURIComponent(s.token)}&f=__lista`, { cache: "no-store" }); if (r.ok) { const l = await r.json(); if (Array.isArray(l) && l.length) { s.lista = l; await salveaza(s); } } } catch (e) { /* offline: rămâne lista salvată */ } }   // v82.17.1: lista de rapoarte se reîmprospătează la fiecare deschidere (Admin și card), altfel un raport apărut după scanarea QR-ului (ex. M9) nu se vedea în selector
     if (s && s.g && R && s.id !== R) s = null;   // sesiunea de client e doar pentru raportul ei
     window.CC_ADM = s;
     const rg = !hm && !lg("cc-adm-qr") ? (R || lg("cc-adm-g")) : "";

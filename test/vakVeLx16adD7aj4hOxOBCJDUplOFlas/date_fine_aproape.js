@@ -86,10 +86,10 @@
   function sectiuniCard(corp, P) {
     if (!$("#dfa-css-sec")) { const s = document.createElement("style"); s.id = "dfa-css-sec"; s.textContent = ".dfa-sec{border:1px solid #d8dde8;border-radius:10px;margin:8px 0;background:#fff}.dfa-sec>summary{font:700 15px var(--font);padding:12px 14px;cursor:pointer}.dfa-sb{padding:0 12px 12px}"; document.head.appendChild(s); }
     corp.innerHTML = SECT.map(([k, t]) => `<details class="dfa-sec" data-k="${k}"><summary>${esc(t)}</summary><div class="dfa-sb"></div></details>`).join("") + '<p class="dfa-src">Nu retransmite aceste date.</p>';
-    corp.querySelectorAll(".dfa-sec").forEach(d => d.addEventListener("toggle", async () => {
+    const onToggle = async d => {
       if (!d.open || d.dataset.g) return; d.dataset.g = "1"; const box = d.querySelector(".dfa-sb"), k = d.dataset.k; box.innerHTML = '<p class="dfa-src">Se încarcă…</p>';
       try {
-        const r = await fetch(`${P}date_fine_aproape.json?sec=${encodeURIComponent(k)}`, { cache: "no-store" });
+        const r = await fetch(`p/${encodeURIComponent(D.id)}/date_fine_aproape.json?sec=${encodeURIComponent(k)}`, { cache: "no-store" });
         if (r.status === 429 || r.status === 401) { box.innerHTML = '<p class="dfa-gol">Cardul nu mai e valabil.</p>'; setTimeout(() => location.reload(), 600); return; }
         if (!r.ok) { d.dataset.g = ""; box.innerHTML = '<p class="dfa-gol">Nu s-a putut încărca; închide și redeschide secțiunea.</p>'; return; }
         let J = await r.json(); if (k === "raza200") J = { cu: J.raza200 || [] };
@@ -100,7 +100,9 @@
           else if (h3) { if (h3.nextElementSibling) h3.nextElementSibling.remove(); h3.remove(); h = t.innerHTML; } }   // randare() desenează toate tabelele din J; aici doar cel de 200 m
         box.innerHTML = h || `<p class="dfa-gol">${GOL}</p>`;
       } catch (e) { d.dataset.g = ""; box.innerHTML = '<p class="dfa-gol">Nu s-a putut încărca; închide și redeschide secțiunea.</p>'; }
-    }));
+    };
+    if (!window.__dfaSec) { window.__dfaSec = 1; document.addEventListener("toggle", e => { const d = e.target; if (d && d.classList && d.classList.contains("dfa-sec") && window.__dfaSecFn) window.__dfaSecFn(d); }, true); }   // delegat: acordeon.js mută / clonează secțiunile și listenerii proprii s-ar pierde
+    window.__dfaSecFn = onToggle;
   }
 
   async function porneste() {
