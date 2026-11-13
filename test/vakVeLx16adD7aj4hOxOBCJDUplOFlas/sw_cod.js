@@ -46,6 +46,8 @@ self.addEventListener("fetch", e => {
   const baza = new URL("./", self.registration.scope).pathname;
   if (!u.pathname.startsWith(baza)) return;
   const r = u.pathname.slice(baza.length);
+  /* v82.25.3: poza copertei (aceeași la toate rapoartele) din cache, imediat; se reîmprospătează în fundal */
+  if (r === "deschidere.jpg") { e.respondWith(caches.open(APP).then(async c => { const m = await c.match(e.request, { ignoreSearch: true }); const n = fetch(e.request).then(x => { if (x && x.ok) c.put(e.request, x.clone()).catch(() => {}); return x; }).catch(() => null); return m || (await n) || new Response("", { status: 503 }); })); return; }
   if (r === "version.json") { e.respondWith(fetch(new Request(e.request, { cache: "no-store" })).catch(() => new Response("{}", { status: 503 }))); return; }
   if (r === "proprietati.json") {
     e.respondWith(stare().then(async s => {
