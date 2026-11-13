@@ -37,7 +37,7 @@
     const I = C.imobile, U = C.unit;
     const cols = ["CF", "Nr. cadastral", "CF vechi", "Nr. cadastral vechi", "Tarla / parcelă", "Nr. topo", "Suprafață (act)", "Suprafață măsurată pe plan", "Folosință", "Laturi (m)"];
     const val = m => [m.cf, m.nc, m.cf_vechi, m.nc_vechi, `${m.tarla} / ${m.parcela}`, m.topo, nf(m.suprafata_mp) + " mp", nf(m.suprafata_masurata_mp, 1) + " mp", `${m.folosinta}, extravilan`, m.segmente_m.map(x => nf(x, 3)).join(" · ")];
-    s.innerHTML = `<div class="pt-w ac-k1"><h2>Cadastru</h2>
+    s.innerHTML = `<div class="pt-w"><h2>Cadastru</h2>
 <p class="pt-n">Terenul unit: ${nf(U.suprafata_mp)} mp în acte (${nf(U.suprafata_masurata_mp, 1)} mp pe plan), două fâșii lipite de câte ≈ 18,8 m, împreună ≈ ${nf(U.latime_m, 1)} × ${nf(U.lungime_m, 1)} m.</p>
 <div class="pt-sc"><table class="pt-t"><thead><tr><th></th>${I.map(m => `<th>CF ${esc(m.cf)}</th>`).join("")}</tr></thead><tbody>${cols.map((c, k) => `<tr><td>${esc(c)}</td>${I.map(m => `<td>${esc(val(m)[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
 <h3>Vecinătăți</h3>${tab(C.vecini)}
@@ -50,7 +50,7 @@
     let adm = "";
     const admin = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !/[?&]client=1/.test(location.search);
     if (admin) { try { const r = await fetch(`p/${id}/privat.json`); if (r.ok) { const V = await r.json(); adm = `<p class="pt-n">🔓 admin (local, nu se publică): ${(V.proprietari || []).map(o => `CF ${esc(o.cf)}: ${esc(o.nume)} (${esc(o.cota)}, ${esc(o.avertisment)})`).join(" · ")}${V.proprietari_actuali_declarati ? ` · declarați actuali: ${esc(V.proprietari_actuali_declarati.nume)} (${esc(V.proprietari_actuali_declarati.nota)})` : ""}</p>`; } } catch (e) {} }
-    s.innerHTML = `<div class="pt-w ac-k1"><h2>Proprietate</h2>
+    s.innerHTML = `<div class="pt-w"><h2>Proprietate</h2>
 ${tab(P.situatie)}${adm}
 <h3>Parcelare: simulare pe teren</h3>${fig(id, P.lotizare)}
 <h3>PUZ-ul vecin, lipit la nord</h3>${fig(id, Z)}
