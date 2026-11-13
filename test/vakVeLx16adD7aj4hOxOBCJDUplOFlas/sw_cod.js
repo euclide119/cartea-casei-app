@@ -55,7 +55,7 @@ self.addEventListener("fetch", e => {
   if (m || r === "piata_istoric.json") {
     const f = m ? decodeURIComponent(m[1]) : r;
     const sec = u.searchParams.get("sec") || "";   // v82.17.0: DOM pe secțiuni (cardul)
-    e.respondWith(stare().then(s => s ? date(`${FN}?t=${encodeURIComponent(s.token)}&f=${encodeURIComponent(f)}${sec ? "&sec=" + encodeURIComponent(sec) : ""}${s.adm && s.n < 2 ? "&n=1" : ""}`, s && s.k ? Object.assign({}, s, { adm: 0 }) : s, `https://cc.local/d/${s.n < 2 ? 1 : 2}/${f}${sec ? "#" + sec : ""}`) : new Response("cere codul raportului", { status: 401 })));   // cardul: fără copie offline a datelor private
+    e.respondWith(stare().then(s => s ? date(`${FN}?t=${encodeURIComponent(s.token)}&f=${encodeURIComponent(f)}${sec ? "&sec=" + encodeURIComponent(sec) : ""}${s.adm && s.n < 2 ? "&n=1" : ""}`, s && (s.k || s.m || s.pv) ? Object.assign({}, s, { adm: 0 }) : s, `https://cc.local/d/${s.n < 2 ? 1 : 2}/${f}${sec ? "#" + sec : ""}`) : new Response("cere codul raportului", { status: 401 })));   // cardul: fără copie offline a datelor private
     return;
   }
   e.respondWith(retea(e.request));

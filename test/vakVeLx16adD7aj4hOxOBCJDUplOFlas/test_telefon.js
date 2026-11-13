@@ -24,7 +24,9 @@
   /* v82.15.0 (Evidență QR): cardul pe destinatar #card=<id> = o listă de rapoarte, legat de un singur dispozitiv (secretul dispozitivului stă în IndexedDB + localStorage; pe server doar hash-ul) */
   const K = /^[A-Za-z0-9_-]{10,40}$/.test(hp.get("card") || "") ? hp.get("card") : "";
   if (K && !hm) lg("cc-card", K);
-  const KC = hm ? "" : (K || (!lg("cc-adm-qr") ? (lg("cc-card") || "") : ""));
+  const MS = !hm && !K && /(^|[#&])master($|[&=])/.test(location.hash || "");   // v82.19.0: #master = intrare cu codul master (orice raport din catalog + DOM, ca utilizator)
+  if (MS) lg("cc-card", null);
+  const KC = hm ? "" : (MS ? "" : (K || (!lg("cc-adm-qr") ? (lg("cc-card") || "") : "")));
   if (R && !hm) lg("cc-adm-g", R);   /* v82.13.0 (perioada de test, gratuit): linkul client #r=<id> fără jeton Admin; după codul de intrare, sesiune de client pentru ACEL raport, 30 de zile */
   const extraHash = () => { const sl = (() => { try { return sessionStorage.getItem("cc-sel") || ""; } catch (e) { return ""; } })(), b = lg("cc-bife") === "1", r = R || lg("cc-adm-id") || "";
     return (b || sl) && r ? "&r=" + r + (b ? "&bife=1" : "") + (sl ? "&sel=" + sl : "") : ""; };
@@ -227,6 +229,42 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
   }
 
+  /* ---------- v82.19.0: intrarea cu codul master (un câmp) ---------- */
+  function ecranMaster(msg) {
+    const mk = () => {
+      document.getElementById("cc-splash")?.remove(); document.getElementById("cc-tt-scan")?.remove();
+      const AC = "#1d5fb0", F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
+      const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "cod master");
+      d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
+      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
+<label for="cc-tt-ci" style="${F};color:${AC};text-align:center">Cod master</label>
+<input id="cc-tt-ci" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-label="cod master" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.08em;width:100%;max-width:320px;box-sizing:border-box;padding:14px 16px;border:2px solid ${AC};border-radius:12px;background:#fff;color:#1a1e2a;text-align:center">
+<button id="cc-tt-cig" type="button" style="${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%">Deschide rapoartele</button>
+<div id="cc-tt-cim" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#9a2a1f;text-align:center;min-height:20px">${msg || ""}</div></div>`;
+      document.body.appendChild(d);
+      const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
+      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul master"; return; } go.disabled = true; m.textContent = "se verifică…";
+        try { const r = await post({ actiune: "cod_master", cod }); if (!r.ok || !r.j.token) { m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
+          const lista = r.j.lista || [], id0 = (lista.find(p => p.id === lg("cc-adm-id")) || lista[0] || {}).id;
+          await salveaza({ adm: 1, c: 1, g: 1, m: 1, n: 2, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Master", id: id0, lista });
+          lg("cc-adm-id", id0); try { history.replaceState(null, "", location.pathname + location.search + "#" + id0); } catch (e) {} location.reload();
+        } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
+      go.onclick = intra; inp.onkeydown = e => { if (e.key === "Enter") intra(); };
+    };
+    document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
+  }
+  /* „vezi ca QR X” (Admin): jeton de previzualizare pentru cardul X; sesiunea Admin se păstrează și se reia din bandă */
+  window.CC_PREVIZ = async cardId => {
+    const s = window.CC_ADM; if (!s || !s.token || s.c || s.k || s.pv || s.m) return { error: "doar Adminul poate previzualiza un card" };
+    const r = await post({ actiune: "previzualizare_card", token: s.token, card: cardId }, 15000);
+    if (!r.ok || !r.j.token) return { error: (r.j && r.j.error) || "nu s-a putut deschide previzualizarea" };
+    await idbSet("sesiune_admin", s);
+    const lista = r.j.lista || [], id0 = (lista[0] || {}).id;
+    await salveaza({ adm: 1, c: 1, g: 1, pv: cardId, pvn: r.j.destinatar || "", n: 2, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Previzualizare", id: id0, lista });
+    lg("cc-adm-id", id0); try { history.replaceState(null, "", location.pathname + location.search + "#" + id0); } catch (e) {} location.reload(); return {};
+  };
+  async function iesiPreviz() { const a = await idbGet("sesiune_admin"); if (a) await salveaza(a); else await sterge(); location.reload(); }
+
   /* ---------- manifest dinamic: start_url cu #qr=… (Admin) sau #r=<id> (client cu cod) ---------- */
   function manifestR(id) { manifest("", id); }
   function manifest(qr, rid, kid) {
@@ -245,7 +283,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     if (window.CC_TT_GATE) { window.CC_ADM = null; if (KC) cardScanat(); return null; }   // sub poarta de instalare nu se schimbă QR-ul și nu se deschide sesiunea; se face în aplicația instalată (start_url poartă #qr=…)
     let s = await cacheGet();
     if (!(s && s.adm)) { const i = await idbGet("sesiune"); if (i && i.adm) { s = i; await cachePut(s); } else s = null; }   // iOS a evacuat Cache-ul: se reface din IndexedDB
-    if (KC && s && s.k !== KC) s = null;   // v82.15.0: linkul cardului are prioritate; sesiunea altui card sau Admin nu se folosește aici
+    if (KC && s && s.k !== KC && !(!s.k && (s.m || s.pv))) s = null;   // v82.15.0: linkul cardului are prioritate; sesiunea altui card sau Admin nu se folosește aici
     if (hm) {
       try {
         const r = await post({ actiune: "admin_qr", qr: hm });
@@ -265,6 +303,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     const rg = !hm && !lg("cc-adm-qr") ? (R || lg("cc-adm-g")) : "";
     if (!s && KC) { window.CC_TT_FARA = true; if (!standalone() && !eLocal) cardScanat(); if (/^Cardul /.test(motiv)) mesajCard(motiv + "."); else ecranCard(KC, motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
     else if (!s && rg) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecranIntrare(rg, motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
+    else if (!s && MS) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecranMaster(motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
     else if (!s) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecran("Scanează din nou QR-ul", (motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + ". " : "") + (TEST ? "Raportul de test se deschide doar cu cardul QR primit." : "Scanează cardul QR primit.")); }
     else { const q = lg("cc-adm-qr"); if (q) manifest(q); }
     return s;
@@ -299,15 +338,20 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
   });
 
   function bara(s) {
-    if (s.g && !s.k) return;   // clientul cu cod nu vede bara Admin; v82.15.0: clientul cu card vede doar alegerea între rapoartele cardului (lista, „vezi ca client”)
+    if (s.pv) { const mkp = () => { if (document.getElementById("cc-tt-pv")) return; const b = document.createElement("div"); b.id = "cc-tt-pv";
+        b.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:9500;background:#f2b04a;color:#1a1e2a;text-align:center;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;font:700 13px -apple-system,system-ui,sans-serif;display:flex;gap:10px;align-items:center;justify-content:center";
+        b.innerHTML = `<span>🔎 previzualizare card${s.pvn ? " · " + String(s.pvn).replace(/[&<>"]/g, "") : ""} · fără legare, fără intrare numărată</span><button type="button" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:5px 9px;background:#1a1e2a;color:#fff">Ieși din previzualizare</button>`;
+        b.querySelector("button").onclick = iesiPreviz; document.body.appendChild(b); };
+      document.body ? mkp() : document.addEventListener("DOMContentLoaded", mkp); }
+    if (s.g && !s.k && !s.m && !s.pv) return;   // clientul cu cod nu vede bara Admin; v82.15.0: clientul cu card vede doar alegerea între rapoartele cardului (lista, „vezi ca client”)
     const mk = () => {
       if (document.getElementById("cc-tt-bar")) return;
       const b = document.createElement("div"); b.id = "cc-tt-bar";
       b.style.cssText = "position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:9000;display:flex;gap:6px;align-items:center;background:rgba(255,253,248,.97);color:#1a1e2a;border:1.5px solid #1a1e2a;border-radius:12px;padding:6px 8px;font:600 12px -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(26,30,42,.3);max-width:560px;margin:0 auto";
       const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const cur = decodeURIComponent((location.hash || "").replace(/^#/, "")).split(".")[0];
-      b.innerHTML = `<span style="white-space:nowrap">${s.c || s.ca_client ? "👁 client" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
-${s.c ? "" : `<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Înapoi la Admin" : "Vezi ca client"}</button>`}
+      b.innerHTML = `<span style="white-space:nowrap">${s.pv ? "🔎 previzualizare" : s.m ? "🔑 master" : s.c || s.ca_client ? "👁 utilizator" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
+${s.c ? "" : `<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Vedere: Admin" : "Vedere: Utilizator"}</button>`}
 <span id="cc-tt-v" style="color:#4a5063;font-weight:600"></span>`;
       document.body.appendChild(b);
       b.querySelector("#cc-tt-sel").onchange = e => { lg("cc-adm-id", e.target.value); location.hash = "#" + e.target.value; location.reload(); };

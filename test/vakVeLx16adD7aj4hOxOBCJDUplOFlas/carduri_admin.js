@@ -61,13 +61,18 @@
     let j; try { j = await api("lista"); } catch (e) { t.textContent = e.message; return; }
     CAT = (j.catalog || []).map(c => /^-?\d+\.\d+, /.test(c.eticheta || "") && NUME[c.id] ? { ...c, eticheta: NUME[c.id] } : c); const et = Object.fromEntries(CAT.map(c => [c.id, c.eticheta || c.id]));
     const scurt = id => { const s = et[id] || id + " (nepublicat)"; return s.split(" · ")[0] + (s.includes("CF ") ? " · " + (s.match(/CF [^·]+/) || [""])[0].trim() : ""); };
-    t.innerHTML = `<table><thead><tr><th>Destinatar</th><th>Rapoarte</th><th>Emis</th><th>Expiră</th><th>Stare</th><th>Prima logare</th><th>Ultima intrare</th><th>Intrări</th><th>Refuzuri</th><th>Acțiuni</th></tr></thead><tbody>${(j.carduri || []).map(c => {
+    t.innerHTML = `<table><thead><tr><th>Destinatar</th><th>Rapoarte</th><th>Emis</th><th>Expiră</th><th>Stare</th><th>Prima logare</th><th>Ultima intrare</th><th>Intrări</th><th>Refuzuri</th><th>Sesiuni</th><th>Acțiuni</th></tr></thead><tbody>${(j.carduri || []).map(c => {
       const st = STARE[c.stare] || [c.stare, "#555"];
-      return `<tr class="c" data-id="${esc(c.id)}"><td><b>${esc(c.destinatar)}</b>${c.nota ? `<br><span style="color:#4a5063">${esc(c.nota)}</span>` : ""}<br><span style="color:#6b6f7d;font-size:12px">${esc(c.id)}</span></td><td>${c.rapoarte.map(r => esc(scurt(r))).join("<br>")}</td><td>${zi(c.emis_la)}</td><td>${zi(c.expira_la)}</td><td><span class="st" style="background:${st[1]}">${st[0]}</span>${c.ua_scurt ? `<br><span style="font-size:12px">${esc(c.ua_scurt)}</span>` : ""}</td><td>${zi(c.prima_logare)}</td><td>${zi(c.ultima_intrare)}</td><td>${c.intrari || 0}</td><td>${c.refuzuri || 0}</td><td><div class="r">${c.stare === "blocat" || c.stare === "expirat" ? `<button data-a="reactiveaza">Reactivează</button>` : `<button class="x" data-a="blocheaza">Blochează</button>`}${c.legat_dispozitiv ? `<button data-a="reseteaza">Resetează dispozitivul</button>` : ""}<button data-a="arata">QR</button></div></td></tr>`;
-    }).join("") || `<tr><td colspan="10">Niciun card încă.</td></tr>`}</tbody></table>`;
+      return `<tr class="c" data-id="${esc(c.id)}"><td><b>${esc(c.destinatar)}</b>${c.nota ? `<br><span style="color:#4a5063">${esc(c.nota)}</span>` : ""}<br><span style="color:#6b6f7d;font-size:12px">${esc(c.id)}</span></td><td>${c.rapoarte.map(r => esc(scurt(r))).join("<br>")}</td><td>${zi(c.emis_la)}</td><td>${zi(c.expira_la)}</td><td><span class="st" style="background:${st[1]}">${st[0]}</span>${c.blocat_automat ? `<br><span style="font-size:12px;color:#9a2a1f">blocat automat</span>` : ""}${c.ua_scurt ? `<br><span style="font-size:12px">${esc(c.ua_scurt)}</span>` : ""}</td><td>${zi(c.prima_logare)}</td><td>${zi(c.ultima_intrare)}</td><td>${c.intrari || 0}</td><td>${c.refuzuri || 0}</td><td>${c.sesiuni || 0} · ${c.minute || 0} min<br><span style="font-size:12px">${c.instalat ? "instalat" + (c.probabil_dezinstalat ? " (probabil dezinstalat)" : "") : "neinstalat"}</span></td><td><div class="r">${c.stare === "blocat" || c.stare === "expirat" ? `<button data-a="reactiveaza">Reactivează</button>` : `<button class="x" data-a="blocheaza">Blochează</button>`}${c.legat_dispozitiv ? `<button data-a="reseteaza">Resetează dispozitivul</button>` : ""}<button data-a="sesiuni">Sesiuni</button><button data-a="previz">Vezi ca acest card</button><button data-a="arata">QR</button></div></td></tr>`;
+    }).join("") || `<tr><td colspan="11">Niciun card încă.</td></tr>`}</tbody></table>`;
     t.querySelectorAll("tr.c").forEach(tr => tr.onclick = async ev => {
       const id = tr.dataset.id, c = (j.carduri || []).find(x => x.id === id), a = ev.target.closest("button") && ev.target.closest("button").dataset.a;
       if (a === "arata") return arata(c);
+      if (a === "sesiuni") return sesiuni(c);
+      if (a === "previz") {   // „vezi ca QR X”: jeton de previzualizare (fără legare, fără intrare numărată, fără limită); revii la Admin din bandă
+        if (!confirm(`Previzualizezi cardul „${c.destinatar}”? Vezi exact ce vede el; cardul nu se leagă și nu se numără intrare.`)) return;
+        try { msg("se deschide previzualizarea…"); const r = await window.CC_PREVIZ(id); if (r && r.error) msg(r.error); } catch (e) { msg(e.message); } return;
+      }
       if (a) {
         const txt = { blocheaza: `Blochezi cardul „${c.destinatar}”? Telefonul lui pierde accesul în cel mult câteva secunde.`, reactiveaza: `Reactivezi cardul „${c.destinatar}”?`, reseteaza: `Resetezi dispozitivul cardului „${c.destinatar}”? Următorul telefon care intră cu codul îl leagă din nou.` }[a];
         if (!confirm(txt)) return;
@@ -75,6 +80,22 @@
       }
       jurnal(c);
     });
+  }
+
+  /* v82.19.0: sesiunile unui card (minute, instalat sau nu, previzualizările Admin marcate) și, la click pe sesiune, capitolele / subcapitolele deschise și secundele pe fiecare */
+  async function sesiuni(c) {
+    const box = document.getElementById("cq-c"); box.innerHTML = `<div class="bx">se încarcă sesiunile…</div>`;
+    try { const j = await api("sesiuni", { card: c.id }), L = j.sesiuni || [];
+      box.innerHTML = `<div class="bx"><div class="r" style="justify-content:space-between"><b>Sesiuni · ${esc(c.destinatar)}</b><button id="cq-sx">Ascunde</button></div><div class="m" style="color:#4a5063">Click pe o sesiune: capitolele și subcapitolele deschise, cu timpul pe fiecare.</div><div class="t"><table style="min-width:620px"><thead><tr><th>Început</th><th>Tip</th><th>Minute</th><th>Instalat</th><th>Dispozitiv</th><th>Ultimul raport</th></tr></thead><tbody>${L.map(r => `<tr class="c" data-s="${esc(r.id)}"><td>${zi(r.pornit_la)}</td><td>${r.tip === "previzualizare" ? "previzualizare Admin" : esc(r.tip)}</td><td>${Math.round((r.durata_s || 0) / 60)}</td><td>${r.instalat ? "da" : "nu"}</td><td>${esc(r.ua_scurt || "")}</td><td>${esc(r.raport_id || "")}</td></tr>`).join("") || `<tr><td colspan="6">Nicio sesiune încă.</td></tr>`}</tbody></table></div><div id="cq-ev"></div></div>`;
+      box.querySelector("#cq-sx").onclick = () => { box.innerHTML = ""; };
+      box.querySelectorAll("tr.c").forEach(tr => tr.onclick = async () => {
+        const ev = box.querySelector("#cq-ev"); ev.innerHTML = "se încarcă…";
+        try { const e = await api("evenimente", { sesiune: tr.dataset.s });
+          ev.innerHTML = `<div class="t"><table style="min-width:560px"><thead><tr><th>Moment</th><th>Tip</th><th>Capitol</th><th>Subcapitol</th><th>Secunde</th></tr></thead><tbody>${(e.evenimente || []).map(x => `<tr><td>${zi(x.moment)}</td><td>${esc(x.tip)}</td><td>${esc(x.capitol || "")}</td><td>${esc(x.subcapitol || "")}</td><td>${x.secunde == null ? "" : x.secunde}</td></tr>`).join("") || `<tr><td colspan="5">Nicio înregistrare de capitol în această sesiune.</td></tr>`}</tbody></table></div>`;
+        } catch (er) { ev.textContent = er.message; }
+      });
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) { box.innerHTML = `<div class="bx m">${esc(e.message)}</div>`; }
   }
 
   async function jurnal(c) {

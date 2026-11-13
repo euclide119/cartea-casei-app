@@ -142,7 +142,7 @@
       }
       return;
     }
-    if (window.CC_ADM && window.CC_ADM.k && window.CC_ADM.n >= 2) { sectiuniCard(corp, P); return; }   // v82.17.0: card: DOM pe secțiuni, fiecare cerută la deschidere
+    if (window.CC_ADM && (window.CC_ADM.k || window.CC_ADM.pv) && window.CC_ADM.n >= 2) { sectiuniCard(corp, P); return; }   // v82.17.0: card: DOM pe secțiuni, fiecare cerută la deschidere
     /* Client (și Admin „ca client”): ascuns până după plată */
     const P2 = window.CC_PLATA, st = P2 ? await P2.stare() : { platit: false, configurat: false };
     if (st.platit) {
