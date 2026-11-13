@@ -109,26 +109,57 @@
 
   /* blocul de deblocare: pret, acord (o singură bifă), buton; Admin „ca client” primește și simularea */
   const ACORD_K = "cc-acord-df";
+  /* v82.15.1 (Manu, 13.11.2026: „cand dau comanda DOM - vreau doar 2 optiuni - am cod reducere / comanda dom - la am cod putem baga 1357 - trebuie sa mearga in ambele directii”).
+     Lacătul are două butoane egale: „Am cod” (un câmp; 1357 sau orice cod de reducere viitor, verificat pe server) și „Comandă DOM” (telefon sau email → tabelul cereri,
+     funcția raport_cerere_dom). Se trece dintr-unul în altul fără să se piardă ce s-a scris; după cod lacătul (deci și „Comandă DOM”) dispare. Fără bifă separată:
+     o linie mică „Continuând, accepți termenii” sub buton. */
+  const mem = { cod: "", contact: "" };
   function montajGratuit(el, dupa) {
-    const g = gSes(), ok = (() => { try { return localStorage.getItem(ACORD_K) === CFG.versiune_acord; } catch (e) { return false; } })();
-    el.innerHTML = `<div class="pl"><h3>🔒 Depth of Market – Level 2</h3>
-      <p><b>Acces gratuit în perioada de test.</b> Firmele, actele de urbanism și proiectele din jurul proprietății.</p>
-      <label class="pl-acc"><input type="checkbox" id="pl-acc"${ok ? " checked" : ""}><span>${esc(TEXT_ACORD)} <a href="${CFG.gdpr}" target="_blank" rel="noopener">GDPR și folosire date</a></span></label>
-      <div class="pl-cod" style="display:${ok ? "flex" : "none"};flex-direction:column;gap:10px">
-        <label for="pl-pin" style="font:700 15px var(--font)">🔒 Cod DOM (de pe card)</label>
-        <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="12" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.2em;padding:12px 14px;border:2px solid #1d5fb0;border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box">
-        <button type="button" class="pl-go" id="pl-pin-go">Deschide DOM</button></div>
-      ${local ? '<span class="pl-rev">textul acordului: de revizuit de avocat</span>' : ""}<p class="pl-msg" role="status"></p></div>`;
-    const acc = el.querySelector("#pl-acc"), cod = el.querySelector(".pl-cod"), msg = el.querySelector(".pl-msg");
-    acc.onchange = () => { cod.style.display = acc.checked ? "flex" : "none"; if (acc.checked) { try { localStorage.setItem(ACORD_K, CFG.versiune_acord); } catch (e) {} } };
-    el.querySelector("#pl-pin-go").onclick = async () => {
-      const pin = el.querySelector("#pl-pin").value.trim(); if (!acc.checked) { msg.textContent = "Bifează acordul."; return; } if (!pin) { msg.textContent = "Scrie codul DOM."; return; }
-      if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul cu codul de intrare."; return; }
-      msg.textContent = "Se verifică…";
-      const r = await fetch(CFG.baza.replace("/functions/v1/", "/functions/v1/") + "raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: g.token, pin }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
-      if (!r.ok || !r.j.token) { msg.textContent = r.j.error || "Cod greșit."; return; }
-      g.n = 2; g.token = r.j.token; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(g); location.reload();
+    const g = gSes(), AC = "#1d5fb0";
+    const B = `font:700 16px var(--font);padding:14px 10px;border-radius:12px;cursor:pointer;flex:1 1 0;min-width:0`;
+    const IN = `font:700 18px ui-monospace,Menlo,monospace;padding:12px 14px;border:2px solid ${AC};border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box`;
+    const LINK = `background:none;border:0;padding:4px 0;color:${AC};font:600 14px var(--font);text-decoration:underline;cursor:pointer;align-self:center`;
+    const termeni = `<p class="pl-ter" style="font:12px/1.4 var(--font);color:#5b6275;text-align:center">Continuând, accepți <a href="${CFG.gdpr}" target="_blank" rel="noopener">termenii</a>.</p>`;
+    const cap = `<h3>🔒 Depth of Market – Level 2</h3><p>Firmele, actele de urbanism și proiectele din jurul proprietății.</p>`;
+    const ecran = mod => {
+      if (mod === "cod") el.innerHTML = `<div class="pl">${cap}
+        <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="16" aria-label="cod" placeholder="cod" value="${esc(mem.cod)}" style="${IN};letter-spacing:.2em;text-align:center">
+        <button type="button" class="pl-go" id="pl-pin-go">Deschide DOM</button>${termeni}
+        <p class="pl-msg" role="status"></p><button type="button" id="pl-la-comanda" style="${LINK}">Comandă DOM</button></div>`;
+      else if (mod === "comanda") el.innerHTML = `<div class="pl">${cap}
+        <input id="pl-ct" type="text" inputmode="email" autocomplete="email" maxlength="120" aria-label="telefon sau email" placeholder="telefon sau email" value="${esc(mem.contact)}" style="${IN};font-family:var(--font)">
+        <button type="button" class="pl-go" id="pl-ct-go">Trimite</button>${termeni}
+        <p class="pl-msg" role="status"></p><button type="button" id="pl-la-cod" style="${LINK}">Am cod</button></div>`;
+      else if (mod === "trimis") el.innerHTML = `<div class="pl">${cap}<p style="font:700 16px/1.45 var(--font);color:#1f6b3d">Te contactăm în 120 de minute în program.</p>
+        <button type="button" id="pl-la-cod" style="${LINK}">Am cod</button></div>`;
+      else el.innerHTML = `<div class="pl">${cap}<div style="display:flex;gap:10px">
+        <button type="button" id="pl-am" style="${B};border:2px solid ${AC};background:#fff;color:${AC}">Am cod</button>
+        <button type="button" id="pl-cmd" style="${B};border:2px solid ${AC};background:${AC};color:#fff">Comandă DOM</button></div></div>`;
+      const q = s => el.querySelector(s), msg = q(".pl-msg");
+      if (q("#pl-am")) q("#pl-am").onclick = () => ecran("cod");
+      if (q("#pl-cmd")) q("#pl-cmd").onclick = () => ecran("comanda");
+      if (q("#pl-la-comanda")) q("#pl-la-comanda").onclick = () => { mem.cod = q("#pl-pin").value; ecran("comanda"); };
+      if (q("#pl-la-cod")) q("#pl-la-cod").onclick = () => { if (q("#pl-ct")) mem.contact = q("#pl-ct").value; ecran("cod"); };
+      const pin = q("#pl-pin"), ct = q("#pl-ct");
+      if (pin) { pin.oninput = () => { mem.cod = pin.value; }; setTimeout(() => pin.focus(), 50);
+        const go = async () => { const v = pin.value.trim(); if (!v) { msg.textContent = "Scrie codul."; return; }
+          if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul."; return; }
+          msg.textContent = "…";
+          const r = await fetch(CFG.baza + "raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: g.token, pin: v }) }).then(async x => ({ ok: x.ok, status: x.status, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
+          if (!r.ok || !r.j.token) { msg.textContent = r.status === 429 ? "Prea multe încercări; revino în 15 minute." : "Cod greșit."; return; }
+          try { localStorage.setItem(ACORD_K, CFG.versiune_acord); } catch (e) {}
+          g.n = 2; g.token = r.j.token; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(g); location.reload(); };
+        q("#pl-pin-go").onclick = go; pin.onkeydown = e => { if (e.key === "Enter") go(); }; }
+      if (ct) { ct.oninput = () => { mem.contact = ct.value; }; setTimeout(() => ct.focus(), 50);
+        const go = async () => { const v = ct.value.trim(); if (v.length < 6) { msg.textContent = "Scrie telefonul sau emailul."; return; }
+          if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul."; return; }
+          msg.textContent = "…"; q("#pl-ct-go").disabled = true;
+          const r = await fetch(CFG.baza + "raport_cerere_dom", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: g.token, contact: v, raport: idProp() }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
+          if (!r.ok) { msg.textContent = r.j.error || "Nu s-a putut trimite; încearcă din nou."; q("#pl-ct-go").disabled = false; return; }
+          ecran("trimis"); };
+        q("#pl-ct-go").onclick = go; ct.onkeydown = e => { if (e.key === "Enter") go(); }; }
     };
+    ecran("alege");
   }
   function montaj(el, dupa, conf) {
     css();
