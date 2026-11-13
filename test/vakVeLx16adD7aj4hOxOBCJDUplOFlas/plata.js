@@ -112,7 +112,7 @@
   /* v82.15.1 (Manu, 13.11.2026: „cand dau comanda DOM - vreau doar 2 optiuni - am cod reducere / comanda dom - la am cod putem baga 1357 - trebuie sa mearga in ambele directii”).
      Lacătul are două butoane egale: „Am cod” (un câmp; 1357 sau orice cod de reducere viitor, verificat pe server) și „Comandă DOM” (telefon sau email → tabelul cereri,
      funcția raport_cerere_dom). Se trece dintr-unul în altul fără să se piardă ce s-a scris; după cod lacătul (deci și „Comandă DOM”) dispare. Fără bifă separată:
-     o linie mică „Continuând, accepți termenii” sub buton. */
+     o linie mică „Continuând, accepți termenii” sub buton. Marcajul .g7-code ține lacătul la vedere în fereastra DOM (acordeon.js nu pliază rândul cu formularul de cod). */
   const mem = { cod: "", contact: "" };
   function montajGratuit(el, dupa) {
     const g = gSes(), AC = "#1d5fb0";
@@ -120,7 +120,7 @@
     const IN = `font:700 18px ui-monospace,Menlo,monospace;padding:12px 14px;border:2px solid ${AC};border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box`;
     const LINK = `background:none;border:0;padding:4px 0;color:${AC};font:600 14px var(--font);text-decoration:underline;cursor:pointer;align-self:center`;
     const termeni = `<p class="pl-ter" style="font:12px/1.4 var(--font);color:#5b6275;text-align:center">Continuând, accepți <a href="${CFG.gdpr}" target="_blank" rel="noopener">termenii</a>.</p>`;
-    const cap = `<h3>🔒 Depth of Market – Level 2</h3><p>Firmele, actele de urbanism și proiectele din jurul proprietății.</p>`;
+    const cap = `<i class="g7-code" hidden></i><h3>🔒 Depth of Market – Level 2</h3><p>Firmele, actele de urbanism și proiectele din jurul proprietății.</p>`;
     const ecran = mod => {
       if (mod === "cod") el.innerHTML = `<div class="pl">${cap}
         <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="16" aria-label="cod" placeholder="cod" value="${esc(mem.cod)}" style="${IN};letter-spacing:.2em;text-align:center">

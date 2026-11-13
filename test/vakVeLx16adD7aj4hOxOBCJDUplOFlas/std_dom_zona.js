@@ -7,7 +7,7 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const nf = v => Number(v).toLocaleString("ro-RO");
-  const json = async u => { try { const r = await fetch(u, { cache: "no-cache" }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+  const json = async u => { try { const r = await fetch(u, { cache: "no-cache" }); if (!r.ok) return null; const t = await r.text(); try { return JSON.parse(t); } catch (e) { return JSON.parse(t.replace(/\bNaN\b/g, "null").replace(/-?\bInfinity\b/g, "null")); } } catch (e) { return null; } };   // anunturi_500m.json are NaN (JSON invalid)
   const niv = async () => window.CC_NIVEL_P ? await window.CC_NIVEL_P : (window.parent !== window ? 1 : 2);
   let facut = null;
 
@@ -41,6 +41,14 @@
     return `<h2>Anunțuri din zonă</h2><p class="lead">Oferte de vânzare din jur, în formă generică: tip, suprafață, preț și zona aproximativă. Linkul, contactul și poziția exactă sunt în DOM.</p>
       <div class="k"><span><b>${nf(st.n || L.length)}</b> anunțuri</span>${st.eur_mp_median ? `<span><b>${nf(st.eur_mp_median)} €/mp</b> mediană teren</span>` : ""}${Object.keys(por).map(k => `<span>${esc(k)}: ${nf(por[k])}</span>`).join("")}</div>
       ${tab(["Tip", "Suprafață", "Preț", "€/mp", "Zona", "Sursa", "Distanță"], L.slice(0, 40).map(a => `<tr><td>${esc(a.tip)}</td><td>${a.mp ? nf(Math.round(a.mp)) + " mp" : "—"}</td><td>${eur(a)}</td><td>${a.eur_mp ? nf(Math.round(a.eur_mp)) : "—"}</td><td>${esc(a.zona)}</td><td>${esc(a.sursa)}</td><td>≈ ${nf(a.dist || 0)} m</td></tr>`))}`;
+  }
+
+  /* STANDARD: afaceri din zonă, publicate pe Google Maps (vecinătăți); CUI, cifre financiare și administratori sunt doar în DOM */
+  function afaceriStd(F) {
+    const L = F.afaceri || [];
+    return `<h2>Vecinătăți: afaceri din zonă</h2><p class="lead">Afaceri din jur, așa cum apar public pe ${esc(F.sursa || "Google Maps")}: nume, categorie, telefon, site și strada. Datele societăților și administratorii sunt în DOM.</p>
+      <div class="k"><span><b>${nf(L.length)}</b> afaceri</span><span>Sursa: ${esc(F.sursa || "Google Maps")}</span></div>
+      ${tab(["Afacere", "Categorie", "Telefon", "Site", "Strada", "Distanță"], L.slice(0, 60).map(a => `<tr><td>${esc(a.nume)}</td><td>${esc(a.categorie)}</td><td>${esc(a.telefon) || "—"}</td><td>${a.site ? `<a href="${esc(/^https?:/.test(a.site) ? a.site : "https://" + a.site)}" target="_blank" rel="noopener">${esc(String(a.site).replace(/^https?:\/\//, "").slice(0, 40))}</a>` : "—"}</td><td>${esc(a.strada) || "—"}</td><td>≈ ${nf(a.dist || 0)} m</td></tr>`))}`;
   }
 
   /* DOM: anunțuri complete (poziție exactă, link, contact) + hartă cu punctele exacte */
@@ -81,6 +89,7 @@
     css();
     const P = `p/${encodeURIComponent(Dd.id)}/`, esteG7 = !!(await json(P + "g7.json"));
     const [A, Sn] = await Promise.all([esteG7 ? null : json(P + "acte_std.json"), esteG7 ? null : json(P + "anunturi_std.json")]);
+    const Fa = await json(P + "afaceri_zona.json"); Fa && (Fa.afaceri || []).length ? sec("afaceri_zona", afaceriStd(Fa)) : ascunde("afaceri_zona");
     A && A.total ? sec("acte_zona", acteStd(A)) : ascunde("acte_zona");
     Sn && (Sn.anunturi || []).length ? sec("anunturi_zona", anunturiStd(Sn)) : ascunde("anunturi_zona");
     if (N < 2) { ascunde("anunturi_dom"); ascunde("vecinatati_dom"); window.CC_ACORDEON && window.CC_ACORDEON.reia && window.CC_ACORDEON.reia(8000); return; }

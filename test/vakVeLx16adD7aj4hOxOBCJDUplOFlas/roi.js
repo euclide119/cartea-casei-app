@@ -1,4 +1,4 @@
-/* Raportul Casei · modul opțional „ROI” (roi.js v1.0.0, 12.11.2026). Blueprintul rămâne neatins: modulul nu face nimic dacă p/<id>/roi.json nu există (flag pe raport: doar mosnita_a92_18_19).
+/* Raportul Casei · modul opțional „ROI” (roi.js v1.1.0, 13.11.2026: integral în DOM, sub lacăt; hartă cu fundal stradal). Blueprintul rămâne neatins: modulul nu face nimic dacă p/<id>/roi.json nu există (flag pe raport: doar mosnita_a92_18_19).
    Capitol „ROI cumpărare cu PUZ”: ipoteze editabile, cost, venit, profit, ROI total și anualizat, preț de echilibru, sensibilitate, comparative din anunțuri (intravilan / extravilan), hartă mică.
    Ipotezele sunt ale lui Manu (12.11.2026) și se citează ca ipoteze; fără opinii. Câmpurile „!” sunt costuri neincluse în ipotezele inițiale (implicit 0). */
 (function () {
@@ -61,12 +61,12 @@
     const lat0 = P.reduce((s, p) => s + p[1], 0) / P.length, lon0 = P.reduce((s, p) => s + p[0], 0) / P.length, k = Math.cos(lat0 * Math.PI / 180);
     const xy = (lon, lat) => [(lon - lon0) * 111320 * k, -(lat - lat0) * 110574];
     const all = pts.map(p => xy(p.lon, p.lat)).concat(P.map(p => xy(p[0], p[1])));
-    const R0 = Math.max(150, ...all.map(a => Math.max(Math.abs(a[0]), Math.abs(a[1])))) * 1.08, W = 520, sc = W / 2 / R0, c = W / 2;
+    const R0 = 2300, W = 520, sc = W / 2 / R0, c = W / 2;   // v1.1.0: fundal_roi_strazi.jpg = pătrat 2 × 2300 m centrat pe teren
     const X = a => (c + a[0] * sc).toFixed(1), Y = a => (c + a[1] * sc).toFixed(1);
     const poly = P.map(p => { const a = xy(p[0], p[1]); return X(a) + "," + Y(a); }).join(" ");
-    const dots = pts.map(p => { const a = xy(p.lon, p.lat); const col = p.tip === "intravilan" ? "#1f6fd1" : "#b7791f"; return `<circle cx="${X(a)}" cy="${Y(a)}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1"><title>${esc(p.eur_mp)} €/mp · ${esc(p.mp)} mp · ${esc(p.dist_m)} m</title></circle>`; }).join("");
+    const dots = pts.filter(p => { const a = xy(p.lon, p.lat); return Math.abs(a[0]) < R0 && Math.abs(a[1]) < R0; }).map(p => { const a = xy(p.lon, p.lat); const col = p.tip === "intravilan" ? "#1f6fd1" : "#b7791f"; return `<circle cx="${X(a)}" cy="${Y(a)}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1"><title>${esc(p.eur_mp)} €/mp · ${esc(p.mp)} mp · ${esc(p.dist_m)} m</title></circle>`; }).join("");
     const rings = [500, 1000, 2000].filter(r => r * sc < c).map(r => `<circle cx="${c}" cy="${c}" r="${r * sc}" fill="none" stroke="#9aa3b2" stroke-dasharray="4 4"/><text x="${c + r * sc - 4}" y="${c - 4}" font-size="11" text-anchor="end" fill="#5b6475">${r} m</text>`).join("");
-    return `<svg class="roi-m" viewBox="0 0 ${W} ${W}" role="img" aria-label="Harta comparativelor">${rings}<polygon points="${poly}" fill="#d64545" fill-opacity=".6" stroke="#a01f1f" stroke-width="1.5"/>${dots}
+    return `<svg class="roi-m" viewBox="0 0 ${W} ${W}" role="img" aria-label="Harta comparativelor"><image href="p/${esc(R.id)}/fundal_roi_strazi.jpg" x="0" y="0" width="${W}" height="${W}" preserveAspectRatio="none" opacity=".85"/>${rings}<polygon points="${poly}" fill="#d64545" fill-opacity=".6" stroke="#a01f1f" stroke-width="1.5"/>${dots}
 <g font-size="12" fill="#1b2230"><circle cx="14" cy="${W - 40}" r="5" fill="#1f6fd1"/><text x="24" y="${W - 36}">intravilan</text><circle cx="100" cy="${W - 40}" r="5" fill="#b7791f"/><text x="110" y="${W - 36}">extravilan / agricol</text><rect x="14" y="${W - 26}" width="12" height="8" fill="#d64545" fill-opacity=".6" stroke="#a01f1f"/><text x="32" y="${W - 18}">terenul (10.000 mp)</text></g></svg>`;
   }
 
@@ -145,7 +145,7 @@ ${harta(R)}
       cur = Dd.id;
       const nv = window.CC_NIVEL_P ? await window.CC_NIVEL_P : (window.parent !== window ? 1 : 2);   // v82.16.0: comparativele cu link și poziție exactă (roi.json) doar în DOM; standard = roi_std.json
       const r = await fetch(`p/${Dd.id}/${nv >= 2 ? "roi" : "roi_std"}.json`); if (!r.ok) return;
-      const R = await r.json(); if (R && R.activ) monta(R);
+      const R = await r.json(); if (!R || !R.activ) return; if (nv < 2 || R.doar_titlu) { const sec = sectiune(); if (sec) sec.innerHTML = `<div class="roi-w"><h2>🔒 ${esc(R.titlu || "Estimare de valoare și randament")}</h2><p class="roi-n">Se deschide cu codul, în Depth of Market – Level 2.</p></div>`; return; } monta(R);
     } catch (e) { console.warn("roi", e); }
   }, 700);
 })();
