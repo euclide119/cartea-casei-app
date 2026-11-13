@@ -74,7 +74,13 @@
       const sc = S.scale(), tz = Math.max(3, Math.min(ZMAX, Math.round(S.z))), n = Math.pow(2, tz), ts = 256 * Math.pow(2, S.z - tz);
       const x0 = Math.floor((S.cwx - W / 2 / sc) * n), x1 = Math.floor((S.cwx + W / 2 / sc) * n), y0 = Math.floor((S.cwy - H / 2 / sc) * n), y1 = Math.floor((S.cwy + H / 2 / sc) * n);
       for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
-        let im = S.tile(tz, x, y); if (im && im._err && tz <= 15) im = S.tile(tz, x, y, TILE2); if (!im || !im._ok) continue; const p = S.toScr(x / n, y / n); c.drawImage(im, p[0], p[1], ts + .5, ts + .5);
+        const p = S.toScr(x / n, y / n);   // placa de la zoomul cerut; dacă lipsește (încă se încarcă / nu există la acest zoom), se desenează placa-părinte mărită
+        for (let k = 0; k <= 6 && tz - k >= 3; k++) {
+          const f = Math.pow(2, k), px = Math.floor(x / f), py = Math.floor(y / f); let im = S.tile(tz - k, px, py); if (im && im._err && tz - k <= 15) im = S.tile(tz - k, px, py, TILE2);
+          if (!im || !im._ok) continue;
+          if (k === 0) c.drawImage(im, p[0], p[1], ts + .5, ts + .5); else { const sw = 256 / f; c.drawImage(im, (x - px * f) * sw, (y - py * f) * sw, sw, sw, p[0], p[1], ts + .5, ts + .5); }
+          break;
+        }
       }
       if (!P) return;
       const vx0 = S.cwx - W / 2 / sc, vx1 = S.cwx + W / 2 / sc, vy0 = S.cwy - H / 2 / sc, vy1 = S.cwy + H / 2 / sc;
@@ -153,7 +159,7 @@
     for (const h of hl) { const b = h.b || [h.pt[0], h.pt[1], h.pt[0], h.pt[1]]; x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]); }
     const sc = M.scale(), a = M.toScr(x0, y0), b = M.toScr(x1, y1), m = 50;
     const vizibil = a[0] > m && a[1] > m + 30 && b[0] < M.W - m && b[1] < M.H - m && (b[0] - a[0]) < M.W * .8 && (b[1] - a[1]) < M.H * .7;
-    if (vizibil) return;   // e în vedere: doar se aprinde
+    if (vizibil && Math.max(b[0] - a[0], b[1] - a[1]) >= 60) return;   // e în vedere și destul de mare: doar se aprinde; parcela mică se apropie până la zoom de stradă
     const w = Math.max(x1 - x0, 1e-7), h2 = Math.max(y1 - y0, 1e-7);
     const zf = Math.log2(Math.min((M.W - 2 * m) / w, (M.H - 2 * m - 30) / h2) / 256);
     M.flyTo((x0 + x1) / 2, (y0 + y1) / 2, Math.max(14, Math.min(ZMAX - .5, zf)));
