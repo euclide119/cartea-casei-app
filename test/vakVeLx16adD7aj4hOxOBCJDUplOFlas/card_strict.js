@@ -2,7 +2,7 @@
    nimic din celelalte butoane nu ar trebui să meargă”).
    Doar când sesiunea e de card (window.CC_ADM.k). RĂMÂN: comutarea între rapoartele cardului (selectorul din bară), capitolele rapoartelor (Cuprins / Raport / Rezumat,
    capitole, ferestre, „mai mult”), hărțile și straturile lor, lacătul DOM („Am cod” / „Comandă DOM”) și secțiunile DOM, linkul cu condițiile, creditele hărților,
-   instalarea pe ecranul principal (necesară la iPhone). DISPAR: ← pagina principală, exportă PDF (toate variantele), generare / introdu adresa nouă / Generează raportul,
+   instalarea pe ecranul principal (necesară la iPhone). DISPAR (ascunse și inerte): ← pagina principală, exportă PDF (toate variantele), generare / introdu adresa nouă / Generează raportul,
    Mod client / Revizie / Aspect / Alege pozele, mapa proprietății, „pdf, trimitere și alte servicii”, Pașii următori (servicii), Stare date / Surse / arată sursele,
    versiunea de test, Evidență QR și orice alt buton Admin. Serverul refuză oricum orice acțiune în afara admin_verifica și privat (raport_cod v16). */
 (function () {
@@ -12,13 +12,14 @@
   const SEL = [".cc-pasi", ".bld-btn", "#bld", "#builder", "[id^=bld-]", "[id^=cq-]", ".cq-btn", "#ac-bar button:not(#ac-mod button)", "#ac-bar #ac-print", "[data-cc-admin]", ".dfa-btn[data-a]", ".dfa-adm"];
   const TXT = /^(←\s*pagina principală|↓?\s*exportă pdf.*|generează.*|introdu adresa.*|✓?\s*pdf, trimitere.*|arată sursele.*|▤?\s*mapa proprietății|pașii următori|evidență qr|[✎▣▦⚙◐⚖]?\s*(mod client|revizie|aspect|alege pozele|generează raportul|raport juridic|stare date|surse))$/i;
   const PASTREAZA = "#cc-tt-bar, #cc-tt-sel, #cc-tt-inst, #pl-am, #pl-cmd, .pl, .dfa-pl, #date_fine_aproape, .ac-pr";   // lacătul DOM, bara cu rapoartele cardului, instalarea
+  const ascunde = e => { if (e.dataset.ccCard) return; e.dataset.ccCard = "1"; e.hidden = true; e.setAttribute("inert", ""); e.setAttribute("aria-hidden", "true"); e.style.setProperty("display", "none", "important"); };   // ascuns, nu șters: restul aplicației își scrie în aceste elemente
   function curata() {
-    IDS.forEach(i => { const e = document.getElementById(i); if (e && !e.matches(PASTREAZA)) e.remove(); });
-    document.querySelectorAll(SEL.join(",")).forEach(e => { if (!e.closest(PASTREAZA) || e.matches(".dfa-btn[data-a],.dfa-adm")) e.remove(); });
+    IDS.forEach(i => { const e = document.getElementById(i); if (e && !e.matches(PASTREAZA)) ascunde(e); });
+    document.querySelectorAll(SEL.join(",")).forEach(e => { if (!e.closest(PASTREAZA) || e.matches(".dfa-btn[data-a],.dfa-adm")) ascunde(e); });
     document.querySelectorAll("button,a").forEach(b => {
       if (b.closest(PASTREAZA)) return;
       const t = (b.textContent || "").trim().replace(/\s+/g, " ");
-      if (TXT.test(t) && !/^comandă dom$/i.test(t)) b.remove();
+      if (TXT.test(t) && !/^comandă dom$/i.test(t)) ascunde(b);
     });
   }
   window.CC_ADM_P.then(s => {
