@@ -25,6 +25,7 @@
     if ($("#dhm-css")) return;
     const s = document.createElement("style"); s.id = "dhm-css";
     s.textContent = `.dhm{position:sticky;top:56px;z-index:6;height:min(45vh,420px);min-height:220px;margin:0 0 10px;border-radius:12px;overflow:hidden;background:#1c2230;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.dhm-x{filter:blur(4px);user-select:none;-webkit-user-select:none}
 .dhm canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .dhm .dhm-back{position:absolute;right:8px;top:8px;min-height:40px;padding:0 12px;border-radius:20px;border:0;background:rgba(255,255,255,.95);color:#1a1e2a;font:700 13px var(--font,system-ui);box-shadow:0 1px 6px rgba(0,0,0,.3);cursor:pointer}
 .dhm .dhm-atr{position:absolute;left:6px;bottom:4px;right:60px;font:10px/1.2 system-ui;color:#fff;text-shadow:0 0 3px #000;pointer-events:none}
@@ -99,7 +100,10 @@
     const d = dom(); if (!d) return null;
     if (Pid === d.id && P) return P;
     if (Pload && Pload.id === d.id) return Pload.p;
-    const id = d.id, p = (async () => { try { const r = await fetch(`p/${encodeURIComponent(id)}/dom_parcele.json`, { cache: "no-store" }); if (!r.ok) return null; P = pregateste(await r.json()); Pid = id; return P; } catch (e) { return null; } })();
+    const id = d.id, p = (async () => { try {   /* v82.27.0: fără cod, harta vine din dom_parcele_mostra.json (public, mascat la sursă: nume 2 litere, obiect 4 caractere, fără adrese / linkuri) */
+      let r = await fetch(`p/${encodeURIComponent(id)}/dom_parcele.json`, { cache: "no-store" }).catch(() => null);
+      if (!r || !r.ok) r = await fetch(`p/${encodeURIComponent(id)}/dom_parcele_mostra.json`, { cache: "no-store" }).catch(() => null);
+      if (!r || !r.ok) return null; P = pregateste(await r.json()); Pid = id; return P; } catch (e) { return null; } })();
     Pload = { id, p }; return p;
   }
 
@@ -255,19 +259,20 @@
   /* ---------- atingere pe hartă: fereastră scurtă cu datele parcelei + „Cronologie” la cerere ---------- */
   const mk = a => a.ds ? " (din sursă)" : "†";   // termen din lista primăriei sau calculat
   const stAct = a => a.st === "valabil" ? `<span class="ok">valabil până la ${dmy(a.sf)}${mk(a)}</span>` : a.st === "expirat" ? `<span class="ex">expirat la ${dmy(a.sf)}${mk(a)}</span>` : "";
+  const mv = (o, k) => o && (o[k] || o[k + "_m"]) ? esc(o[k] || "") + (o[k + "_m"] ? `<span class="dhm-x">${esc(o[k + "_m"])}</span>` : "") : "";   // v82.27.0: câmp mascat (prefix + estompare)
   const banii = a => a.pret ? `${Number(a.pret).toLocaleString("ro-RO")} ${a.mon || ""}${a.mp ? " · " + a.mp + " mp" : ""}${a.eur_mp ? " · " + a.eur_mp + " €/mp" : ""}` : "preț nespecificat";
   function fisa(box, sel) {
     const V = P.v2; let h = "", k = sel.k, f = k && V.f[k];
     if (f) {
       const ac = f.acte.filter(a => a.t === "AC").length, cu = f.acte.filter(a => a.t === "CU").length;
       h += `<h4>Parcela NC ${esc(k)}</h4><div class="s">${f.dm != null ? "la " + f.dm + " m de teren · " : ""}AC ${ac} · CU ${cu} · PUZ ${f.puz.length}${f.firme.length ? " · firme " + f.firme.length : ""}${f.anunturi.length ? " · anunțuri " + f.anunturi.length : ""}</div>`;
-      if (f.acte.length) h += "<ul>" + f.acte.slice(0, 4).map(a => `<li><b>${esc(a.t)} ${esc(a.n)}</b> · ${dmy(a.d)} · ${stAct(a)}<br>${esc(a.o || "—")}${a.b ? " · <i>" + esc(a.b) + "</i>" : ""}</li>`).join("") + (f.acte.length > 4 ? `<li class="s">+${f.acte.length - 4} în Cronologie</li>` : "") + "</ul>";
-      if (f.puz.length) h += "<ul>" + f.puz.map(z => `<li><b>PUZ</b> HCL ${esc(z.h || "")} · ${dmy(z.d)} · ${esc(z.s || "")}<br>${esc(z.o)}</li>`).join("") + "</ul>";
+      if (f.acte.length) h += "<ul>" + f.acte.slice(0, 4).map(a => `<li><b>${esc(a.t)} ${esc(a.n)}</b> · ${dmy(a.d)} · ${stAct(a)}<br>${mv(a, "o") || "—"}${a.b ? " · <i>" + mv(a, "b") + "</i>" : ""}</li>`).join("") + (f.acte.length > 4 ? `<li class="s">+${f.acte.length - 4} în Cronologie</li>` : "") + "</ul>";
+      if (f.puz.length) h += "<ul>" + f.puz.map(z => `<li><b>PUZ</b> HCL ${esc(z.h || "")} · ${dmy(z.d)} · ${esc(z.s || "")}<br>${mv(z, "o")}</li>`).join("") + "</ul>";
     } else h += `<h4>${esc(sel.titlu || "Obiect pe hartă")}</h4>`;
     const fir = sel.firma ? [sel.firma] : f ? f.firme : [], anu = sel.anunt ? [sel.anunt] : f ? f.anunturi : [];
-    if (fir.length) h += "<div><b>Firme</b></div><ul>" + fir.map(x => `<li>${esc(x.n)} · CAEN ${esc(x.c || "—")} · ${esc(x.st || "")}<br><span class="s">${esc(x.ad || "")} · la ${x.d} m</span></li>`).join("") + "</ul>";
-    if (anu.length) h += "<div><b>Anunțuri de vânzare</b></div><ul>" + anu.map(x => `<li>${esc(banii(x))}<br><span class="s">${esc(x.t)} · ${dmy(x.d)}${x.aprox ? " · poziție aproximativă (~100 m)" : ""}${x.u ? ' · <a href="' + esc(x.u) + '" target="_blank" rel="noopener">anunț</a>' : ""}</span></li>`).join("") + "</ul>";
-    if (sel.inv) { const x = sel.inv; h += `<div class="s">${esc(x.grup)} · ${esc(x.st || "")}${x.aprox ? " · poziție aproximativă (sat)" : (x.loc && /^OSM/.test(x.loc) ? " · traseu din OpenStreetMap" : "")}${x.loc ? " · " + esc(x.loc) : ""}${x.val ? " · " + esc(x.val) + " lei" : ""}${x.d ? " · " + dmy(x.d) : ""}</div><div>${esc(x.t)}</div>${x.u ? '<div class="s"><a href="' + esc(x.u) + '" target="_blank" rel="noopener">sursa</a></div>' : ""}`; }
+    if (fir.length) h += "<div><b>Firme</b></div><ul>" + fir.map(x => `<li>${mv(x, "n")} · CAEN ${esc(x.c || "—")} · ${esc(x.st || "")}<br><span class="s">${esc(x.ad || "")} · la ${x.d} m</span></li>`).join("") + "</ul>";
+    if (anu.length) h += "<div><b>Anunțuri de vânzare</b></div><ul>" + anu.map(x => `<li>${esc(banii(x))}<br><span class="s">${x.t ? esc(x.t) + " · " : ""}${dmy(x.d)}${x.aprox ? " · poziție aproximativă (~100 m)" : ""}${x.u ? ' · <a href="' + esc(x.u) + '" target="_blank" rel="noopener">anunț</a>' : ""}</span></li>`).join("") + "</ul>";
+    if (sel.inv) { const x = sel.inv; h += `<div class="s">${esc(x.grup)} · ${esc(x.st || "")}${x.aprox ? " · poziție aproximativă (sat)" : (x.loc && /^OSM/.test(x.loc) ? " · traseu din OpenStreetMap" : "")}${x.loc ? " · " + esc(x.loc) : ""}${x.val ? " · " + esc(x.val) + " lei" : ""}${x.d ? " · " + dmy(x.d) : ""}</div><div>${mv(x, "t")}</div>${x.u ? '<div class="s"><a href="' + esc(x.u) + '" target="_blank" rel="noopener">sursa</a></div>' : ""}`; }
     if (f && (f.acte.length || f.puz.length)) h += `<button type="button" class="cr">Cronologie</button>`;
     let w = $(".dhm-fis", box); if (!w) { w = document.createElement("div"); w.className = "dhm-fis"; box.appendChild(w); }
     w.innerHTML = `<button type="button" class="x" aria-label="Închide">×</button>` + h;

@@ -115,13 +115,14 @@
      funcția raport_cerere_dom). Se trece dintr-unul în altul fără să se piardă ce s-a scris; după cod lacătul (deci și „Comandă DOM”) dispare. Fără bifă separată:
      o linie mică „Continuând, accepți termenii” sub buton. Marcajul .g7-code ține lacătul la vedere în fereastra DOM (acordeon.js nu pliază rândul cu formularul de cod). */
   const mem = { cod: "", contact: "" };
-  function montajGratuit(el, dupa) {
+  function montajGratuit(el, dupa, opt) {
+    const compact = !!(opt && opt.compact);   // v82.27.0: lacătul de deasupra hărții și cel de sub date: doar butoanele, fără titlu dublat
     const g = gSes(), AC = "#1d5fb0";
     const B = `font:700 16px var(--font);padding:14px 10px;border-radius:12px;cursor:pointer;flex:1 1 0;min-width:0`;
     const IN = `font:700 18px ui-monospace,Menlo,monospace;padding:12px 14px;border:2px solid ${AC};border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box`;
     const LINK = `background:none;border:0;padding:4px 0;color:${AC};font:600 14px var(--font);text-decoration:underline;cursor:pointer;align-self:center`;
     const termeni = `<p class="pl-ter" style="font:12px/1.4 var(--font);color:#5b6275;text-align:center">Continuând, accepți <a href="${CFG.gdpr}" target="_blank" rel="noopener">termenii</a>.</p>`;
-    const cap = `<i class="g7-code" hidden></i><h3>🔒 Depth of Market – Level 2</h3><p>Firmele, actele de urbanism și proiectele din jurul proprietății.</p>`;
+    const cap = compact ? `<i class="g7-code" hidden></i>` : `<i class="g7-code" hidden></i><h3>🔒 Depth of Market – Level 2</h3><p>Firmele, actele de urbanism și proiectele din jurul proprietății.</p>`;
     const ecran = mod => {
       if (mod === "cod") el.innerHTML = `<div class="pl">${cap}
         <input id="pl-pin" type="text" inputmode="numeric" autocomplete="off" maxlength="16" aria-label="cod" placeholder="cod" value="${esc(mem.cod)}" style="${IN};letter-spacing:.2em;text-align:center">
@@ -161,6 +162,7 @@
         q("#pl-ct-go").onclick = go; ct.onkeydown = e => { if (e.key === "Enter") go(); }; }
     };
     ecran("alege");
+    if (compact) { el.querySelectorAll(".pl").forEach(x => x.classList.add("pl-c")); new MutationObserver(() => el.querySelectorAll(".pl:not(.pl-c)").forEach(x => x.classList.add("pl-c"))).observe(el, { childList: true }); return; }
     /* un singur loc de cod în fereastra DOM: titlul dublat și linkul de sub lacăt (date_fine_aproape.js) și vechiul câmp G7 „cod de 4 cifre / nu sunt robot” (g7.js) nu se mai văd cât lacătul e închis */
     try { const sec = el.closest("section"); if (sec) { const t = sec.querySelector(":scope > div:first-child"); if (t && !t.contains(el)) t.style.display = "none"; const f = sec.querySelector(":scope > .dfa-foot"); if (f) f.style.display = "none"; } } catch (e) {}
     document.body.classList.add("cc-dom-lacat");
@@ -172,9 +174,63 @@
     e.preventDefault(); e.stopImmediatePropagation(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }, true);
   { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM"; }); };
     let n = 0; const t = setInterval(() => { fix(); if (++n > 40) clearInterval(t); }, 500); }
-  function montaj(el, dupa, conf) {
+  /* v82.27.0 (Manu, 14.11.2026): „Deblochează datele complete” rămâne la 499 RON; butonul duce la pagina secundară de plată, cu GDPR-ul specific acestui set de date
+     (surse publice, interes legitim declarat de cumpărător); sub casetă, pe două coloane, fără linii: ce conține și de unde vine. Texte generice, fără angajamente. */
+  const GDPR_DOM = [
+    "Datele provin exclusiv din surse publice: registrul comerțului (ONRC), certificatele de urbanism și autorizațiile de construire publicate de primării, hotărârile consiliului local (PUZ), anunțuri publice și cadastrul public.",
+    "Temeiul prelucrării este interesul legitim (art. 6 alin. (1) lit. f din Regulamentul (UE) 2016/679) al cumpărătorului de a cunoaște zona în care investește și vecinătățile proprietății.",
+    "Datele se folosesc doar pentru evaluarea propriei investiții; nu se retransmit, nu se publică și nu se folosesc pentru marketing.",
+    "Nu conțin CNP sau date sensibile. Persoanele vizate își pot exercita drepturile (informare, opoziție, ștergere) prin datele de contact din pagina GDPR.",
+    "Informațiile au caracter orientativ, sunt redate așa cum apar în sursele publice la data colectării și nu constituie consultanță juridică, tehnică sau financiară."];
+  const ACORD_DOM = "Declar că am un interes legitim de a cunoaște zona în care investesc și vecinătățile ei și accept condițiile de mai sus.";
+  const CONTINUT = [["Firme din jur și administratorii lor", "registrul comerțului (ONRC)"], ["Autorizații de construire, cu beneficiari", "acte publicate de primărie"], ["Certificate de urbanism", "acte publicate de primărie"],
+    ["PUZ-uri aprobate", "hotărâri ale consiliului local"], ["Proiecte de infrastructură", "anunțuri publice ale autorităților"], ["Harta parcelelor cu acte", "cadastru public"]];
+  function cssDebl() {
+    if (document.getElementById("pl-css-debl")) return;
+    const s = document.createElement("style"); s.id = "pl-css-debl";
+    s.textContent = `.pl.pl-c{padding:10px;gap:8px;border-width:1px;margin:8px 0}.pl.pl-c .pl-ter{display:none}
+.pl-2c{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:8px;margin:4px 2px 14px;font:13px/1.4 var(--font);color:#3d4354}.pl-2c b{font-weight:700;color:#1a1e2a}.pl-2c span{color:#5b6275}
+.pl-pag{position:fixed;inset:0;z-index:2147482000;background:#fffdf8!important;overflow:auto;-webkit-overflow-scrolling:touch}
+.pl-pag .w{max-width:430px;margin:0 auto;padding:12px 16px 32px;color:#1a1e2a;font:14px/1.5 var(--font)}
+.pl-pag .bk{all:unset;cursor:pointer;color:#1d5fb0;font:700 14px var(--font);padding:8px 0}
+.pl-pag h2{margin:8px 0 4px;font:800 20px var(--font)}.pl-pag .pr{font:800 26px var(--font);margin:6px 0 10px}
+.pl-pag h3{margin:16px 0 6px;font:700 15px var(--font)}.pl-pag ul{margin:0;padding-left:18px}.pl-pag li{margin:0 0 6px}
+.pl-pag .pl-acc{margin:12px 0}.pl-pag .pl-go{width:100%}.pl-pag .pl-msg{margin-top:8px}`;
+    document.head.appendChild(s);
+  }
+  const doua = () => `<div class="pl-2c">${CONTINUT.map(([a, b]) => `<b>${esc(a)}</b><span>${esc(b)}</span>`).join("")}</div>`;
+  function deblocheaza(el) {
+    css(); cssDebl();
+    el.innerHTML = `<div class="pl"><h3>Deblochează datele complete</h3><p>Toate rândurile, fără estompare, și harta completă. Plată unică: <b>${CFG.pret_ron} ${CFG.moneda}</b>.</p>
+      <button type="button" class="pl-go">Plătește ${CFG.pret_ron} ${CFG.moneda}</button></div>${doua()}`;
+    el.querySelector(".pl-go").onclick = paginaPlata;
+  }
+  function paginaPlata() {
+    css(); cssDebl();
+    const ov = document.createElement("div"); ov.className = "pl-pag"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Plată");
+    ov.innerHTML = `<div class="w"><button type="button" class="bk">← înapoi la raport</button>
+      <h2>Depth of Market – Level 2</h2><p>Datele complete din jurul proprietății, livrate imediat în aplicație.</p><div class="pr">${CFG.pret_ron} ${CFG.moneda}</div>
+      ${doua()}<h3>Informare privind datele (GDPR)</h3><ul>${GDPR_DOM.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      <p><a href="${CFG.gdpr}#dom" target="_blank" rel="noopener">GDPR și folosire date</a> · <a href="conditii.html" target="_blank" rel="noopener">condițiile de utilizare</a></p>
+      <label class="pl-acc"><input type="checkbox" id="pl-acc"><span>${esc(ACORD_DOM)}</span></label>
+      <button type="button" class="pl-go" disabled>Plătește ${CFG.pret_ron} ${CFG.moneda}</button>
+      <div class="pl-stripe" hidden></div><p class="pl-msg" role="status"></p></div>`;
+    const inchide = () => { ov.remove(); document.documentElement.style.overflow = ""; };
+    ov.querySelector(".bk").onclick = () => { if (history.state && history.state.plPag) history.back(); else inchide(); };
+    const acc = ov.querySelector("#pl-acc"), go = ov.querySelector(".pl-go"), msg = ov.querySelector(".pl-msg");
+    acc.onchange = () => { go.disabled = !acc.checked; };
+    go.onclick = async () => {
+      const r = await apel("plata_config", {});
+      if (r.neconfigurat || r.configurat === false) { msg.innerHTML = 'Plata online nu e activă încă. <button type="button" class="bk" id="pl-pag-cmd">Comandă DOM cu telefon sau email</button>';
+        ov.querySelector("#pl-pag-cmd").onclick = () => { inchide(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }; return; }
+      plateste(ov.querySelector(".w"), () => { inchide(); location.reload(); });
+    };
+    document.body.appendChild(ov); document.documentElement.style.overflow = "hidden";
+    try { history.pushState({ plPag: 1 }, ""); const pop = () => { window.removeEventListener("popstate", pop); inchide(); }; window.addEventListener("popstate", pop); } catch (e) {}
+  }
+  function montaj(el, dupa, conf, opt) {
     css();
-    if (CC_GRATUIT && gSes()) return montajGratuit(el, dupa);
+    if (CC_GRATUIT && gSes()) return montajGratuit(el, dupa, opt);
     el.innerHTML = `<div class="pl"><h3>Deblochează datele complete</h3>
       <p>Firme, administratori și asociați din registrul public, autorizații și certificate de urbanism cu beneficiari (din actele publice ale primăriilor), PUZ-uri și investiții declarate. Preț: <b>${CFG.pret_ron} ${CFG.moneda}</b>, plată unică.</p>
       <label class="pl-acc"><input type="checkbox" id="pl-acc"><span>${esc(TEXT_ACORD)} <a href="${CFG.gdpr}" target="_blank" rel="noopener">GDPR și folosire date</a></span></label>
@@ -189,5 +245,5 @@
     const sim = el.querySelector(".pl-sim"); if (sim) sim.onclick = () => { simulat = true; dupa && dupa(); };
   }
   window.CC_GRATUIT = CC_GRATUIT;
-  window.CC_PLATA = { gratuit: CC_GRATUIT, pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
+  window.CC_PLATA = { deblocheaza, paginaPlata, gratuit: CC_GRATUIT, pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
 })();

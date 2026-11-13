@@ -25,6 +25,7 @@
 .dfa-adm{display:inline-block;font:600 12px var(--font);background:#e8f5ec;border:1px solid #a9d8b8;border-radius:8px;padding:3px 8px;margin:6px 0}
 .dfa-btn{font:700 14px var(--font);padding:10px 14px;border-radius:10px;border:0;background:#1d5fb0;color:#fff;cursor:pointer;margin:6px 6px 6px 0}
 .dfa-i{font:700 12px var(--font);width:22px;height:22px;border-radius:50%;border:1px solid #8a6d00;background:#fff3b0;color:#3a2e00;cursor:pointer;margin-left:6px}
+#${SEC}.dfa-lock{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}@media print{#${SEC}{display:none!important}}
 .dfa-src{color:#4a5063;font-size:12px}.dfa-inv{font:12px/1.4 var(--font);color:#6b7280;margin-top:8px}`;
     document.head.appendChild(s);
   }
@@ -57,13 +58,15 @@
   const srcAdm = r => `<span class="dfa-src">${esc(String(r.sursa || r.sursa_tip || "").slice(0, 60))} · ${esc(String(r.data_sursei || "").slice(0, 10))} · ${esc(r.incredere || "")}</span>`;
   /* v82.18.0: harta DOM. Fiecare rând poartă data-s (secțiunea) și data-i (indexul în fișierul întreg); dom_harta.js îl mapează la parcelă prin dom_parcele.json (randuri[sec][i]). Cardul primește _i / _s de la server (secțiunile vin tăiate la cele mai apropiate 40). */
   /* v82.20.0 (Manu, 13.11: „standard aratam 119m in jur - daca se cere putem merge pana la 0 sau pana la 350 m”): raza DOM, implicit 119 m, reglabilă 0–350 m; filtrul se aplică la toate tabelele cu distanță (firme, CU, AC, PUZ, infrastructură) */
-  window.__dfaRaza = window.__dfaRaza == null ? 119 : window.__dfaRaza;
+  /* v82.27.0 (Manu, 14.11: „bara cu distanța pleacă de la 100 m până la 211 m”): cursorul 100–211 m, implicit 119 m */
+  const RMIN = 100, RMAX = 211;
+  window.__dfaRaza = window.__dfaRaza == null ? 119 : Math.max(RMIN, Math.min(RMAX, window.__dfaRaza));
   const RAZA = () => window.__dfaRaza;
-  const ctrlRaza = () => `<div class="dfa-rz" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 10px;font:600 14px var(--font)"><label for="dfa-raza">Rază în jurul terenului: <b id="dfa-rv">${RAZA()}</b> m</label><input id="dfa-raza" type="range" min="0" max="350" step="1" value="${RAZA()}" style="flex:1 1 180px;min-width:150px"><span class="dfa-src">standard 119 m; la cerere de la 0 la 350 m</span></div>`;
+  const ctrlRaza = () => `<div class="dfa-rz" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 10px;font:600 14px var(--font)"><label for="dfa-raza">Rază în jurul terenului: <b id="dfa-rv">${RAZA()}</b> m</label><input id="dfa-raza" type="range" min="${RMIN}" max="${RMAX}" step="1" value="${RAZA()}" style="flex:1 1 180px;min-width:150px"><span class="dfa-src">de la ${RMIN} la ${RMAX} m</span></div>`;
   let tR = null;
   document.addEventListener("input", e => { if (e.target && e.target.id === "dfa-raza") { const rv = document.getElementById("dfa-rv"); if (rv) rv.textContent = e.target.value; } }, true);
   document.addEventListener("change", e => {   // la eliberarea cursorului: se reface lista (doar secțiunile deschise la card; tot la ceilalți)
-    if (!e.target || e.target.id !== "dfa-raza") return; const v = Math.max(0, Math.min(350, Number(e.target.value) || 0)); clearTimeout(tR);
+    if (!e.target || e.target.id !== "dfa-raza") return; const v = Math.max(RMIN, Math.min(RMAX, Number(e.target.value) || RMIN)); clearTimeout(tR);
     tR = setTimeout(() => { window.__dfaRaza = v; document.querySelectorAll("details.dfa-sec").forEach(d => { d.dataset.g = ""; if (d.open && window.__dfaSecFn) window.__dfaSecFn(d); }); if (!document.querySelector("details.dfa-sec")) { facut = null; try { porneste(); } catch (er) {} } }, 500);
   }, true);
   const SK = ["firme", "cu", "ac", "puz", "investitii"];
@@ -74,6 +77,8 @@
     const full = nivel !== "ascuns", adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);
     const fx = full ? (r, k) => val(r[k]) : m;
     const cap = c => adm && full && arataSurse ? [...c, "Sursă"] : c, cel = (r, h) => adm && full && arataSurse ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
+    const zi = r => String(r.data_act || r.data || "");
+    const pc = (L, n) => (L || []).filter(r => r.distanta_m != null && r.distanta_m <= RAZA()).slice().sort((x, y) => zi(y).localeCompare(zi(x)) || x.distanta_m - y.distanta_m).slice(0, n);   // v82.27.0: CU și AC în ordine cronologică (cele mai noi primele)
     const pd = (L, n) => (L || []).filter(r => r.distanta_m != null && r.distanta_m <= RAZA()).slice().sort((x, y) => x.distanta_m - y.distanta_m).slice(0, n);
     const cfc = r => { const l = String(r.nc || r.cf || r.adresa_cf || "").split(/[;,\s]+/).filter(Boolean); return l.slice(0, 3).join(", ") + (l.length > 3 ? ` +${l.length - 3}` : "") || "—"; };   // v82.16.0: alocarea precisă pe parcelă (NC / CF) doar în DOM
     const rAct = (r, cuDist) => cel(r, `<tr${ta(r)}><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}${full ? `<td>${esc(cfc(r))}</td>` : ""}</tr>`);
@@ -81,7 +86,7 @@
     h += tabel("Cele mai apropiate firme", cap(["Firma", "Administratori", "Telefon", "Distanță"]),
       pd(J.firme, 60).map(r => cel(r, `<tr${ta(r)}><td>${fx(r, "denumire")}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon") || "—"}</td><td>${dist(r)}</td></tr>`)), GOL);
     [["cu", "Cele mai apropiate certificate de urbanism"], ["ac", "Cele mai apropiate autorizații de construire"], ["puz", "Cele mai apropiate PUZ-uri"]].forEach(([k, t]) =>
-      h += tabel(t, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), pd(J[k], 60).map(r => rAct(r, true)), GOL));
+      h += tabel(t, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), (k === "puz" ? pd : pc)(J[k], 60).map(r => rAct(r, true)), GOL));
     const L = J.localitate || {};
     if (L.cu_ultime || L.ac_ultime) {
       h += tabel(`Ultimele certificate de urbanism din ${esc(L.uat || "localitate")}`, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect"]), (L.cu_ultime || []).map(r => rAct(r, false)), GOL);
@@ -90,8 +95,8 @@
     const lucru = (J.investitii || []).filter(r => /lucr|execu|derul|început|inceput|contract|implement|în curs|in curs/i.test(`${typeof r.stadiu === "string" ? r.stadiu : ""} ${typeof r.termen === "string" ? r.termen : ""}`));
     h += tabel("Proiecte de infrastructură în lucru", cap(["Ce", "Stadiu", "Termen", "Distanță"]),
       lucru.map(r => cel(r, `<tr${ta(r)}><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(typeof r.stadiu === "string" ? r.stadiu : "") || "în lucru"}</td><td>${esc(typeof r.termen === "string" && r.termen ? r.termen : "neprecizat")}</td><td>${r.distanta_m != null ? dist(r) : "în comună"}</td></tr>`)), "Nu sunt proiecte în lucru anunțate în comună.");
-    const raza = [...(J.cu || []), ...(J.ac || [])].filter(r => r.distanta_m != null && r.distanta_m <= RAZA()).sort((x, y) => x.distanta_m - y.distanta_m);
-    h += tabel(`Certificate de urbanism și autorizații pe o rază de ${RAZA()} m`, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), "Nu sunt certificate sau autorizații pe 200 m.");
+    const raza = pc([...(J.cu || []), ...(J.ac || [])], 1e9);
+    h += tabel(`Certificate de urbanism și autorizații pe o rază de ${RAZA()} m`, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), `Nu sunt certificate sau autorizații pe ${RAZA()} m.`);
     if (adm && J.investitii_lipsa && J.investitii_lipsa.length) h += `<details class="dfa-inv"><summary>lipsuri de colectare (doar Admin)</summary>${J.investitii_lipsa.map(x => `<p>${esc(typeof x === "string" ? x : JSON.stringify(x))}</p>`).join("")}</details>`;
     return (J.__fara_ctrl ? "" : ctrlRaza()) + h;
   }
@@ -130,10 +135,20 @@
     /* sesiunea cu cod (modul gratuit), înainte de PIN: doar lacătul, acordul și câmpul pentru cod; nu se încarcă nimic din DOM */
     const g0 = window.CC_ADM && window.CC_ADM.g, lacat = g0 ? window.CC_ADM.n < 2 : !ADMIN();
     if (g0 && window.CC_ADM.n < 2 && window.CC_PLATA && window.CC_PLATA.gratuit) {
-      if (sec.dataset.dfaLacat === Dd.id && sec.querySelector(".pl")) return;
-      sec.dataset.dfaLacat = Dd.id; facut = null; sec.hidden = false;
-      sec.innerHTML = `<div><h2>🔒 Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul de pe card.</p></div><div class="dfa-pl"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
-      window.CC_PLATA.montaj($(".dfa-pl", sec), () => {}, true); return;
+      /* v82.27.0 (Manu, 14.11): fără cod se văd datele minime, estompate (nume 2 litere, telefon 4 cifre, mascate la sursă) și harta; „Am cod / Comandă DOM” deasupra hărții și sub date;
+         jos „Deblochează datele complete” (499 RON) → pagina de plată, cu GDPR-ul acestui set de date; dedesubt, pe două coloane, ce conține și de unde vine. */
+      const cheie = Dd.id + "|" + RAZA();
+      if (sec.dataset.dfaLacat === cheie && sec.querySelector(".dfa-corp")) return;
+      if (sec.dataset.dfaLacat === "…" + cheie) return;
+      sec.dataset.dfaLacat = "…" + cheie; facut = null;
+      const mo = await json(P + "date_fine_aproape_mostra.json");
+      sec.dataset.dfaLacat = cheie; sec.hidden = false; sec.classList.add("dfa-lock");
+      sec.innerHTML = `<div><h2>🔒 Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății. Datele complete se deschid cu codul.</p></div><div class="dfa-pl dfa-pl-sus"></div><div class="dfa-corp"></div><div class="dfa-pl dfa-pl-jos"></div><div class="dfa-debl"></div>`;
+      $(".dfa-corp", sec).innerHTML = mo ? randare(mo, "ascuns") : `<p class="dfa-gol">${GOL}</p>`;
+      window.CC_PLATA.montaj($(".dfa-pl-sus", sec), () => {}, true, { compact: true });
+      window.CC_PLATA.montaj($(".dfa-pl-jos", sec), () => {}, true, { compact: true });
+      if (window.CC_PLATA.deblocheaza) window.CC_PLATA.deblocheaza($(".dfa-debl", sec));
+      return;
     }
     const mostra = await json(P + "date_fine_aproape_mostra.json");
     if (!mostra) { sec.hidden = true; return; }
@@ -165,5 +180,6 @@
     corp.innerHTML = randare(mostra, "ascuns") + '<div class="dfa-pl"></div>' + "";
     if (P2) P2.montaj($(".dfa-pl", corp), () => { facut = null; porneste(); }, st.configurat);
   }
-  setInterval(() => { try { porneste(); } catch (e) { console.warn("date_fine_aproape", e); } }, 1500);
+  ["copy", "cut", "contextmenu", "dragstart"].forEach(t => document.addEventListener(t, e => { const x = e.target && e.target.closest && e.target.closest("#" + SEC + ".dfa-lock"); if (x && !(e.target.closest("input"))) e.preventDefault(); }, true));   // v82.27.0: datele estompate nu se copiază
+  setInterval(() => { try { const s0 = $("#" + SEC); if (s0 && !(window.CC_ADM && window.CC_ADM.g && window.CC_ADM.n < 2)) s0.classList.remove("dfa-lock"); porneste(); } catch (e) { console.warn("date_fine_aproape", e); } }, 1500);
 })();
