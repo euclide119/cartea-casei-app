@@ -34,7 +34,7 @@
   function ascunsa(keep) { for (const [k, v] of [...deschise]) inchide(k, v); trimite(keep); if (sid) post({ actiune: "sesiune", op: "bataie", sid, raport: rid() }, keep); }
   async function porneste(s) {
     S = s; const r = await post({ actiune: "sesiune", op: "start", inst: inst() ? 1 : 0, raport: rid() }); if (!r || !r.sid) return; sid = r.sid;
-    setInterval(() => { if (document.visibilityState === "visible" && sid) post({ actiune: "sesiune", op: "bataie", sid, raport: rid() }); }, 30000);
+    setInterval(() => { if (document.visibilityState === "visible" && sid) { post({ actiune: "sesiune", op: "bataie", sid, raport: rid() }); trimite(false); } }, 30000);   // evenimentele din coadă pleacă la fiecare bătaie
     setInterval(scan, 1000);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") ascunsa(true); else scan(); });
     addEventListener("pagehide", () => ascunsa(true));
