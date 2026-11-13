@@ -28,7 +28,11 @@ async function retea(req) {   // network-first, cu rezervă din cache
 }
 async function date(url, s, cheie) {   // datele Admin: rețea, cu copie offline (doar pentru Admin)
   try {
-    const r = await fetch(url);
+    let r = await fetch(url);
+    for (let i = 0; i < 3 && r.status === 429; i++) {   // v82.20.0: limita umană (master / Admin) încetinește, nu blochează: se așteaptă retry_after și se reîncearcă; blocarea unui card (fără retry_after) nu se reîncearcă
+      let ra = 0; try { ra = Number((await r.clone().json()).retry_after) || 0; } catch (e) {}
+      if (!ra) break; await new Promise(ok => setTimeout(ok, Math.min(ra, 30) * 1000)); r = await fetch(url);
+    }
     if (s && s.adm && r.ok) (await caches.open("cc-date")).put(cheie, r.clone()).catch(() => {});
     return r;
   } catch (e) {

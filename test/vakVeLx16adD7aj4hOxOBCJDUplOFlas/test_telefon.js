@@ -351,10 +351,15 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const cur = decodeURIComponent((location.hash || "").replace(/^#/, "")).split(".")[0];
       b.innerHTML = `<span style="white-space:nowrap">${s.pv ? "🔎 previzualizare" : s.m ? "🔑 master" : s.c || s.ca_client ? "👁 utilizator" : "🔓 admin"}</span><select id="cc-tt-sel" aria-label="locația" style="flex:1;min-width:0;font:600 12px -apple-system,system-ui,sans-serif;padding:5px;border-radius:8px;border:0;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">${(s.lista || []).map(p => `<option value="${esc(p.id)}"${p.id === cur ? " selected" : ""}>${esc(p.eticheta || p.id)}</option>`).join("")}</select>
-${s.c ? "" : `<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Vedere: Admin" : "Vedere: Utilizator"}</button>`}
-<span id="cc-tt-v" style="color:#4a5063;font-weight:600"></span>`;
+${s.c ? "" : `<button id="cc-tt-cm" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:#fff;color:#1a1e2a;border:1px solid #8a90a3">Coduri</button><button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:${s.ca_client ? "#1f6b3d" : "#f2b04a"};color:${s.ca_client ? "#fff" : "#1a1e2a"}">${s.ca_client ? "Vedere: Admin" : "Vedere: Utilizator"}</button>`}
+<button id="cc-tt-dom" type="button" style="font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 10px;background:#1d5fb0;color:#fff">DOM</button><span id="cc-tt-v" style="color:#4a5063;font-weight:600"></span>`;
       document.body.appendChild(b);
       b.querySelector("#cc-tt-sel").onchange = e => { lg("cc-adm-id", e.target.value); location.hash = "#" + e.target.value; location.reload(); };
+      const dm = b.querySelector("#cc-tt-dom"); if (dm) dm.onclick = () => {   // v82.20.0: acces direct la DOM (Manu: „mult prea greu de gasit si intrat in DOM”): deschide capitolul și sub-fereastra, apoi derulează la hartă / lacăt
+        const h = [...document.querySelectorAll("button.ac-h")].find(x => /Depth of Market/.test(x.textContent)); if (h && h.getAttribute("aria-expanded") !== "true") h.click();
+        setTimeout(() => { const sb = [...document.querySelectorAll("button.ac-subh")].find(x => /^Depth of Market/.test(x.textContent.trim())), sec = document.querySelector("#date_fine_aproape"); if (sb && sec && getComputedStyle(sec).visibility === "hidden") sb.click();
+          setTimeout(() => { const t = document.querySelector(".dhm") || document.querySelector("#date_fine_aproape") || h; if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }, 500); }, 400); };
+      const cm = b.querySelector("#cc-tt-cm"); if (cm) cm.onclick = () => { window.CC_CODURI && window.CC_CODURI(); };   // v82.20.0: „Codurile mele”
       const cl = b.querySelector("#cc-tt-cl"); if (cl) cl.onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (1357, verificat pe server) deblochează datele complete în această vedere
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
