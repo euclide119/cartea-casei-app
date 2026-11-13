@@ -13,7 +13,7 @@
      (3) Sentinel-2 cloudless (EOX, CC BY 4.0) doar ca rezervă la zoom mic, când placa Esri lipsește. CC_DOM_TILE poate înlocui primarul. */
   const TILE = window.CC_DOM_TILE || "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
   const TILE2 = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2022_3857/default/g/{z}/{y}/{x}.jpg";
-  const ZMAX = 19;
+  const ZMAX = 19, ZTILE = 18;   // la z19 Esri trimite o placă „Map data not yet available” (200 OK, aceeași în G7 și Bucovăț): plăcile se cer până la z18, peste el se mărește placa z18
   const ATRIB = "Esri, Maxar, Earthstar Geographics (imagini live) · Sentinel-2 cloudless 2022 © EOX / Copernicus (rezervă) · contururi: baza de date proprie";
   const wx = lon => (lon + 180) / 360, wy = lat => { const r = lat * Math.PI / 180; return (1 - Math.asinh(Math.tan(r)) / Math.PI) / 2; };
   const dom = () => typeof D !== "undefined" && D && D.id ? D : null;
@@ -71,7 +71,7 @@
     };
     S.draw = () => {
       S.dirty = false; const c = S.cx, W = S.W, H = S.H; c.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); c.fillStyle = "#1c2230"; c.fillRect(0, 0, W, H);
-      const sc = S.scale(), tz = Math.max(3, Math.min(ZMAX, Math.round(S.z))), n = Math.pow(2, tz), ts = 256 * Math.pow(2, S.z - tz);
+      const sc = S.scale(), tz = Math.max(3, Math.min(ZTILE, Math.round(S.z))), n = Math.pow(2, tz), ts = 256 * Math.pow(2, S.z - tz);
       const x0 = Math.floor((S.cwx - W / 2 / sc) * n), x1 = Math.floor((S.cwx + W / 2 / sc) * n), y0 = Math.floor((S.cwy - H / 2 / sc) * n), y1 = Math.floor((S.cwy + H / 2 / sc) * n);
       for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
         const p = S.toScr(x / n, y / n);   // placa de la zoomul cerut; dacă lipsește (încă se încarcă / nu există la acest zoom), se desenează placa-părinte mărită
