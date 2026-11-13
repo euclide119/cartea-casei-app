@@ -94,7 +94,7 @@ ${card("Piață · parcele construibile (" + esc(p.descriere) + ")", p.intravila
       ["impozit_pct_profit", "! Impozit (% din profit)", "neinclus în ipoteze; implicit 0", "ex"],
       ["finantare_eur", "! Finanțare, dobândă (€)", "neinclusă în ipoteze; implicit 0", "ex"]];
     const sI = R.stat.intravilan, sE = R.stat.extravilan, C = R.comparative;
-    sec.innerHTML = `<div class="roi-w">
+    sec.innerHTML = `<div class="roi-w ac-k1">
 <h2>ROI · cumpărare cu realizare PUZ</h2>
 <p class="roi-n">Terenul unit (CF 419740 + CF 419748, 10.000 mp). Ipotezele sunt ale lui Manu (12.11.2026) și se pot modifica; câmpurile cu „!” sunt costuri neincluse în ipotezele inițiale. ${esc(R.vandabil_sursa)}.</p>
 ${mediiHtml(R)}

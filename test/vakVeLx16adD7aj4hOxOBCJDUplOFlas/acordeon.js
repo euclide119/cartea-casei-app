@@ -13,7 +13,7 @@
     { t: "Viața de zi cu zi", p: "Școlile, magazinele și locurile la pas de casă, plus cine sunt vecinii tăi.", s: ["scoli", "facilitati", "populatie"] },
     { t: "Natură și patrimoniu", p: "Monumentele, siturile și ariile protejate din apropierea acestei proprietăți și ce înseamnă ele.", s: ["monumente", "arii_protejate"] },
     { t: "Soare și energie", p: "Câtă lumină primește proprietatea în fiecare lună și câtă energie solară poate produce.", s: ["insorire", "pv"] },
-    { t: "Prețul", p: "Cât costă tranzacția până la capăt; evaluarea față de piață e în datele fine.", s: ["costuri"] },
+    { t: "Prețul", p: "Cât costă tranzacția până la capăt; evaluarea față de piață e în datele fine.", s: ["costuri", "roi"] },
     { t: "Cronologia locului", p: "Cum s-a schimbat locul de-a lungul anilor, de la primele hărți până acum.", s: ["cronologie"] },
     { t: "De discutat între părți", p: "Ce merită clarificat cu cealaltă parte înainte de semnare.", s: ["negociere"] },
     { t: "🔒 Depth of Market – Level 2", p: "Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
