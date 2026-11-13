@@ -4,8 +4,8 @@
    iar barele fixe (position:fixed pe toată lățimea) se strâng în coloană. Pe telefon (≤ 520 px) și la imprimare nu face nimic. ?desktop=1 oprește emularea (doar pentru depanare).
    Element înghețat: html.cc-mobil (elemente_inghetate_raport.json, id „coloana-mobil”). */
 (() => {
-  const W = 430, real = window.innerWidth;
-  if (window.__ccMobil || real <= 520 || /[?&]desktop=1/.test(location.search)) return;
+  const W = 430, real = window.innerWidth, ecran = Math.min(screen.width || 9999, screen.height || 9999);   /* v82.25.0: pe telefon innerWidth poate fi 980 înainte de meta viewport; decide lățimea ECRANULUI (telefon = nu face nimic) */
+  if (window.__ccMobil || ecran <= 520 || real <= 520 || /[?&]desktop=1/.test(location.search)) return;
   window.__ccMobil = true; window.__ccReal = real;
   document.documentElement.classList.add("cc-mobil");
   try { Object.defineProperty(window, "innerWidth", { configurable: true, get: () => W }); } catch (e) { /* rămâne lățimea reală */ }
