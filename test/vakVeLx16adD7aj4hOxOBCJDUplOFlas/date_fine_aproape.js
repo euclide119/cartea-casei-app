@@ -89,7 +89,7 @@
     const onToggle = async d => {
       if (!d.open || d.dataset.g) return; d.dataset.g = "1"; const box = d.querySelector(".dfa-sb"), k = d.dataset.k; box.innerHTML = '<p class="dfa-src">Se încarcă…</p>';
       try {
-        const r = await fetch(`p/${encodeURIComponent(D.id)}/date_fine_aproape.json?sec=${encodeURIComponent(k)}`, { cache: "no-store" });
+        const r = await fetch(`${(window.CC_STARE && window.CC_STARE.FN) || "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod"}?t=${encodeURIComponent(window.CC_ADM.token)}&f=${encodeURIComponent(D.id + "/date_fine_aproape.json")}&sec=${encodeURIComponent(k)}`, { cache: "no-store" });
         if (r.status === 429 || r.status === 401) { box.innerHTML = '<p class="dfa-gol">Cardul nu mai e valabil.</p>'; setTimeout(() => location.reload(), 600); return; }
         if (!r.ok) { d.dataset.g = ""; box.innerHTML = '<p class="dfa-gol">Nu s-a putut încărca; închide și redeschide secțiunea.</p>'; return; }
         let J = await r.json(); if (k === "raza200") J = { cu: J.raza200 || [] };
