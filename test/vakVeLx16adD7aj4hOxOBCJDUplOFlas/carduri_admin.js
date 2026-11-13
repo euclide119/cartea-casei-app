@@ -39,6 +39,7 @@
 #cc-qr .st{display:inline-block;border-radius:999px;padding:1px 8px;color:#fff;font-weight:700;font-size:12px}
 #cc-qr .bx{background:#fffdf8;border:1px solid #cfc7b6;border-radius:12px;padding:14px;margin-top:12px}
 #cc-qr input[type=text],#cc-qr input[type=number]{font:600 15px -apple-system,system-ui,sans-serif;padding:8px 10px;border:1.5px solid #8a90a3;border-radius:9px;background:#fff;color:#1a1e2a}
+#cc-qr td,#cc-qr th,#cc-qr input,#cc-qr label{font-family:-apple-system,system-ui,sans-serif}
 #cc-qr label.b{display:flex;gap:8px;align-items:flex-start;padding:4px 0}#cc-qr .m{color:#9a2a1f;min-height:18px}`;
     document.head.appendChild(st);
   }
