@@ -37,7 +37,7 @@
     if (v == null || v === "") return o[k + "_m"] ? `<span class="dfa-x">${esc(o[k + "_m"])}</span>` : "";
     return `${esc(v)}${o[k + "_m"] ? `<span class="dfa-x">${esc(o[k + "_m"])}</span>` : ""}`;
   };
-  const val = v => v == null ? "" : (typeof v === "object" ? (v.gol || v.valoare === "" ? `<span class="dfa-src">${esc(v.motiv_gol || "necompletat")}</span>` : esc(v.valoare)) : esc(v));
+  const val = v => v == null ? "" : (typeof v === "object" ? (v.gol || v.valoare === "" ? (ADMIN() && !(window.CC_ADM && window.CC_ADM.g) && v.motiv_gol ? `<span class="dfa-src">${esc(v.motiv_gol)}</span>` : "—") : esc(v.valoare)) : esc(v));
   const dist = r => r.distanta_m != null ? nf(r.distanta_m) + " m" : "—";
   const sursa = r => `<span class="dfa-src">${esc(r.sursa_tip || (r.sursa && /^https?:/.test(r.sursa) ? "primărie" : r.sursa) || "")} · ${esc(String(r.data_sursei || "").slice(0, 10) || "dată necunoscută")} · încredere ${esc(r.incredere || "—")}</span>`;
   const tabel = (titlu, cap, rows, motiv) => `<h3>${titlu} <small>(${rows.length})</small></h3>` + (rows.length ? `<div class="scroll"><table><tr>${cap.map(c => `<th>${c}</th>`).join("")}</tr>${rows.join("")}</table></div>` : `<p class="dfa-gol">${esc(motiv)}</p>`);

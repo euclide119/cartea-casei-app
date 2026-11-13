@@ -7,7 +7,7 @@
     { t: "Pe scurt", p: "Tot ce contează despre această proprietate, adunat într-un singur loc, dintr-o privire.", s: ["rezumat"] },
     { t: "Riscuri naturale", p: "Cât de expusă e proprietatea la inundații, cutremure, alunecări de teren și aer poluat.", s: ["inundatii", "seismic", "alunecari", "aer"] },
     { t: "Zgomot", p: "Ce se aude aici de la drumuri, cale ferată, aeroport și săli de evenimente.", s: ["zgomot"] },
-    { t: "Ce poți construi", p: "Regulile de construire și retragerile pentru această proprietate, din documentațiile de urbanism.", s: ["urbanism"] },
+    { t: "Ce poți construi", p: "Regulile de construire și retragerile pentru această proprietate, din documentațiile de urbanism.", s: ["cadastru", "proprietate", "urbanism"] },
     { t: "Ce s-a construit în jur", p: "Ce s-a autorizat în zonă în ultimii ani și cum arată cartierul din jur.", s: ["autorizatii", "g7_zona", "zonare"] },
     { t: "Acces și transport", p: "Cum ajungi la proprietate și cât de repede ajungi de acolo unde ai nevoie.", s: ["acces_drum", "transport"] },
     { t: "Viața de zi cu zi", p: "Școlile, magazinele și locurile la pas de casă, plus cine sunt vecinii tăi.", s: ["scoli", "facilitati", "populatie"] },

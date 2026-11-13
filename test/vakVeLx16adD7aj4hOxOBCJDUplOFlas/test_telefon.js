@@ -1,4 +1,4 @@
-/* Raportul casei · aplicația de test pe telefon (v82.4.0, 07.11.2026).
+/* Raportul casei · aplicația de test pe telefon (v82.4.0, 07.11.2026; v82.15.0: cardul QR pe destinatar #card=<id>, legat de un dispozitiv).
    Un singur QR: adresa build-ului de test + #qr=ad_… (jeton Admin, 30 de zile, revocabil pe server). Aici:
    · schimbul QR → jeton de sesiune (funcția raport_cod, actiune admin_qr), fără câmp de cod și fără bifa antibot;
    · sesiunea stă în Cache „cc-cod” (/__stare, citit de service worker și de intrare.js) ȘI în IndexedDB (iOS poate evacua una dintre ele);
@@ -21,6 +21,10 @@
   if (hp.get("bife") === "1") lg("cc-bife", "1"); else if (hp.get("bife") === "0") lg("cc-bife", null);
   if (/^[a-z0-9]{10}$/.test(hp.get("sel") || "")) { try { sessionStorage.setItem("cc-sel", hp.get("sel")); } catch (e) {} }
   if (R) lg("cc-adm-id", R);
+  /* v82.15.0 (Evidență QR): cardul pe destinatar #card=<id> = o listă de rapoarte, legat de un singur dispozitiv (secretul dispozitivului stă în IndexedDB + localStorage; pe server doar hash-ul) */
+  const K = /^[A-Za-z0-9_-]{10,40}$/.test(hp.get("card") || "") ? hp.get("card") : "";
+  if (K && !hm) lg("cc-card", K);
+  const KC = hm ? "" : (K || (!lg("cc-adm-qr") ? (lg("cc-card") || "") : ""));
   if (R && !hm) lg("cc-adm-g", R);   /* v82.13.0 (perioada de test, gratuit): linkul client #r=<id> fără jeton Admin; după codul de intrare, sesiune de client pentru ACEL raport, 30 de zile */
   const extraHash = () => { const sl = (() => { try { return sessionStorage.getItem("cc-sel") || ""; } catch (e) { return ""; } })(), b = lg("cc-bife") === "1", r = R || lg("cc-adm-id") || "";
     return (b || sl) && r ? "&r=" + r + (b ? "&bife=1" : "") + (sl ? "&sel=" + sl : "") : ""; };
@@ -32,7 +36,7 @@
 
   /* ---------- instalare ca aplicație ---------- */
   // manifestul dinamic (start_url cu #qr=…) se pune sincron, ca Chrome să evalueze criteriile PWA la încărcare
-  { const q0 = hm || lg("cc-adm-qr"); if (q0) manifest(q0); else { const r0 = R || lg("cc-adm-g"); if (r0) manifestR(r0); } }
+  { const q0 = hm || (K ? "" : lg("cc-adm-qr")); if (q0) manifest(q0); else if (KC) manifest("", "", KC); else { const r0 = R || lg("cc-adm-g"); if (r0) manifestR(r0); } }
   const standalone = () => { if (/[?&]standalone=1/.test(location.search)) return true; try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } };
   let dip = window.__bip || null;   // evenimentul beforeinstallprompt, prins cât mai devreme de scriptul inline din <head> (index.html)
   addEventListener("cc-bip", () => { dip = window.__bip || dip; if (dip) instaleaza(); });
@@ -93,7 +97,7 @@
       if (cpb) cpb.onclick = () => copiaza(m);
       const ck = d.querySelector("#cc-tt-ck"), go = d.querySelector("#cc-tt-go"); if (!ck) return;
       ck.onchange = () => { go.disabled = !ck.checked; };
-      const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : ((R || lg("cc-adm-g")) ? "#r=" + (R || lg("cc-adm-g")) : ""))); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
+      const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : KC ? "#card=" + KC : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : ((R || lg("cc-adm-g")) ? "#r=" + (R || lg("cc-adm-g")) : ""))); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
       const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (cod 1357 pentru raport, ca până acum)
       window.CC_TT_INSTALAT = instalat;
       go.onclick = async () => {
@@ -178,13 +182,58 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
   }
 
+
+  /* ---------- v82.15.0: cardul QR pe destinatar ---------- */
+  const dispGet = async k => (await idbGet("disp:" + k)) || lg("cc-disp-" + k) || "";
+  const dispSet = async (k, v) => { await idbSet("disp:" + k, v); lg("cc-disp-" + k, v); };
+  function mesajCard(text) {   // un singur mesaj clar, fără câmp (al doilea dispozitiv, card blocat sau expirat)
+    const mk = () => { document.getElementById("cc-splash")?.remove(); document.getElementById("cc-tt-scan")?.remove(); document.getElementById("cc-tt-poarta")?.remove();
+      const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "alert");
+      d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif";
+      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="padding:44px 36px;text-align:center"><div style="font:700 21px/1.35 -apple-system,system-ui,sans-serif;color:#9a2a1f">${text}</div><p style="margin:16px 0 0;color:#3d4456">Cardul se folosește pe un singur telefon. Pentru alt telefon cere un card nou.</p></div>`;
+      document.body.appendChild(d); };
+    document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
+  }
+  async function cardScanat() {   // browserul (înainte de instalare): jurnal „scanat”; al doilea dispozitiv află imediat că cardul e luat
+    try { if (sessionStorage.getItem("cc-scan-" + KC)) return; sessionStorage.setItem("cc-scan-" + KC, "1"); } catch (e) {}
+    try { const r = await post({ actiune: "card_scanat", card: KC, disp: await dispGet(KC), inst: standalone() ? 1 : 0 }, 6000);
+      if (r.ok && r.j.mesaj) mesajCard(r.j.mesaj + "."); else if (r.status === 404) mesajCard("Cardul nu e valid.");
+    } catch (e) {}
+  }
+  function ecranCard(k, msg) {   // aplicația instalată (sau desktop): codul de intrare; prima intrare leagă cardul de acest dispozitiv
+    const mk = () => {
+      document.getElementById("cc-splash")?.remove(); document.getElementById("cc-tt-scan")?.remove();
+      const AC = "#1d5fb0", F = "font:600 18px/1.3 -apple-system,system-ui,sans-serif";
+      const d = document.createElement("div"); d.id = "cc-tt-scan"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "cod de intrare");
+      d.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f6f1e7;color:#1a1e2a;overflow:auto;font:16px/1.5 -apple-system,system-ui,sans-serif;-webkit-text-size-adjust:100%";
+      d.innerHTML = `<img src="deschidere.jpg" alt="Raportul casei" style="display:block;width:100%;max-height:40vh;object-fit:cover"><div style="min-height:56%;display:flex;flex-direction:column;align-items:center;gap:30px;padding:44px 44px calc(44px + env(safe-area-inset-bottom));box-sizing:border-box">
+<label for="cc-tt-ci" style="${F};color:${AC};text-align:center">Cod de intrare</label>
+<input id="cc-tt-ci" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="24" aria-label="cod de intrare" style="font:700 20px ui-monospace,Menlo,monospace;letter-spacing:.08em;width:100%;max-width:320px;box-sizing:border-box;padding:14px 16px;border:2px solid ${AC};border-radius:14px;background:#fff;color:#1a1e2a;text-align:center">
+<button id="cc-tt-cig" type="button" style="${F};border:0;border-radius:14px;padding:15px 36px;background:${AC};color:#fff;min-width:240px;max-width:100%">Deschide rapoartele</button>
+<div id="cc-tt-cim" role="status" style="font:500 14px/1.4 -apple-system,system-ui,sans-serif;color:#9a2a1f;text-align:center;min-height:20px">${msg || ""}</div></div>`;
+      document.body.appendChild(d);
+      const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
+      const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de intrare"; return; } go.disabled = true; m.textContent = "se verifică…";
+        try { const r = await post({ actiune: "card_cod", card: k, cod, disp: await dispGet(k), inst: standalone() ? 1 : 0 });
+          if (!r.ok || !r.j.token) { if (r.j.stare === "alt_dispozitiv" || r.j.stare === "blocat" || r.j.stare === "expirat") { mesajCard((r.j.error || "Cardul nu mai e valabil") + "."); return; } m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
+          if (r.j.disp) await dispSet(k, r.j.disp);
+          const lista = r.j.lista || [], id0 = (lista[0] || {}).id;
+          await salveaza({ adm: 1, c: 1, g: 1, k, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id: id0, lista });
+          const alege = lista.some(p => p.id === lg("cc-adm-id")) ? lg("cc-adm-id") : id0; lg("cc-adm-id", alege); lg("cc-card", k);
+          try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} location.reload();
+        } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
+      go.onclick = intra; inp.onkeydown = e => { if (e.key === "Enter") intra(); };
+    };
+    document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
+  }
+
   /* ---------- manifest dinamic: start_url cu #qr=… (Admin) sau #r=<id> (client cu cod) ---------- */
   function manifestR(id) { manifest("", id); }
-  function manifest(qr, rid) {
+  function manifest(qr, rid, kid) {
     try {
       const base = location.origin + location.pathname.replace(/[^/]*$/, "");
       const sl0 = (() => { try { return sessionStorage.getItem("cc-sel") || ""; } catch (e) { return ""; } })();
-      const m = { id: sl0 ? base + "?s=" + sl0 : base, name: "Raportul casei · test", short_name: "raport test", description: "raportul proprietății, test pe telefon", start_url: base + (rid ? "#r=" + rid : "#qr=" + qr + extraHash()), scope: base, display: "standalone", orientation: "portrait", background_color: "#f6f1e7", theme_color: "#f6f1e7", lang: "ro",
+      const m = { id: kid ? base + "?k=" + kid : (sl0 ? base + "?s=" + sl0 : base), name: kid ? "Raportul casei" : "Raportul casei · test", short_name: kid ? "Raportul casei" : "raport test", description: "raportul proprietății, test pe telefon", start_url: base + (kid ? "#card=" + kid : rid ? "#r=" + rid : "#qr=" + qr + extraHash()), scope: base, display: "standalone", orientation: "portrait", background_color: "#f6f1e7", theme_color: "#f6f1e7", lang: "ro",
         icons: [{ src: base + "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" }, { src: base + "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" }, { src: base + "icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }] };
       const l = document.querySelector('link[rel="manifest"]'); if (l) l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" }));
     } catch (e) {}
@@ -193,9 +242,10 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
   /* ---------- sesiunea ---------- */
   let motiv = "";
   window.CC_ADM_P = (async () => {
-    if (window.CC_TT_GATE) { window.CC_ADM = null; return null; }   // sub poarta de instalare nu se schimbă QR-ul și nu se deschide sesiunea; se face în aplicația instalată (start_url poartă #qr=…)
+    if (window.CC_TT_GATE) { window.CC_ADM = null; if (KC) cardScanat(); return null; }   // sub poarta de instalare nu se schimbă QR-ul și nu se deschide sesiunea; se face în aplicația instalată (start_url poartă #qr=…)
     let s = await cacheGet();
     if (!(s && s.adm)) { const i = await idbGet("sesiune"); if (i && i.adm) { s = i; await cachePut(s); } else s = null; }   // iOS a evacuat Cache-ul: se reface din IndexedDB
+    if (KC && s && s.k !== KC) s = null;   // v82.15.0: linkul cardului are prioritate; sesiunea altui card sau Admin nu se folosește aici
     if (hm) {
       try {
         const r = await post({ actiune: "admin_qr", qr: hm });
@@ -207,12 +257,13 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       } catch (e) { motiv = "nu s-a putut verifica codul QR (fără internet?)"; if (!s) { /* rămâne ecranul de scanare */ } }
     } else if (s) {
       if (s.e && s.e <= Date.now()) { await sterge(); s = null; motiv = "sesiunea a expirat"; }
-      else { try { const r = await post({ actiune: "admin_verifica", token: s.token }, 4000); if (r.status === 401) { await sterge(); s = null; motiv = r.j.error || "sesiunea a fost revocată"; } } catch (e) { /* offline: se folosește ce e în cache */ } }
+      else { try { const r = await post({ actiune: "admin_verifica", token: s.token, deschis: s.k ? 1 : undefined }, 4000); if (r.status === 401) { await sterge(); s = null; motiv = r.j.error || "sesiunea a fost revocată"; } } catch (e) { /* offline: se folosește ce e în cache */ } }
     } else if (hint) motiv = "sesiunea lipsește de pe acest telefon (iPhone șterge datele unei aplicații nefolosite o săptămână)";
     if (s && s.g && R && s.id !== R) s = null;   // sesiunea de client e doar pentru raportul ei
     window.CC_ADM = s;
     const rg = !hm && !lg("cc-adm-qr") ? (R || lg("cc-adm-g")) : "";
-    if (!s && rg) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecranIntrare(rg, motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
+    if (!s && KC) { window.CC_TT_FARA = true; if (!standalone() && !eLocal) cardScanat(); if (/^Cardul /.test(motiv)) mesajCard(motiv + "."); else ecranCard(KC, motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
+    else if (!s && rg) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecranIntrare(rg, motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + "." : ""); }
     else if (!s) { window.CC_TT_FARA = true; if (!window.CC_TT_GATE) ecran("Scanează din nou QR-ul", (motiv ? motiv.charAt(0).toUpperCase() + motiv.slice(1) + ". " : "") + (TEST ? "Raportul de test se deschide doar cu cardul QR primit." : "Scanează cardul QR primit.")); }
     else { const q = lg("cc-adm-qr"); if (q) manifest(q); }
     return s;
@@ -243,7 +294,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
   });
 
   function bara(s) {
-    if (s.g) return;   // clientul cu cod nu vede bara Admin (lista, „vezi ca client”)
+    if (s.g && !s.k) return;   // clientul cu cod nu vede bara Admin; v82.15.0: clientul cu card vede doar alegerea între rapoartele cardului (lista, „vezi ca client”)
     const mk = () => {
       if (document.getElementById("cc-tt-bar")) return;
       const b = document.createElement("div"); b.id = "cc-tt-bar";
@@ -284,6 +335,8 @@ ${s.c ? "" : `<button id="cc-tt-cl" style="font:700 12px -apple-system,system-ui
   }
   async function sesiune() {   // jeton revocat sau expirat cât timp aplicația stă deschisă
     const s = window.CC_ADM; if (!s) return;
+    if (s.k) { const k = s.k; let err = ""; if (s.e && s.e <= Date.now()) err = "Sesiunea a expirat"; else { try { const r = await post({ actiune: "admin_verifica", token: s.token }, 5000); if (r.status === 401) err = r.j.error || "Cardul nu mai e valabil"; } catch (e) { return; } }
+      if (err) { await sterge(); window.CC_ADM = null; /^Cardul /.test(err) ? mesajCard(err + ".") : ecranCard(k, err + "."); } return; }   // v82.15.0
     if (s.e && s.e <= Date.now()) { const g = s.g ? s.id : null; await sterge(); window.CC_ADM = null; g ? ecranIntrare(g, "Sesiunea a expirat.") : ecran("Scanează din nou QR-ul", "Sesiunea a expirat."); return; }
     try { const r = await post({ actiune: "admin_verifica", token: s.token }, 5000); if (r.status === 401) { const g = s.g ? s.id : null; await sterge(); window.CC_ADM = null; g ? ecranIntrare(g, (r.j.error || "Sesiunea a fost revocată") + ".") : ecran("Scanează din nou QR-ul", (r.j.error || "Sesiunea a fost revocată") + "."); } } catch (e) { /* offline */ }
   }
