@@ -128,7 +128,7 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
       m.onclick = () => lung(i); W.appendChild(m); c.mai = m;
     });
     const f = $("#cl-final"), p = $("#rep-foot-p"); if (f) setare(f, baza(0) + 90); if (p) setare(p, 10000);
-    const b = document.createElement("button"); b.id = "ac-cap"; b.type = "button"; b.textContent = "☰ capitole";
+    const b = document.createElement("button"); b.id = "ac-cap"; b.type = "button"; b.textContent = "Cuprins";   /* v82.24.1 (cerere Manu 13.11.2026): buton mic „Cuprins”; panoul e închis implicit și se închide la atingerea în afara lui sau pe un capitol */
     const l = document.createElement("div"); l.id = "ac-lista";
     document.body.append(b, l);
     b.onclick = e => { e.stopPropagation(); lista(); l.classList.toggle("on"); };

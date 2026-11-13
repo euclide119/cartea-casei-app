@@ -106,15 +106,15 @@ section.sx-gol{display:none!important}
       CAPS.filter(c => c.grup === g).forEach((c, i) => {
         let b = btn(c.id); const ph = nav.querySelector(`[data-sx-t="${c.id}"]`);
         if (b && ph) ph.remove();
-        if (!b) { b = ph || document.createElement("span"); b.className = "sx-ph sx-off"; b.dataset.sxT = c.id; b.dataset.sxPh = "1"; }
+        if (!b) { b = ph || document.createElement("span"); if (b.dataset.sxPh !== "1") { b.className = "sx-ph sx-off"; b.dataset.sxT = c.id; b.dataset.sxPh = "1"; } }   // v82.24.1: atributele se scriu o singură dată (înainte: la fiecare 700 ms = clipirea cuprinsului)
         if (!b.dataset.sxLbl) { b.dataset.sxLbl = "1"; b.innerHTML = `<i class="sx-n">${String(c.nr).padStart(2, "0")}</i><span>${esc(c.scurt)}</span>`; b.title = c.titlu; }
-        b.classList.toggle("sx-esen", c.clasa === "esential");
+        if (b.classList.contains("sx-esen") !== (c.clasa === "esential")) b.classList.toggle("sx-esen", c.clasa === "esential");
         const pos = el.children[i + 1]; if (pos !== b) el.insertBefore(b, pos || null);
       });
     });
     // grupurile vechi (din index.html) raman goale: se scot; \u201edespre raport\u201d si instrumentele raman la final
-    $$(nav, ":scope > .ng:not(.sx-g):not(#ng-tools)").forEach(g => { if (!g.querySelector("[data-t]")) g.remove(); else nav.appendChild(g); });
-    const tools = $("#ng-tools"); if (tools && tools !== nav.lastElementChild) nav.appendChild(tools);
+    $$(nav, ":scope > .ng:not(.sx-g):not(#ng-tools)").forEach(g => { if (!g.querySelector("[data-t]")) g.remove(); else if (g.dataset.sxMov !== "1") { g.dataset.sxMov = "1"; nav.appendChild(g); } });   // v82.24.1: mutat o singură dată
+    const tools = $("#ng-tools"); if (tools && tools.dataset.sxMov !== "1") { tools.dataset.sxMov = "1"; nav.appendChild(tools); }
   }
 
   /* ---------- 3. stare pe capitol: are date / fara registru local / gol ---------- */
@@ -150,9 +150,9 @@ section.sx-gol{display:none!important}
         if (c.clasa === "esential") {
           if (!sec && b && b.dataset.sxPh !== "1") { sec = document.createElement("section"); sec.id = c.id; document.querySelector(".wrap").appendChild(sec); }
           if (sec && b && b.dataset.sxPh !== "1") { if (!continut(sec) || sec.dataset.sxStub === Dd.id) { stub(sec, c, Dd); b.hidden = false; st.stub = true; st.faraRegistru = true; } }
-        } else if (sec && !ascuns) sec.classList.add("sx-gol");
-      } else if (sec) sec.classList.remove("sx-gol");
-      if (b) b.classList.toggle("sx-off", !st.are && !st.stub && !tanar);
+        } else if (sec && !ascuns && !sec.classList.contains("sx-gol")) sec.classList.add("sx-gol");
+      } else if (sec && sec.classList.contains("sx-gol")) sec.classList.remove("sx-gol");   // v82.24.1: clasa se scrie doar când se schimbă (înainte: la fiecare 700 ms pe fiecare capitol = clipirea capitolelor)
+      if (b) { const of = !st.are && !st.stub && !tanar; if (b.classList.contains("sx-off") !== of) b.classList.toggle("sx-off", of); }
       window.RIC_STARE[c.id] = st;
     });
     // raportul intreg: capitolele aparute dupa montare intra si ele
