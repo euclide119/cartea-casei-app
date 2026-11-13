@@ -116,7 +116,7 @@ ${harta(R)}
     const sub = C.filter(x => x.tip === "intravilan" && x.eur_mp < H.pret_min).length, intre = C.filter(x => x.tip === "intravilan" && x.eur_mp >= H.pret_min && x.eur_mp <= H.pret_max).length, peste = C.filter(x => x.tip === "intravilan" && x.eur_mp > H.pret_max).length;
     const ex = C.filter(x => x.tip === "extravilan");
     document.getElementById("roi-poz").innerHTML = `Poziționare (prețuri cerute): din ${nI} anunțuri intravilane, ${sub} sunt sub ${H.pret_min} €/mp, ${intre} între ${H.pret_min} și ${H.pret_max}, ${peste} peste ${H.pret_max}; mediana intravilană ${nf(sI.mediana, 1)} €/mp. Intrarea la ${H.pret_intrare} €/mp se compară cu ${ex.length ? `${ex.length} anunț${ex.length === 1 ? "" : "uri"} agricol${ex.length === 1 ? "" : "e"}: ${ex.map(x => nf(x.eur_mp, 1)).join(", ")} €/mp` : "niciun anunț agricol în rază"}.`;
-    document.getElementById("roi-l").innerHTML = `<div><span>€/mp</span><span>mp</span><span>dist.</span><span>dată</span><span>anunț</span></div>` + C.map(x => `<div style="border-left:4px solid ${x.tip === "intravilan" ? "#1f6fd1" : "#b7791f"}"><span>${nf(x.eur_mp, 1)}</span><span>${nf(x.mp)}</span><span>${nf(x.dist_m)} m</span><span>${esc(x.data.slice(5).split("-").reverse().join("."))}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.portal)} · ${esc(x.tip)}${x.strada ? " · " + esc(x.strada) : ""}</a></div>`).join("");
+    document.getElementById("roi-l").innerHTML = `<div><span>€/mp</span><span>mp</span><span>dist.</span><span>dată</span><span>anunț</span></div>` + C.map(x => `<div style="border-left:4px solid ${x.tip === "intravilan" ? "#1f6fd1" : "#b7791f"}"><span>${nf(x.eur_mp, 1)}</span><span>${nf(x.mp)}</span><span>${nf(x.dist_m)} m</span><span>${esc(x.data.slice(5).split("-").reverse().join("."))}</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.portal)} · ${esc(x.tip)}${x.strada ? " · " + esc(x.strada) : ""}</a>` : `<span>${esc(x.portal)} · ${esc(x.tip)}</span>`}</div>`).join("");
 
     const refresh = () => {
       sec.querySelectorAll("input[data-k]").forEach(i => { const v = parseFloat(i.value); H[i.dataset.k] = isFinite(v) ? v : 0; });
@@ -143,7 +143,8 @@ ${harta(R)}
     try {
       const Dd = typeof D !== "undefined" ? D : null; if (!Dd || !Dd.id || cur === Dd.id || !document.querySelector('nav#tabs [data-t="urbanism"]')) return;
       cur = Dd.id;
-      const r = await fetch(`p/${Dd.id}/roi.json`); if (!r.ok) return;
+      const nv = window.CC_NIVEL_P ? await window.CC_NIVEL_P : (window.parent !== window ? 1 : 2);   // v82.16.0: comparativele cu link și poziție exactă (roi.json) doar în DOM; standard = roi_std.json
+      const r = await fetch(`p/${Dd.id}/${nv >= 2 ? "roi" : "roi_std"}.json`); if (!r.ok) return;
       const R = await r.json(); if (R && R.activ) monta(R);
     } catch (e) { console.warn("roi", e); }
   }, 700);

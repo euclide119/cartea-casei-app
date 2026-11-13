@@ -288,9 +288,9 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
         if (!navigator.serviceWorker.controller) await new Promise(res => { navigator.serviceWorker.addEventListener("controllerchange", res, { once: true }); setTimeout(res, 2500); });
         if (!sessionStorage.getItem("cc-tt-rel")) { sessionStorage.setItem("cc-tt-rel", "1"); location.reload(); return; } } catch (e) {}
     }
-    /* v82.15.1: numele afișate din catalog (ex. „G7 – Maule”, Manu 13.11.2026) înlocuiesc eticheta din date.json în titlul raportului (#name, D.eticheta, titlul aplicației); coordonatele nu sunt nume */
+    /* v82.15.1: numele afișate din catalog (ex. „G7 – Maule”, Manu 13.11.2026) înlocuiesc eticheta din date.json în titlul raportului (prin D.eticheta: antetul, titlul aplicației, PDF); coordonatele nu sunt nume */
     { let n = 0; const pune = () => { try { const d = typeof D !== "undefined" ? D : null, c = d && d.id && lista.find(p => p.id === d.id);
-        if (c && c.eticheta && !/^-?\d+\.\d+, /.test(c.eticheta)) { if (d.eticheta !== c.eticheta) d.eticheta = c.eticheta; const h = document.getElementById("name"); if (h && h.textContent !== c.eticheta) h.textContent = c.eticheta; } } catch (e) {}
+        if (c && c.eticheta && !/^-?\d+\.\d+, /.test(c.eticheta)) { if (d.eticheta !== c.eticheta) d.eticheta = c.eticheta; } } catch (e) {}
         if (++n < 100) setTimeout(pune, n < 50 ? 200 : 2000); }; pune(); }
     bara(s);
     versiune();

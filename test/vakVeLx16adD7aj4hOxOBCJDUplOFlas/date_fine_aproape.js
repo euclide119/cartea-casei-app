@@ -60,22 +60,23 @@
     const fx = full ? (r, k) => val(r[k]) : m;
     const cap = c => adm && full && arataSurse ? [...c, "Sursă"] : c, cel = (r, h) => adm && full && arataSurse ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
     const pd = (L, n) => (L || []).filter(r => r.distanta_m != null).slice().sort((x, y) => x.distanta_m - y.distanta_m).slice(0, n);
-    const rAct = (r, cuDist) => cel(r, `<tr><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}</tr>`);
+    const cfc = r => { const l = String(r.nc || r.cf || r.adresa_cf || "").split(/[;,\s]+/).filter(Boolean); return l.slice(0, 3).join(", ") + (l.length > 3 ? ` +${l.length - 3}` : "") || "—"; };   // v82.16.0: alocarea precisă pe parcelă (NC / CF) doar în DOM
+    const rAct = (r, cuDist) => cel(r, `<tr><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}${full ? `<td>${esc(cfc(r))}</td>` : ""}</tr>`);
     let h = "";
     h += tabel("Cele mai apropiate firme", cap(["Firma", "Administratori", "Telefon", "Distanță"]),
       pd(J.firme, 20).map(r => cel(r, `<tr><td>${fx(r, "denumire")}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon") || "—"}</td><td>${dist(r)}</td></tr>`)), GOL);
     [["cu", "Cele mai apropiate certificate de urbanism"], ["ac", "Cele mai apropiate autorizații de construire"], ["puz", "Cele mai apropiate PUZ-uri"]].forEach(([k, t]) =>
-      h += tabel(t, cap(["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), pd(J[k], 20).map(r => rAct(r, true)), GOL));
+      h += tabel(t, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), pd(J[k], 20).map(r => rAct(r, true)), GOL));
     const L = J.localitate || {};
     if (L.cu_ultime || L.ac_ultime) {
-      h += tabel(`Ultimele certificate de urbanism din ${esc(L.uat || "localitate")}`, cap(["Act", "Data", "Beneficiar", "Obiect"]), (L.cu_ultime || []).map(r => rAct(r, false)), GOL);
-      h += tabel(`Ultimele autorizații de construire din ${esc(L.uat || "localitate")}`, cap(["Act", "Data", "Beneficiar", "Obiect"]), (L.ac_ultime || []).map(r => rAct(r, false)), GOL);
+      h += tabel(`Ultimele certificate de urbanism din ${esc(L.uat || "localitate")}`, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect"]), (L.cu_ultime || []).map(r => rAct(r, false)), GOL);
+      h += tabel(`Ultimele autorizații de construire din ${esc(L.uat || "localitate")}`, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect"]), (L.ac_ultime || []).map(r => rAct(r, false)), GOL);
     }
     const lucru = (J.investitii || []).filter(r => /lucr|execu|derul|început|inceput|contract|implement|în curs|in curs/i.test(`${typeof r.stadiu === "string" ? r.stadiu : ""} ${typeof r.termen === "string" ? r.termen : ""}`));
     h += tabel("Proiecte de infrastructură în lucru", cap(["Ce", "Stadiu", "Termen", "Distanță"]),
       lucru.map(r => cel(r, `<tr><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(typeof r.stadiu === "string" ? r.stadiu : "") || "în lucru"}</td><td>${esc(typeof r.termen === "string" && r.termen ? r.termen : "neprecizat")}</td><td>${r.distanta_m != null ? dist(r) : "în comună"}</td></tr>`)), "Nu sunt proiecte în lucru anunțate în comună.");
     const raza = [...(J.cu || []), ...(J.ac || [])].filter(r => r.distanta_m != null && r.distanta_m <= 200).sort((x, y) => x.distanta_m - y.distanta_m);
-    h += tabel("Certificate de urbanism și autorizații pe o rază de 200 m", cap(["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), "Nu sunt certificate sau autorizații pe 200 m.");
+    h += tabel("Certificate de urbanism și autorizații pe o rază de 200 m", cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), "Nu sunt certificate sau autorizații pe 200 m.");
     if (adm && J.investitii_lipsa && J.investitii_lipsa.length) h += `<details class="dfa-inv"><summary>lipsuri de colectare (doar Admin)</summary>${J.investitii_lipsa.map(x => `<p>${esc(typeof x === "string" ? x : JSON.stringify(x))}</p>`).join("")}</details>`;
     return h;
   }

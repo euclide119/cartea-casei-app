@@ -8,7 +8,7 @@
     { t: "Riscuri naturale", p: "Cât de expusă e proprietatea la inundații, cutremure, alunecări de teren și aer poluat.", s: ["inundatii", "seismic", "alunecari", "aer"] },
     { t: "Zgomot", p: "Ce se aude aici de la drumuri, cale ferată, aeroport și săli de evenimente.", s: ["zgomot"] },
     { t: "Ce poți construi", p: "Regulile de construire și retragerile pentru această proprietate, din documentațiile de urbanism.", s: ["cadastru", "proprietate", "urbanism"] },
-    { t: "Ce s-a construit în jur", p: "Ce s-a autorizat în zonă în ultimii ani și cum arată cartierul din jur.", s: ["autorizatii", "g7_zona", "zonare"] },
+    { t: "Ce s-a construit în jur", p: "Ce s-a autorizat în zonă în ultimii ani și cum arată cartierul din jur.", s: ["autorizatii", "g7_zona", "acte_zona", "anunturi_zona", "zonare"] },
     { t: "Acces și transport", p: "Cum ajungi la proprietate și cât de repede ajungi de acolo unde ai nevoie.", s: ["acces_drum", "transport"] },
     { t: "Viața de zi cu zi", p: "Școlile, magazinele și locurile la pas de casă, plus cine sunt vecinii tăi.", s: ["scoli", "facilitati", "populatie"] },
     { t: "Natură și patrimoniu", p: "Monumentele, siturile și ariile protejate din apropierea acestei proprietăți și ce înseamnă ele.", s: ["monumente", "arii_protejate"] },
@@ -16,7 +16,7 @@
     { t: "Prețul", p: "Cât costă tranzacția până la capăt; evaluarea față de piață e în datele fine.", s: ["costuri", "roi"] },
     { t: "Cronologia locului", p: "Cum s-a schimbat locul de-a lungul anilor, de la primele hărți până acum.", s: ["cronologie"] },
     { t: "De discutat între părți", p: "Ce merită clarificat cu cealaltă parte înainte de semnare.", s: ["negociere"] },
-    { t: "🔒 Depth of Market – Level 2", p: "Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
+    { t: "🔒 Depth of Market – Level 2", p: "Firmele, actele de urbanism și proiectele din jurul proprietății. Se deschid cu codul.", s: ["g7_sinteza", "g7_cu", "g7_privat", "date_fine_aproape", "anunturi_dom", "vecinatati_dom", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "g7_comercial", "g7_afis"], privat: 1 }
   ];
   const PRIV = new Set();
   /* ce conțin datele fine, lista lui Manu din 02.11.2026; se arată și când modulele nu sunt deschise */

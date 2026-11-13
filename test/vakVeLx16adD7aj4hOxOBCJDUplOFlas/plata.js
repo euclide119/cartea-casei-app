@@ -160,7 +160,13 @@
         q("#pl-ct-go").onclick = go; ct.onkeydown = e => { if (e.key === "Enter") go(); }; }
     };
     ecran("alege");
+    window.CC_DOM_COMANDA = () => { ecran("comanda"); try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {} };
   }
+  /* butonul „Comand DOM” din lista de anunțuri (acordeon.js) duce la același ecran „Comandă DOM” din lacăt; după cod dispare (o singură cale de comandă) */
+  document.addEventListener("click", e => { const t = e.target && e.target.closest && e.target.closest(".ac-pr-btn"); if (!t || !(CC_GRATUIT && gSes())) return;
+    e.preventDefault(); e.stopImmediatePropagation(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }, true);
+  { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM"; }); };
+    let n = 0; const t = setInterval(() => { fix(); if (++n > 40) clearInterval(t); }, 500); }
   function montaj(el, dupa, conf) {
     css();
     if (CC_GRATUIT && gSes()) return montajGratuit(el, dupa);
