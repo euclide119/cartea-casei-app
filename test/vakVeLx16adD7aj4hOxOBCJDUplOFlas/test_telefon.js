@@ -100,7 +100,7 @@
       const ck = d.querySelector("#cc-tt-ck"), go = d.querySelector("#cc-tt-go"); if (!ck) return;
       ck.onchange = () => { go.disabled = !ck.checked; };
       const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : KC ? "#card=" + KC : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : ((R || lg("cc-adm-g")) ? "#r=" + (R || lg("cc-adm-g")) : ""))); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
-      const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (cod 1357 pentru raport, ca până acum)
+      const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (codul DOM pentru raport, ca până acum)
       window.CC_TT_INSTALAT = instalat;
       go.onclick = async () => {
         if (!ck.checked) return;
@@ -360,7 +360,7 @@ ${s.c ? "" : `<button id="cc-tt-cm" style="font:700 12px -apple-system,system-ui
         setTimeout(() => { const sb = [...document.querySelectorAll("button.ac-subh")].find(x => /^Depth of Market/.test(x.textContent.trim())), sec = document.querySelector("#date_fine_aproape"); if (sb && sec && getComputedStyle(sec).visibility === "hidden") sb.click();
           setTimeout(() => { const t = document.querySelector(".dhm") || document.querySelector("#date_fine_aproape") || h; if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }, 500); }, 400); };
       const cm = b.querySelector("#cc-tt-cm"); if (cm) cm.onclick = () => { window.CC_CODURI && window.CC_CODURI(); };   // v82.20.0: „Codurile mele”
-      const cl = b.querySelector("#cc-tt-cl"); if (cl) cl.onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (1357, verificat pe server) deblochează datele complete în această vedere
+      const cl = b.querySelector("#cc-tt-cl"); if (cl) cl.onclick = async () => { s.ca_client = !s.ca_client; s.n = s.ca_client ? 1 : 2; await salveaza(s); location.reload(); };   // „Vezi ca client” pornește fără cod de date fine; codul (codul DOM, verificat pe server) deblochează datele complete în această vedere
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
     addEventListener("hashchange", () => { const h = decodeURIComponent(location.hash.replace(/^#/, "")).split(".")[0]; if (h) lg("cc-adm-id", h); });

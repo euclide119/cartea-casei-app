@@ -83,7 +83,7 @@
     const firme = (V.firme || []).map(pun), anunturi = (V.anunturi || []).map(pun);
     for (const x of firme) if (x.nc && f[x.nc]) f[x.nc].firme.push(x);
     for (const x of anunturi) if (x.nc && f[x.nc]) f[x.nc].anunturi.push(x);
-    const investitii = (V.investitii || []).map(x => { const g = x.g, w = g.type === "Point" ? [wx(g.coordinates[0]), wy(g.coordinates[1])] : null, ln = g.type === "LineString" ? g.coordinates.map(c => [wx(c[0]), wy(c[1])]) : null; return { ...x, w, ln }; });
+    const investitii = (V.investitii || []).map(x => { const g = x.g, w = g.type === "Point" ? [wx(g.coordinates[0]), wy(g.coordinates[1])] : null, lns = g.type === "LineString" ? [g.coordinates] : g.type === "MultiLineString" ? g.coordinates : null, ln = lns ? lns.map(l => l.map(c => [wx(c[0]), wy(c[1])])) : null; return { ...x, w, ln }; });
     return { f, firme, anunturi, investitii, centru: V.centru, raza: V.raza_max_m || 350, r0: V.r0 || 0, reguli: V.reguli, data: V.data, stat: V.stat };
   }
   const RAZA = () => Math.max(0, Math.min(350, window.__dfaRaza == null ? 119 : Number(window.__dfaRaza)));   // aceeași rază ca în liste (cursor 0–350 m)
@@ -117,7 +117,7 @@
     const z = S.z;   // investiții: linie sau punct aproximativ
     for (const x of V.investitii) {
       if (x.dm != null && x.dm > K.R) continue; const col = COL_INV[x.grup] || "#2563eb";
-      if (x.ln) { c.beginPath(); x.ln.forEach((q, i) => { const p = S.toScr(q[0], q[1]); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.lineJoin = c.lineCap = "round"; c.strokeStyle = "#fff"; c.lineWidth = 6; c.stroke(); c.strokeStyle = col; c.lineWidth = 3.5; c.setLineDash(x.grup === "viitor" ? [8, 6] : []); c.stroke(); c.setLineDash([]); }
+      if (x.ln) { c.beginPath(); x.ln.forEach(l => l.forEach((q, i) => { const p = S.toScr(q[0], q[1]); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); })); c.lineJoin = c.lineCap = "round"; c.strokeStyle = "#fff"; c.lineWidth = 6; c.stroke(); c.strokeStyle = col; c.lineWidth = 3.5; c.setLineDash(x.grup === "viitor" ? [8, 6] : []); c.stroke(); c.setLineDash([]); }
       else if (x.w) { const p = S.toScr(x.w[0], x.w[1]); c.beginPath(); c.moveTo(p[0], p[1] - 9); c.lineTo(p[0] + 9, p[1]); c.lineTo(p[0], p[1] + 9); c.lineTo(p[0] - 9, p[1]); c.closePath(); c.fillStyle = col; c.globalAlpha = .75; c.fill(); c.globalAlpha = 1; c.setLineDash([3, 3]); c.strokeStyle = "#fff"; c.lineWidth = 1.6; c.stroke(); c.setLineDash([]); }
     }
     const dot = (w, dx, dy, fill, stroke) => { const p = S.toScr(w[0], w[1]); c.beginPath(); c.arc(p[0] + dx, p[1] + dy, 4.2, 0, 7); c.fillStyle = fill; c.fill(); c.lineWidth = 1.6; c.strokeStyle = stroke; c.stroke(); };
@@ -250,7 +250,8 @@
 
 
   /* ---------- atingere pe hartă: fereastră scurtă cu datele parcelei + „Cronologie” la cerere ---------- */
-  const stAct = a => a.st === "valabil" ? `<span class="ok">valabil până la ${dmy(a.sf)}†</span>` : a.st === "expirat" ? `<span class="ex">expirat la ${dmy(a.sf)}†</span>` : "";
+  const mk = a => a.ds ? " (din sursă)" : "†";   // termen din lista primăriei sau calculat
+  const stAct = a => a.st === "valabil" ? `<span class="ok">valabil până la ${dmy(a.sf)}${mk(a)}</span>` : a.st === "expirat" ? `<span class="ex">expirat la ${dmy(a.sf)}${mk(a)}</span>` : "";
   const banii = a => a.pret ? `${Number(a.pret).toLocaleString("ro-RO")} ${a.mon || ""}${a.mp ? " · " + a.mp + " mp" : ""}${a.eur_mp ? " · " + a.eur_mp + " €/mp" : ""}` : "preț nespecificat";
   function fisa(box, sel) {
     const V = P.v2; let h = "", k = sel.k, f = k && V.f[k];
@@ -263,7 +264,7 @@
     const fir = sel.firma ? [sel.firma] : f ? f.firme : [], anu = sel.anunt ? [sel.anunt] : f ? f.anunturi : [];
     if (fir.length) h += "<div><b>Firme</b></div><ul>" + fir.map(x => `<li>${esc(x.n)} · CAEN ${esc(x.c || "—")} · ${esc(x.st || "")}<br><span class="s">${esc(x.ad || "")} · la ${x.d} m</span></li>`).join("") + "</ul>";
     if (anu.length) h += "<div><b>Anunțuri de vânzare</b></div><ul>" + anu.map(x => `<li>${esc(banii(x))}<br><span class="s">${esc(x.t)} · ${dmy(x.d)}${x.aprox ? " · poziție aproximativă (~100 m)" : ""}${x.u ? ' · <a href="' + esc(x.u) + '" target="_blank" rel="noopener">anunț</a>' : ""}</span></li>`).join("") + "</ul>";
-    if (sel.inv) { const x = sel.inv; h += `<div class="s">${esc(x.grup)} · ${esc(x.st || "")}${x.aprox ? " · poziție aproximativă (sat)" : ""}${x.loc ? " · " + esc(x.loc) : ""}${x.val ? " · " + esc(x.val) + " lei" : ""}${x.d ? " · " + dmy(x.d) : ""}</div><div>${esc(x.t)}</div>${x.u ? '<div class="s"><a href="' + esc(x.u) + '" target="_blank" rel="noopener">sursa</a></div>' : ""}`; }
+    if (sel.inv) { const x = sel.inv; h += `<div class="s">${esc(x.grup)} · ${esc(x.st || "")}${x.aprox ? " · poziție aproximativă (sat)" : (x.loc && /^OSM/.test(x.loc) ? " · traseu din OpenStreetMap" : "")}${x.loc ? " · " + esc(x.loc) : ""}${x.val ? " · " + esc(x.val) + " lei" : ""}${x.d ? " · " + dmy(x.d) : ""}</div><div>${esc(x.t)}</div>${x.u ? '<div class="s"><a href="' + esc(x.u) + '" target="_blank" rel="noopener">sursa</a></div>' : ""}`; }
     if (f && (f.acte.length || f.puz.length)) h += `<button type="button" class="cr">Cronologie</button>`;
     let w = $(".dhm-fis", box); if (!w) { w = document.createElement("div"); w.className = "dhm-fis"; box.appendChild(w); }
     w.innerHTML = `<button type="button" class="x" aria-label="Închide">×</button>` + h;
@@ -283,7 +284,7 @@
       ov.querySelector(".w").innerHTML = `<button type="button" class="x" aria-label="Închide">×</button><h3>Cronologie · NC ${esc(k)}</h3><div class="s" style="color:#4a5160;font-size:12px">${f.dm != null ? "la " + f.dm + " m de teren · " : ""}${nv} valabile · ${ne} expirate · ${f.puz.length} PUZ · linia roșie = azi</div>
         <div class="f">${[["toate", "Toate " + toate.length], ["valabile", "Valabile " + nv], ["expirate", "Expirate " + ne]].map(([m, t]) => `<button type="button" data-m="${m}" class="${m === mod ? "on" : ""}">${t}</button>`).join("")}</div>
         ${Object.keys(ani).sort().reverse().map(y => `<h5>${y} · ${ani[y].length} ${ani[y].length === 1 ? "act" : "acte"}</h5>` + ani[y].map(rand).join("")).join("") || '<p class="s">Niciun act în această categorie.</p>'}
-        <div class="n">${esc(V.reguli || "")} † = termen calculat, nu din sursă.</div>`;
+        <div class="n">${esc(V.reguli || "")} † = termen calculat, nu din sursă; „din sursă” = termenul din lista primăriei.</div>`;
       ov.querySelector(".x").onclick = () => ov.remove(); ov.querySelectorAll(".f button").forEach(b => b.onclick = () => { mod = b.dataset.m; desen(); });
     };
     ov.innerHTML = '<div class="w"></div>'; ov.addEventListener("click", e => { if (e.target === ov) ov.remove(); }); desen(); document.body.appendChild(ov);
@@ -296,7 +297,7 @@
     let sel = null;
     for (const x of V.anunturi) if (!sel && x.dist <= K.R && near(x.w, -6, -6)) sel = { k: x.nc, anunt: x, titlu: "Anunț de vânzare" };
     for (const x of V.firme) if (!sel && x.d <= K.R && near(x.w, 6, -6)) sel = { k: x.nc, firma: x, titlu: "Firmă" };
-    for (const x of V.investitii) { if (sel || (x.dm != null && x.dm > K.R)) continue; if (x.w && near(x.w, 0, 0)) sel = { inv: x, titlu: "Investiție" }; else if (x.ln) { for (let i = 1; i < x.ln.length; i++) { const a = S.toScr(x.ln[i - 1][0], x.ln[i - 1][1]), b = S.toScr(x.ln[i][0], x.ln[i][1]); if (distSeg(sx, sy, a, b) <= 12) { sel = { inv: x, titlu: "Investiție" }; break; } } } }
+    for (const x of V.investitii) { if (sel || (x.dm != null && x.dm > K.R)) continue; if (x.w && near(x.w, 0, 0)) sel = { inv: x, titlu: "Investiție" }; else if (x.ln) { for (const l of x.ln) { for (let i = 1; i < l.length; i++) { const a = S.toScr(l[i - 1][0], l[i - 1][1]), b = S.toScr(l[i][0], l[i][1]); if (distSeg(sx, sy, a, b) <= 12) { sel = { inv: x, titlu: "Investiție" }; break; } } if (sel) break; } } }
     if (!sel) for (const k of Object.keys(V.f)) { const f = V.f[k]; if ((f.dm == null || f.dm <= K.R) && wxp >= f.b[0] && wxp <= f.b[2] && wyp >= f.b[1] && wyp <= f.b[3] && inPoly(f.rings, wxp, wyp)) { sel = { k }; break; } }
     if (!sel) return;
     const f = sel.k && V.f[sel.k]; M.hl = f ? [{ rings: f.rings, c: f.c, b: f.b, nc: sel.k }] : []; M.label = ""; M.dirty = true; fisa(box, sel);

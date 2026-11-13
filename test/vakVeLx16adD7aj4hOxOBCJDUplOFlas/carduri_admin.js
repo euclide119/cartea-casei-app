@@ -1,13 +1,13 @@
 /* Raportul casei · „Evidență QR” (v82.15.0, 13.11.2026, cerut de Manu 12.11.2026). Modul separat, doar în aplicația de test, doar pentru Admin.
    Butonul „Evidență QR” apare în bara Admin numai dacă funcția raport_carduri_admin acceptă jetonul Admin (sesiunea de client sau de card nu îl vede).
    Tabel: destinatar, rapoarte, emis, expiră, stare, prima logare, ultima intrare, intrări, refuzuri; click pe rând = jurnalul cardului.
-   Acțiuni (cu confirmare): Blochează, Reactivează, Resetează dispozitivul, Generează QR nou (destinatar, rapoarte bifate din catalog, zile) → card cu QR, cele două coduri, 🔒 lângă 1357, PNG și PDF.
+   Acțiuni (cu confirmare): Blochează, Reactivează, Resetează dispozitivul, Generează QR nou (destinatar, rapoarte bifate din catalog, zile) → card cu QR, cele două coduri, 🔒 lângă codul DOM, PNG și PDF.
    Nimic nu se șterge: fiecare acțiune schimbă starea și scrie în jurnal (raport_carduri_jurnal). */
 (function () {
   "use strict";
   if (window.parent !== window || !window.CC_ADM_P) return;
   const FN = "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_carduri_admin";
-  const COD_INTRARE = "dis100count", COD_DOM = "1357";
+  let COD_INTRARE = "", COD_DOM = "";   // v82.21.1: valorile nu mai sunt în aplicație; vin de la server (coduri_mele, doar Admin) și stau doar în memorie
   const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const zi = s => s ? new Date(s).toLocaleString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
   const STARE = { activ: ["activ", "#1d5fb0"], legat: ["legat", "#1f6b3d"], blocat: ["blocat", "#9a2a1f"], expirat: ["expirat", "#6b6f7d"] };
@@ -142,8 +142,9 @@
   }
   const descarca = (href, nume) => { const a = document.createElement("a"); a.href = href; a.download = nume; document.body.appendChild(a); a.click(); a.remove(); };
   const jspdf = () => window.jspdf ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
-  function arata(c) {
+  async function arata(c) {
     const box = document.getElementById("cq-c"); if (!window.qrcode) { box.innerHTML = `<div class="bx m">generatorul QR nu s-a încărcat; reîncarcă pagina</div>`; return; }
+    try { const j = await api("coduri_mele"); COD_INTRARE = (j.globale && j.globale.intrare) || ""; COD_DOM = (j.globale && j.globale.dom) || ""; } catch (e) { /* cardul se desenează fără coduri dacă serverul nu răspunde */ }
     const { cv, url } = desen(c), png = cv.toDataURL("image/png");
     box.innerHTML = `<div class="bx"><div class="r" style="justify-content:space-between"><b>Card · ${esc(c.destinatar)}</b><button id="cq-ax">Ascunde</button></div><img src="${png}" alt="cardul QR" style="display:block;width:100%;max-width:420px;margin:12px auto;border:1px solid #cfc7b6;border-radius:8px"><div class="r" style="justify-content:center"><button class="p" id="cq-png">Descarcă PNG</button><button class="p" id="cq-pdf">Descarcă PDF</button><button id="cq-cp">Copiază linkul</button></div><div class="m" id="cq-am" style="text-align:center"></div></div>`;
     box.querySelector("#cq-ax").onclick = () => { box.innerHTML = ""; };

@@ -1,6 +1,6 @@
 /* Raport _ Cartea Casei - „Date fine din jurul proprietății” (v82.11.0, 09.11.2026, cerut de Manu).
    Din p/<id>/date_fine_aproape_mostra.json (nivelul ASCUNS, mascat la sursă: valorile sensibile au doar primele 4 caractere) și, la nivelul ARĂTAT,
-   din p/<id>/date_fine_aproape.json (Admin, după butonul „Arată”, cod 1357) sau din funcția server `date_fine_livrare` (Client după plată, filtrată pe server:
+   din p/<id>/date_fine_aproape.json (Admin, după butonul „Arată” și codul DOM) sau din funcția server `date_fine_livrare` (Client după plată, filtrată pe server:
    persoanele cu sursa_publica ONRC/AC/CU/PUZ; persoanele fără sursă publică, telefoanele din anunțuri și contactele alocate nu ajung la client).
    Valoarea reală NU se află în pagină la nivelul ascuns. Fără CNP. 20 firme, 20 CU, 20 AC, 20 PUZ, investiții declarate pe comună, alte date (densitate).
    Rând gol = motivul scris; „investitii_lipsa” doar la Admin; investiție fără termen: „termen neprecizat”; fiecare rând: sursă, data sursei, încredere. */
@@ -144,12 +144,12 @@
     if (adm) {
       if (arataAdmin) {
         const J = await json(P + "date_fine_aproape.json");
-        corp.innerHTML = `<span class="dfa-adm">🔓 Admin: date complete (cod 1357), nu se publică</span> <button type="button" class="dfa-btn" data-a="ascunde">Ascunde</button> <button type="button" class="dfa-btn" data-a="surse" title="surse">i</button>` + (J ? randare(J, "arati_admin") : '<p class="dfa-gol">date_fine_aproape.json lipsește pentru această proprietate.</p>');
+        corp.innerHTML = `<span class="dfa-adm">🔓 Admin: date complete (cod DOM), nu se publică</span> <button type="button" class="dfa-btn" data-a="ascunde">Ascunde</button> <button type="button" class="dfa-btn" data-a="surse" title="surse">i</button>` + (J ? randare(J, "arati_admin") : '<p class="dfa-gol">date_fine_aproape.json lipsește pentru această proprietate.</p>');
         corp.querySelector('[data-a="ascunde"]').onclick = () => { arataAdmin = false; facut = null; porneste(); };
         corp.querySelector('[data-a="surse"]').onclick = () => { arataSurse = !arataSurse; facut = null; porneste(); };
       } else {
         corp.innerHTML = `<span class="dfa-adm">Nivel ascuns (valorile sensibile sunt mascate)</span> <button type="button" class="dfa-btn" data-a="arata">Arată</button>` + randare(mostra, "ascuns");
-        corp.querySelector('[data-a="arata"]').onclick = () => { const c = window.prompt("Cod Admin:"); if (c === "1357") { arataAdmin = true; facut = null; porneste(); } };
+        corp.querySelector('[data-a="arata"]').onclick = async () => { const c = window.prompt("Cod Admin:"); if (!c) return; try { const r = await fetch((window.CC_STARE && window.CC_STARE.FN) || "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: window.CC_ADM.token, pin: c }) }); if (r.ok) { arataAdmin = true; facut = null; porneste(); } else window.alert("Cod greșit"); } catch (e) { window.alert("Nu pot verifica codul acum"); } };   // v82.21.1: codul se verifică pe server, nu în aplicație
       }
       return;
     }

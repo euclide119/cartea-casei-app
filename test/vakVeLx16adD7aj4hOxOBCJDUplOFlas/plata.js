@@ -9,7 +9,7 @@
 (function () {
   "use strict";
   /* CONFIGURARE · MOD GRATUIT (perioada de test, cerut de Manu 12.11.2026, TEMPORAR): true = nu se arată butonul de 499 RON și nimic din Stripe;
-     la Date fine apare „Acces gratuit în perioada de test”, bifa de acord și câmpul pentru codul de date fine (1357, verificat pe server prin acțiunea `privat`).
+     la Date fine apare „Acces gratuit în perioada de test”, bifa de acord și câmpul pentru codul de date fine (codul DOM, verificat pe server prin acțiunea `privat`).
      Pentru a reporni plata: false (codul Stripe de mai jos rămâne neschimbat). */
   const CC_GRATUIT = true;
   const CFG = { pret_ron: 499, moneda: "RON", baza: "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/", versiune_acord: "2026-11-09-v1", gdpr: "gdpr_date_fine.html" };
@@ -110,8 +110,8 @@
 
   /* blocul de deblocare: pret, acord (o singură bifă), buton; Admin „ca client” primește și simularea */
   const ACORD_K = "cc-acord-df";
-  /* v82.15.1 (Manu, 13.11.2026: „cand dau comanda DOM - vreau doar 2 optiuni - am cod reducere / comanda dom - la am cod putem baga 1357 - trebuie sa mearga in ambele directii”).
-     Lacătul are două butoane egale: „Am cod” (un câmp; 1357 sau orice cod de reducere viitor, verificat pe server) și „Comandă DOM” (telefon sau email → tabelul cereri,
+  /* v82.15.1 (Manu, 13.11.2026: „cand dau comanda DOM - vreau doar 2 optiuni - am cod reducere / comanda dom - la am cod putem baga codul DOM - trebuie sa mearga in ambele directii”).
+     Lacătul are două butoane egale: „Am cod” (un câmp; codul DOM sau orice cod de reducere viitor, verificat pe server) și „Comandă DOM” (telefon sau email → tabelul cereri,
      funcția raport_cerere_dom). Se trece dintr-unul în altul fără să se piardă ce s-a scris; după cod lacătul (deci și „Comandă DOM”) dispare. Fără bifă separată:
      o linie mică „Continuând, accepți termenii” sub buton. Marcajul .g7-code ține lacătul la vedere în fereastra DOM (acordeon.js nu pliază rândul cu formularul de cod). */
   const mem = { cod: "", contact: "" };
