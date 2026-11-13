@@ -72,7 +72,10 @@
   const iosUA = UAq === "ios" || iOS;
   const mobil = UAq ? true : (/Android|iPhone|iPad|iPod|Mobile/i.test(UAs) || iOS);
   const eLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
-  const GATE = mobil && !standalone() && !(eLocal && !/[?&]gate=1/.test(location.search));
+  /* v82.27.1 (Manu, 14.11: „dau click pe instalează aplicația și nu merge; nici deschide raportul, butonul e mort”): când Chrome nu dă dialogul de instalare (aplicație deja instalată sau dialog refuzat
+     anterior: Chrome îl suspendă luni de zile), butonul nu mai rămâne mort: intră în raport în browser, la „cod de acces”; instalarea rămâne în bară când Chrome o permite. Alegerea se ține pe dispozitiv. */
+  const inBrowser = (() => { try { return localStorage.getItem("cc-tt-browser") === "1"; } catch (e) { return false; } })();
+  const GATE = mobil && !standalone() && !inBrowser && !(eLocal && !/[?&]gate=1/.test(location.search));
   window.CC_TT_GATE = GATE;
   function copiaza(m) {
     const ok = () => { m.textContent = "Linkul e copiat"; };
@@ -102,8 +105,12 @@
       const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : KC ? "#card=" + KC : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : ((R || lg("cc-adm-g")) ? "#r=" + (R || lg("cc-adm-g")) : ""))); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
       const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (codul DOM pentru raport, ca până acum)
       window.CC_TT_INSTALAT = instalat;
+      const inBr = () => { try { localStorage.setItem("cc-tt-browser", "1"); } catch (e) {} location.reload(); };
+      let iosVazut = false;
       go.onclick = async () => {
         if (!ck.checked) return;
+        if (iosUA && iosVazut) return inBr();   // a doua atingere pe iPhone: continuă în browser
+        if (iosUA) iosVazut = true;
         if (iosUA) {   // iPhone: un singur rând vizual + săgeată spre Partajează
           const ipad = /iPad/.test(UAs) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
           m.textContent = ipad ? "⎙ (sus) → Adaugă pe ecranul principal" : "⎙ → Adaugă pe ecranul principal";
@@ -112,10 +119,10 @@
         }
         if (dip) {   // Android/Chrome/Edge/Samsung: dialogul nativ (cere o atingere de confirmare); refuzul rămâne tăcut
           const p = dip; dip = null; window.__bip = null; go.disabled = true;
-          try { p.prompt(); const r = await p.userChoice; if (r && r.outcome === "accepted") setTimeout(instalat, 1200); else go.disabled = false; } catch (e) { go.disabled = false; }
+          try { p.prompt(); const r = await p.userChoice; if (r && r.outcome === "accepted") setTimeout(instalat, 1200); else inBr(); } catch (e) { inBr(); }
           return;
         }
-        m.textContent = "⋮ → Instalează aplicația";   // promptul nu e disponibil: doar indiciul vizual, un singur rând
+        inBr();   // v82.27.1: fără dialog de instalare, intră în raport în browser (înainte: doar textul „⋮ → Instalează aplicația”, butonul părea mort)
       };
     };
     document.body ? mk() : document.addEventListener("DOMContentLoaded", mk);
