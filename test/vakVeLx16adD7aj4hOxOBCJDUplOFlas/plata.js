@@ -43,6 +43,7 @@
 
   /* datele complete, filtrate pe server pentru client (doar sursa_publica ONRC/AC/CU/PUZ); Admin „ca client” simulat: aceeași filtrare, în pagină */
   async function dateLivrate() {
+    if (CC_GRATUIT && gSes() && gSes().k) return null;   // v82.17.0: cardul nu primește fișierul întreg; DOM se încarcă pe secțiuni (date_fine_aproape.js)
     if (CC_GRATUIT && gSes() && gSes().n >= 2) {   // jetonul n:2 deschide fișierul prin funcție; aceeași filtrare ca la plată (doar sursa_publica ONRC/AC/CU/PUZ)
       try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; return filtruClient(await r.json()); } catch (e) { return null; }
     }

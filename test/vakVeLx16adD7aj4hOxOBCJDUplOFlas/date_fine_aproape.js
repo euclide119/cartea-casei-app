@@ -81,6 +81,28 @@
     return h;
   }
 
+  /* v82.17.0 (cardul): DOM pe secțiuni. Serverul nu mai dă fișierul întreg unui card; fiecare secțiune se cere când o deschizi și intră în jurnalul cardului. */
+  const SECT = [["firme", "Cele mai apropiate firme"], ["cu", "Cele mai apropiate certificate de urbanism"], ["ac", "Cele mai apropiate autorizații de construire"], ["puz", "Cele mai apropiate PUZ-uri"], ["localitate", "Ultimele certificate de urbanism și autorizații din localitate"], ["investitii", "Proiecte de infrastructură în lucru"], ["raza200", "Certificate de urbanism și autorizații pe o rază de 200 m"]];
+  function sectiuniCard(corp, P) {
+    if (!$("#dfa-css-sec")) { const s = document.createElement("style"); s.id = "dfa-css-sec"; s.textContent = ".dfa-sec{border:1px solid #d8dde8;border-radius:10px;margin:8px 0;background:#fff}.dfa-sec>summary{font:700 15px var(--font);padding:12px 14px;cursor:pointer}.dfa-sb{padding:0 12px 12px}"; document.head.appendChild(s); }
+    corp.innerHTML = SECT.map(([k, t]) => `<details class="dfa-sec" data-k="${k}"><summary>${esc(t)}</summary><div class="dfa-sb"></div></details>`).join("") + '<p class="dfa-src">Nu retransmite aceste date.</p>';
+    corp.querySelectorAll(".dfa-sec").forEach(d => d.addEventListener("toggle", async () => {
+      if (!d.open || d.dataset.g) return; d.dataset.g = "1"; const box = d.querySelector(".dfa-sb"), k = d.dataset.k; box.innerHTML = '<p class="dfa-src">Se încarcă…</p>';
+      try {
+        const r = await fetch(`${P}date_fine_aproape.json?sec=${encodeURIComponent(k)}`, { cache: "no-store" });
+        if (r.status === 429 || r.status === 401) { box.innerHTML = '<p class="dfa-gol">Cardul nu mai e valabil.</p>'; setTimeout(() => location.reload(), 600); return; }
+        if (!r.ok) { d.dataset.g = ""; box.innerHTML = '<p class="dfa-gol">Nu s-a putut încărca; închide și redeschide secțiunea.</p>'; return; }
+        let J = await r.json(); if (k === "raza200") J = { cu: J.raza200 || [] };
+        const f = window.CC_PLATA && window.CC_PLATA.filtruClient ? window.CC_PLATA.filtruClient(J) : J;
+        let h = randare(f, "aratat_client");
+        { const t = document.createElement("div"); t.innerHTML = h; const h3 = [...t.querySelectorAll("h3")].find(x => /200 m/.test(x.textContent));
+          if (k === "raza200") h = h3 ? h3.outerHTML + (h3.nextElementSibling ? h3.nextElementSibling.outerHTML : "") : "";
+          else if (h3) { if (h3.nextElementSibling) h3.nextElementSibling.remove(); h3.remove(); h = t.innerHTML; } }   // randare() desenează toate tabelele din J; aici doar cel de 200 m
+        box.innerHTML = h || `<p class="dfa-gol">${GOL}</p>`;
+      } catch (e) { d.dataset.g = ""; box.innerHTML = '<p class="dfa-gol">Nu s-a putut încărca; închide și redeschide secțiunea.</p>'; }
+    }));
+  }
+
   async function porneste() {
     css();
     const Dd = typeof D !== "undefined" ? D : null; if (!Dd || !Dd.id) return;
@@ -113,6 +135,7 @@
       }
       return;
     }
+    if (window.CC_ADM && window.CC_ADM.k && window.CC_ADM.n >= 2) { sectiuniCard(corp, P); return; }   // v82.17.0: card: DOM pe secțiuni, fiecare cerută la deschidere
     /* Client (și Admin „ca client”): ascuns până după plată */
     const P2 = window.CC_PLATA, st = P2 ? await P2.stare() : { platit: false, configurat: false };
     if (st.platit) {
