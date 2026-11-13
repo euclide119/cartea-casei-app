@@ -55,16 +55,21 @@
   const obiect = (r, full) => full ? esc(String(r.tip_lucrare || r.obiect || "").replace(/\s+/g, " ").slice(0, 140)) : m(r, "tip_lucrare");
   const act = r => `${esc(r.tip || "")} ${esc(r.numar || r.numar_hcl || "")}${r.an ? "/" + esc(r.an) : ""}`.trim();
   const srcAdm = r => `<span class="dfa-src">${esc(String(r.sursa || r.sursa_tip || "").slice(0, 60))} · ${esc(String(r.data_sursei || "").slice(0, 10))} · ${esc(r.incredere || "")}</span>`;
+  /* v82.18.0: harta DOM. Fiecare rând poartă data-s (secțiunea) și data-i (indexul în fișierul întreg); dom_harta.js îl mapează la parcelă prin dom_parcele.json (randuri[sec][i]). Cardul primește _i / _s de la server (secțiunile vin tăiate la cele mai apropiate 40). */
+  const SK = ["firme", "cu", "ac", "puz", "investitii"];
+  const taga = J => { SK.forEach(k => { if (Array.isArray(J[k])) J[k].forEach((r, i) => { if (r && typeof r === "object") { if (r._i == null) r._i = i; if (!r._s) r._s = k; } }); }); return J; };
+  const ta = r => r && r._i != null && r._s ? ` data-s="${r._s}" data-i="${r._i}"` : "";
   function randare(J, nivel) {
+    taga(J);
     const full = nivel !== "ascuns", adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);
     const fx = full ? (r, k) => val(r[k]) : m;
     const cap = c => adm && full && arataSurse ? [...c, "Sursă"] : c, cel = (r, h) => adm && full && arataSurse ? h.replace(/<\/tr>$/, `<td>${srcAdm(r)}</td></tr>`) : h;
     const pd = (L, n) => (L || []).filter(r => r.distanta_m != null).slice().sort((x, y) => x.distanta_m - y.distanta_m).slice(0, n);
     const cfc = r => { const l = String(r.nc || r.cf || r.adresa_cf || "").split(/[;,\s]+/).filter(Boolean); return l.slice(0, 3).join(", ") + (l.length > 3 ? ` +${l.length - 3}` : "") || "—"; };   // v82.16.0: alocarea precisă pe parcelă (NC / CF) doar în DOM
-    const rAct = (r, cuDist) => cel(r, `<tr><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}${full ? `<td>${esc(cfc(r))}</td>` : ""}</tr>`);
+    const rAct = (r, cuDist) => cel(r, `<tr${ta(r)}><td>${act(r)}</td><td>${data(r)}</td><td>${benef(r, full, adm)}</td><td>${obiect(r, full)}</td>${cuDist ? `<td>${dist(r)}</td>` : ""}${full ? `<td>${esc(cfc(r))}</td>` : ""}</tr>`);
     let h = "";
     h += tabel("Cele mai apropiate firme", cap(["Firma", "Administratori", "Telefon", "Distanță"]),
-      pd(J.firme, 20).map(r => cel(r, `<tr><td>${fx(r, "denumire")}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon") || "—"}</td><td>${dist(r)}</td></tr>`)), GOL);
+      pd(J.firme, 20).map(r => cel(r, `<tr${ta(r)}><td>${fx(r, "denumire")}</td><td>${admnm(r, full)}</td><td>${fx(r, "telefon") || "—"}</td><td>${dist(r)}</td></tr>`)), GOL);
     [["cu", "Cele mai apropiate certificate de urbanism"], ["ac", "Cele mai apropiate autorizații de construire"], ["puz", "Cele mai apropiate PUZ-uri"]].forEach(([k, t]) =>
       h += tabel(t, cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), pd(J[k], 20).map(r => rAct(r, true)), GOL));
     const L = J.localitate || {};
@@ -74,7 +79,7 @@
     }
     const lucru = (J.investitii || []).filter(r => /lucr|execu|derul|început|inceput|contract|implement|în curs|in curs/i.test(`${typeof r.stadiu === "string" ? r.stadiu : ""} ${typeof r.termen === "string" ? r.termen : ""}`));
     h += tabel("Proiecte de infrastructură în lucru", cap(["Ce", "Stadiu", "Termen", "Distanță"]),
-      lucru.map(r => cel(r, `<tr><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(typeof r.stadiu === "string" ? r.stadiu : "") || "în lucru"}</td><td>${esc(typeof r.termen === "string" && r.termen ? r.termen : "neprecizat")}</td><td>${r.distanta_m != null ? dist(r) : "în comună"}</td></tr>`)), "Nu sunt proiecte în lucru anunțate în comună.");
+      lucru.map(r => cel(r, `<tr${ta(r)}><td>${full ? esc(r.titlu) : m(r, "titlu")}</td><td>${esc(typeof r.stadiu === "string" ? r.stadiu : "") || "în lucru"}</td><td>${esc(typeof r.termen === "string" && r.termen ? r.termen : "neprecizat")}</td><td>${r.distanta_m != null ? dist(r) : "în comună"}</td></tr>`)), "Nu sunt proiecte în lucru anunțate în comună.");
     const raza = [...(J.cu || []), ...(J.ac || [])].filter(r => r.distanta_m != null && r.distanta_m <= 200).sort((x, y) => x.distanta_m - y.distanta_m);
     h += tabel("Certificate de urbanism și autorizații pe o rază de 200 m", cap(full ? ["Act", "Data", "Beneficiar", "Obiect", "Distanță", "Parcela (NC / CF)"] : ["Act", "Data", "Beneficiar", "Obiect", "Distanță"]), raza.map(r => rAct(r, true)), "Nu sunt certificate sau autorizații pe 200 m.");
     if (adm && J.investitii_lipsa && J.investitii_lipsa.length) h += `<details class="dfa-inv"><summary>lipsuri de colectare (doar Admin)</summary>${J.investitii_lipsa.map(x => `<p>${esc(typeof x === "string" ? x : JSON.stringify(x))}</p>`).join("")}</details>`;
