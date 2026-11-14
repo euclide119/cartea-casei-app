@@ -191,7 +191,7 @@
     s.textContent = `.pl.pl-c{padding:10px;gap:8px;border-width:1px;margin:8px 0}.pl.pl-c .pl-ter{display:none}
 .pl-2c{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:8px;margin:4px 2px 14px;font:13px/1.4 var(--font);color:#3d4354}.pl-2c b{font-weight:700;color:#1a1e2a}.pl-2c span{color:#5b6275}
 .pl-pag{position:fixed;inset:0;z-index:2147482000;background:#fffdf8!important;overflow:auto;-webkit-overflow-scrolling:touch}
-.pl-pag .w{max-width:430px;margin:0 auto;padding:12px 16px 32px;color:#1a1e2a;font:14px/1.5 var(--font)}
+.pl-pag .w{max-width:430px;margin:0 auto;padding:12px 16px 32px;color:#1a1e2a;font:14px/1.5 var(--font);background:transparent!important}
 .pl-pag .bk{all:unset;cursor:pointer;color:#1d5fb0;font:700 14px var(--font);padding:8px 0}
 .pl-pag h2{margin:8px 0 4px;font:800 20px var(--font)}.pl-pag .pr{font:800 26px var(--font);margin:6px 0 10px}
 .pl-pag h3{margin:16px 0 6px;font:700 15px var(--font)}.pl-pag ul{margin:0;padding-left:18px}.pl-pag li{margin:0 0 6px}
