@@ -74,6 +74,7 @@
   const eLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(location.hostname);
   /* v82.27.1 (Manu, 14.11: „dau click pe instalează aplicația și nu merge; nici deschide raportul, butonul e mort”): când Chrome nu dă dialogul de instalare (aplicație deja instalată sau dialog refuzat
      anterior: Chrome îl suspendă luni de zile), butonul nu mai rămâne mort: intră în raport în browser, la „cod de acces”; instalarea rămâne în bară când Chrome o permite. Alegerea se ține pe dispozitiv. */
+  const URL0 = location.href;   // v82.27.1: adresa de la deschidere (#master / #r= / #card=); generic.js o curăță cât stă poarta
   const inBrowser = (() => { try { return localStorage.getItem("cc-tt-browser") === "1"; } catch (e) { return false; } })();
   const GATE = mobil && !standalone() && !inBrowser && !(eLocal && !/[?&]gate=1/.test(location.search));
   window.CC_TT_GATE = GATE;
@@ -105,7 +106,7 @@
       const intra = () => { const u = location.origin + location.pathname.replace(/[^/]*$/, "") + (hm ? "#qr=" + hm : KC ? "#card=" + KC : (lg("cc-adm-qr") ? "#qr=" + lg("cc-adm-qr") : ((R || lg("cc-adm-g")) ? "#r=" + (R || lg("cc-adm-g")) : ""))); try { window.open(u, "_blank") || (location.href = u); } catch (e) { location.href = u; } };
       const instalat = () => { go.disabled = false; go.textContent = "Deschide aplicația"; ck.closest("label").style.display = "none"; m.textContent = ""; go.onclick = intra; };   // după instalare: același buton intră în aplicație (codul DOM pentru raport, ca până acum)
       window.CC_TT_INSTALAT = instalat;
-      const inBr = () => { try { localStorage.setItem("cc-tt-browser", "1"); } catch (e) {} location.reload(); };
+      const inBr = () => { try { localStorage.setItem("cc-tt-browser", "1"); } catch (e) {} try { history.replaceState(null, "", URL0); } catch (e) {} location.reload(); };
       let iosVazut = false;
       go.onclick = async () => {
         if (!ck.checked) return;
