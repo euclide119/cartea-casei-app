@@ -39,7 +39,8 @@
 #cc-qr h2{font:700 20px -apple-system,system-ui,sans-serif;margin:0}#cc-qr .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #cc-qr button{font:700 13px -apple-system,system-ui,sans-serif;border:1.5px solid #1a1e2a;border-radius:9px;padding:7px 11px;background:#fffdf8;color:#1a1e2a;cursor:pointer}
 #cc-qr button.p{background:#1d5fb0;border-color:#1d5fb0;color:#fff}#cc-qr button.x{border-color:#9a2a1f;color:#9a2a1f}
-#cc-qr .t{width:100%;overflow-x:auto;margin-top:12px;background:#fffdf8;border:1px solid #cfc7b6;border-radius:10px}
+#cc-qr .t{width:100%;margin-top:12px;background:#fffdf8;border:1px solid #cfc7b6;border-radius:10px}
+#cc-qr .cc{border-bottom:1px solid #e4dccb;padding:8px 10px}#cc-qr .cc:last-child{border-bottom:0}#cc-qr .cr{display:flex;align-items:center;gap:8px}#cc-qr .cn{flex:1;min-width:0}#cc-qr .cn b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cc-qr .cs{display:block;font-size:12px;color:#6b6f7d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cc-qr .ce{font-size:12px;color:#4a5063;min-width:2.8em;text-align:right}#cc-qr .cr button{padding:5px 9px;min-width:34px}#cc-qr .cr button[data-a=i]{border-radius:50%;width:30px;height:30px;padding:0;font-style:italic;font-family:Georgia,serif}#cc-qr .cr button.on{background:#1a1e2a;color:#fff}#cc-qr .cd{padding:8px 0 2px;font-size:13px}#cc-qr .cg{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:6px 0 8px}#cc-qr .cg span:nth-child(odd){color:#6b6f7d}
 #cc-qr table{border-collapse:collapse;width:100%;min-width:860px}#cc-qr th,#cc-qr td{padding:7px 8px;border-bottom:1px solid #e4dccb;text-align:left;vertical-align:top}
 #cc-qr th{font-size:12px;color:#4a5063;font-weight:700}#cc-qr tr.c{cursor:pointer}#cc-qr tr.c:hover{background:#f1ead9}
 #cc-qr .st{display:inline-block;border-radius:999px;padding:1px 8px;color:#fff;font-weight:700;font-size:12px}
@@ -66,14 +67,23 @@
     let j; try { j = await api("lista"); } catch (e) { t.textContent = e.message; return; }
     CAT = (j.catalog || []); const et = Object.fromEntries(CAT.map(c => [c.id, c.eticheta || c.id]));
     const scurt = id => { const s = et[id] || id + " (nepublicat)"; return s.split(" · ")[0] + (s.includes("CF ") ? " · " + (s.match(/CF [^·]+/) || [""])[0].trim() : ""); };
-    t.innerHTML = (j.alerta_rosie ? `<div style="background:#9a2a1f;color:#fff;font-weight:700;padding:8px 12px;border-radius:8px;margin-bottom:8px">⚠ Limita umană depășită de master / Admin de ${(j.alerte || []).length} ori în ultimele 10 minute (cererile au fost încetinite, nu blocate): ${esc((j.alerte || [])[0] && (j.alerte || [])[0].detaliu || "")}</div>` : "") + `<table><thead><tr><th>Destinatar</th><th>Rapoarte</th><th>Emis</th><th>Expiră</th><th>Stare</th><th>Prima logare</th><th>Ultima intrare</th><th>Intrări</th><th>Refuzuri</th><th>Sesiuni</th><th>Acțiuni</th></tr></thead><tbody>${(j.carduri || []).map(c => {
-      const st = STARE[c.stare] || [c.stare, "#555"];
-      return `<tr class="c" data-id="${esc(c.id)}"><td><b>${esc(c.destinatar)}</b>${c.nota ? `<br><span style="color:#4a5063">${esc(c.nota)}</span>` : ""}<br><span style="color:#6b6f7d;font-size:12px">${esc(c.id)}</span></td><td>${c.rapoarte.map(r => esc(scurt(r))).join("<br>")}</td><td>${zi(c.emis_la)}</td><td>${zi(c.expira_la)}</td><td><span class="st" style="background:${st[1]}">${st[0]}</span>${c.blocat_automat ? `<br><span style="font-size:12px;color:#9a2a1f">blocat automat</span>` : ""}${c.ua_scurt ? `<br><span style="font-size:12px">${esc(c.ua_scurt)}</span>` : ""}</td><td>${zi(c.prima_logare)}</td><td>${zi(c.ultima_intrare)}</td><td>${c.intrari || 0}</td><td>${c.refuzuri || 0}</td><td>${c.sesiuni || 0} · ${c.minute || 0} min<br><span style="font-size:12px">${c.instalat ? "instalat" + (c.probabil_dezinstalat ? " (probabil dezinstalat)" : "") : "neinstalat"}</span></td><td><div class="r">${c.stare === "blocat" || c.stare === "expirat" ? `<button data-a="reactiveaza">Reactivează</button>` : `<button class="x" data-a="blocheaza">Blochează</button>`}${c.legat_dispozitiv ? `<button data-a="reseteaza">Resetează dispozitivul</button>` : ""}<button data-a="sesiuni">Sesiuni</button><button data-a="previz">Vezi ca acest card</button><button data-a="arata">QR</button></div></td></tr>`;
-    }).join("") || `<tr><td colspan="11">Niciun card încă.</td></tr>`}</tbody></table>`;
-    t.querySelectorAll("tr.c").forEach(tr => tr.onclick = async ev => {
-      const id = tr.dataset.id, c = (j.carduri || []).find(x => x.id === id), a = ev.target.closest("button") && ev.target.closest("button").dataset.a;
+    /* v82.29.1 (Manu, 14.11: „codurile QR – istoric – mai compact; detaliile multe doar la atingerea butonului i; în rest minime în meniu”): un rând scurt pe card
+       (destinatar, stare, expiră, „i”, „QR”); tot restul (notă, raport, emis, prima logare, ultima intrare, intrări, refuzuri, sesiuni, instalat, acțiuni) stă sub „i”. */
+    const cur = c => {
+      const st = STARE[c.stare] || [c.stare, "#555"], rap = c.rapoarte || [], r0 = rap[0] ? scurt(rap[0]) : "", plus = rap.length > 1 ? ` +${rap.length - 1}` : "";
+      const exp = c.expira_la ? new Date(c.expira_la).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit" }) : "—";
+      return `<div class="cc" data-id="${esc(c.id)}"><div class="cr"><div class="cn"><b>${esc(c.destinatar)}</b><span class="cs">${esc(r0)}${plus}</span></div><span class="st" style="background:${st[1]}">${st[0]}</span><span class="ce">${exp}</span><button type="button" data-a="i" aria-label="detalii" aria-expanded="false">i</button><button type="button" data-a="arata" aria-label="QR">QR</button></div>
+        <div class="cd" hidden>${c.nota ? `<div>${esc(c.nota)}</div>` : ""}<div class="cg"><span>id</span><span>${esc(c.id)}</span><span>rapoarte</span><span>${(rap).map(r => esc(scurt(r))).join("<br>") || "—"}</span><span>emis</span><span>${zi(c.emis_la)}</span><span>expiră</span><span>${zi(c.expira_la)}</span><span>prima logare</span><span>${zi(c.prima_logare)}</span><span>ultima intrare</span><span>${zi(c.ultima_intrare)}</span><span>intrări / refuzuri</span><span>${c.intrari || 0} / ${c.refuzuri || 0}</span><span>sesiuni</span><span>${c.sesiuni || 0} · ${c.minute || 0} min · ${c.instalat ? "instalat" + (c.probabil_dezinstalat ? " (probabil dezinstalat)" : "") : "neinstalat"}</span>${c.ua_scurt ? `<span>dispozitiv</span><span>${esc(c.ua_scurt)}</span>` : ""}${c.blocat_automat ? `<span>blocat automat</span><span>${zi(c.blocat_automat)}</span>` : ""}</div>
+        <div class="r">${c.stare === "blocat" || c.stare === "expirat" ? `<button data-a="reactiveaza">Reactivează</button>` : `<button class="x" data-a="blocheaza">Blochează</button>`}${c.legat_dispozitiv ? `<button data-a="reseteaza">Resetează dispozitivul</button>` : ""}<button data-a="sesiuni">Sesiuni</button><button data-a="jurnal">Jurnal</button><button data-a="previz">Vezi ca acest card</button></div></div></div>`;
+    };
+    t.innerHTML = (j.alerta_rosie ? `<div style="background:#9a2a1f;color:#fff;font-weight:700;padding:8px 12px;border-radius:8px;margin-bottom:8px">⚠ Limita umană depășită de master / Admin de ${(j.alerte || []).length} ori în ultimele 10 minute (cererile au fost încetinite, nu blocate): ${esc((j.alerte || [])[0] && (j.alerte || [])[0].detaliu || "")}</div>` : "") + ((j.carduri || []).map(cur).join("") || `<div style="padding:12px">Niciun card încă.</div>`);
+    t.onclick = async ev => {
+      const b = ev.target.closest("button"); if (!b) return; const card = b.closest(".cc"); if (!card) return;
+      const id = card.dataset.id, c = (j.carduri || []).find(x => x.id === id), a = b.dataset.a;
+      if (a === "i") { const d = card.querySelector(".cd"); d.hidden = !d.hidden; b.setAttribute("aria-expanded", String(!d.hidden)); b.classList.toggle("on", !d.hidden); return; }
       if (a === "arata") return arata(c);
       if (a === "sesiuni") return sesiuni(c);
+      if (a === "jurnal") return jurnal(c);
       if (a === "previz") {   // „vezi ca QR X”: jeton de previzualizare (fără legare, fără intrare numărată, fără limită); revii la Admin din bandă
         if (!confirm(`Previzualizezi cardul „${c.destinatar}”? Vezi exact ce vede el; cardul nu se leagă și nu se numără intrare.`)) return;
         try { msg("se deschide previzualizarea…"); const r = await window.CC_PREVIZ(id); if (r && r.error) msg(r.error); } catch (e) { msg(e.message); } return;
@@ -83,8 +93,7 @@
         if (!confirm(txt)) return;
         try { await api(a, { card: id }); msg(""); } catch (e) { msg(e.message); } return tabel();
       }
-      jurnal(c);
-    });
+    };
   }
 
   /* v82.19.0: sesiunile unui card (minute, instalat sau nu, previzualizările Admin marcate) și, la click pe sesiune, capitolele / subcapitolele deschise și secundele pe fiecare */

@@ -172,7 +172,8 @@
     window.CC_DOM_COMANDA = () => paginaPlata();   // v82.29.0: orice „Comandă DOM” duce la pagina de comandă
   }
   /* butonul „Comand DOM” din lista de anunțuri (acordeon.js) duce la același ecran „Comandă DOM” din lacăt; după cod dispare (o singură cale de comandă) */
-  document.addEventListener("click", e => { const t = e.target && e.target.closest && e.target.closest(".ac-pr-btn"); if (!t || !(CC_GRATUIT && gSes())) return;
+  window.CC_DOM_COMANDA = () => paginaPlata();   // v82.29.1: definit mereu (înainte doar după montarea lacătului: butonul „Comand DOM” din previzualizare nu făcea nimic când lacătul nu era montat)
+  document.addEventListener("click", e => { const t = e.target && e.target.closest && e.target.closest(".ac-pr-btn"); if (!t || !(CC_GRATUIT && window.CC_ADM && window.CC_ADM.n < 2)) return;
     e.preventDefault(); e.stopImmediatePropagation(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }, true);
   { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM"; }); };
     let n = 0; const t = setInterval(() => { fix(); if (++n > 40) clearInterval(t); }, 500); }

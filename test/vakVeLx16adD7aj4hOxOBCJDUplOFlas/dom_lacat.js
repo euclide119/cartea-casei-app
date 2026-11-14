@@ -29,7 +29,8 @@ section.dl-l>h2{margin-bottom:6px}.dl-bar{display:block;margin:4px 0 8px}.dl-bar
         if (window.CC_PLATA && window.CC_PLATA.montaj && window.CC_ADM && window.CC_ADM.g) window.CC_PLATA.montaj(bar, () => {}, true, { compact: true });
         else { bar.innerHTML = '<button type="button" data-a="cod">Am cod</button><button type="button" data-a="cmd">Comandă DOM</button>';
           bar.querySelector('[data-a="cod"]').onclick = deschide; bar.querySelector('[data-a="cmd"]').onclick = () => window.CC_PLATA && window.CC_PLATA.paginaPlata ? window.CC_PLATA.paginaPlata() : deschide(); }
-        const h = s.querySelector("h2"); h ? h.after(bar) : s.prepend(bar);
+        /* v82.29.1 (Manu, 14.11: „la DOM toate butoanele sunt moarte”): titlul h2 sta într-un bloc „hero” estompat și fără atingeri (copil direct al secțiunii), iar bara se punea ÎN el; acum bara e copil direct al secțiunii, înaintea blocului estompat */
+        const h = s.querySelector("h2"); (h && h.parentElement === s) ? h.after(bar) : s.prepend(bar);
       } else if (!blocat && are) { s.classList.remove("dl-l"); s.querySelectorAll(":scope>.dl-bar").forEach(x => x.remove()); }
     }
   }
