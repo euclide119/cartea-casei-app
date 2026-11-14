@@ -45,7 +45,7 @@
   async function dateLivrate() {
     if (CC_GRATUIT && gSes() && (gSes().k || gSes().pv)) return null;   // v82.17.0: cardul nu primește fișierul întreg; DOM se încarcă pe secțiuni (date_fine_aproape.js)
     if (CC_GRATUIT && gSes() && gSes().n >= 2) {   // jetonul n:2 deschide fișierul prin funcție; aceeași filtrare ca la plată (doar sursa_publica ONRC/AC/CU/PUZ)
-      try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; return filtruClient(await r.json()); } catch (e) { return null; }
+      try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; const J = await r.json(); return gSes().m ? J : filtruClient(J); } catch (e) { return null; }   // v82.29.0: masterul vede toate datele, fără filtrul de client
     }
     if (simulat && caAdmin()) {
       try { const r = await fetch(`p/${encodeURIComponent(idProp())}/date_fine_aproape.json`, { cache: "no-cache" }); if (!r.ok) return null; return filtruClient(await r.json()); } catch (e) { return null; }
@@ -71,7 +71,7 @@
 
   /* un singur loc pentru plată: pregătește plata, o confirmă în Stripe, așteaptă webhook-ul */
   async function plateste(el, dupa) {
-    const msg = el.querySelector(".pl-msg"), btn = el.querySelector(".pl-go");
+    const msg = el.querySelector(".pl-msg"), btn = el.querySelector("#pl-pag-plata") || el.querySelector(".pl-go");
     const spune = t => { msg.textContent = t; };
     if (!el.querySelector("#pl-acc").checked) { spune("Bifează acordul ca să poți plăti."); return; }
     btn.disabled = true; spune("Se pregătește plata…");
@@ -139,13 +139,14 @@
         <button type="button" id="pl-cmd" style="${B};border:2px solid ${AC};background:${AC};color:#fff">Comandă DOM</button></div></div>`;
       const q = s => el.querySelector(s), msg = q(".pl-msg");
       if (q("#pl-am")) q("#pl-am").onclick = () => ecran("cod");
-      if (q("#pl-cmd")) q("#pl-cmd").onclick = () => ecran("comanda");
-      if (q("#pl-la-comanda")) q("#pl-la-comanda").onclick = () => { mem.cod = q("#pl-pin").value; ecran("comanda"); };
+      if (q("#pl-cmd")) q("#pl-cmd").onclick = () => paginaPlata();   // v82.29.0: direct la pagina de comandă
+      if (q("#pl-la-comanda")) q("#pl-la-comanda").onclick = () => { mem.cod = q("#pl-pin").value; paginaPlata(); };
       if (q("#pl-la-cod")) q("#pl-la-cod").onclick = () => { if (q("#pl-ct")) mem.contact = q("#pl-ct").value; ecran("cod"); };
       const pin = q("#pl-pin"), ct = q("#pl-ct");
       if (pin) { pin.oninput = () => { mem.cod = pin.value; }; setTimeout(() => pin.focus(), 50);
         const go = async () => { const v = pin.value.trim(); if (!v) { msg.textContent = "Scrie codul."; return; }
           if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul."; return; }
+          if (g.m && v === "0000") { g.n = 2; g.ca_client = false; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(g); location.reload(); return; }   // v82.29.0 (Manu): doar în sesiunea master, 0000 deschide tot (fără server)
           msg.textContent = "…";
           const r = await fetch(CFG.baza + "raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: g.token, pin: v }) }).then(async x => ({ ok: x.ok, status: x.status, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
           if (!r.ok || !r.j.token) { msg.textContent = r.status === 429 ? "Prea multe încercări; revino în 15 minute." : "Cod greșit."; return; }
@@ -155,6 +156,7 @@
       if (ct) { ct.oninput = () => { mem.contact = ct.value; }; setTimeout(() => ct.focus(), 50);
         const go = async () => { const v = ct.value.trim(); if (v.length < 6) { msg.textContent = "Scrie telefonul sau emailul."; return; }
           if (!g) { msg.textContent = "Sesiune lipsă; redeschide raportul."; return; }
+          if (g.m && v === "0000") { g.n = 2; g.ca_client = false; if (window.CC_ADM_SALVEAZA) await window.CC_ADM_SALVEAZA(g); location.reload(); return; }   // v82.29.0 (Manu): doar în sesiunea master, 0000 deschide tot (fără server)
           msg.textContent = "…"; q("#pl-ct-go").disabled = true;
           const r = await fetch(CFG.baza + "raport_cerere_dom", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: g.token, contact: v, raport: idProp() }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
           if (!r.ok) { msg.textContent = r.j.error || "Nu s-a putut trimite; încearcă din nou."; q("#pl-ct-go").disabled = false; return; }
@@ -167,7 +169,7 @@
     try { const sec = el.closest("section"); if (sec) { const t = sec.querySelector(":scope > div:first-child"); if (t && !t.contains(el)) t.style.display = "none"; const f = sec.querySelector(":scope > .dfa-foot"); if (f) f.style.display = "none"; } } catch (e) {}
     document.body.classList.add("cc-dom-lacat");
     if (!document.getElementById("pl-css-lacat")) { const st = document.createElement("style"); st.id = "pl-css-lacat"; st.textContent = "body.cc-dom-lacat section:has(#g7cod){display:none!important}"; document.head.appendChild(st); }
-    window.CC_DOM_COMANDA = () => { ecran("comanda"); try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {} };
+    window.CC_DOM_COMANDA = () => paginaPlata();   // v82.29.0: orice „Comandă DOM” duce la pagina de comandă
   }
   /* butonul „Comand DOM” din lista de anunțuri (acordeon.js) duce la același ecran „Comandă DOM” din lacăt; după cod dispare (o singură cale de comandă) */
   document.addEventListener("click", e => { const t = e.target && e.target.closest && e.target.closest(".ac-pr-btn"); if (!t || !(CC_GRATUIT && gSes())) return;
@@ -205,28 +207,40 @@
       <button type="button" class="pl-go">Plătește ${CFG.pret_ron} ${CFG.moneda}</button></div>${doua()}`;
     el.querySelector(".pl-go").onclick = paginaPlata;
   }
+  /* v82.29.0 (Manu, 14.11: „comandă - te duce direct la pagina de comandă; iar continuarea”): o singură pagină de comandă pentru toate butoanele „Comandă DOM”
+     (din capitolul DOM, din capitolele DOM estompate, din „Deblochează datele complete”). Pe pagină: preț, ce conține, GDPR-ul setului, bifa de acord și continuarea:
+     plata (dacă e activă la server) sau comanda cu telefon / e-mail (tabelul cererilor, funcția raport_cerere_dom), cu răspuns „te contactăm în 120 de minute în program”. */
   function paginaPlata() {
     css(); cssDebl();
-    const ov = document.createElement("div"); ov.className = "pl-pag"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Plată");
+    if (document.querySelector(".pl-pag")) return;
+    const ov = document.createElement("div"); ov.className = "pl-pag"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Comandă DOM");
+    const IN = "font:600 16px var(--font);padding:12px 14px;border:2px solid #1d5fb0;border-radius:12px;background:#fff;color:#1a1e2a;width:100%;box-sizing:border-box;margin:4px 0 10px";
     ov.innerHTML = `<div class="w"><button type="button" class="bk">← înapoi la raport</button>
-      <h2>Depth of Market – Level 2</h2><p>Datele complete din jurul proprietății, livrate imediat în aplicație.</p><div class="pr">${CFG.pret_ron} ${CFG.moneda}</div>
+      <h2>Comandă Depth of Market – Level 2</h2><p>Datele complete din jurul proprietății, livrate în aplicație.</p><div class="pr">${CFG.pret_ron} ${CFG.moneda}</div>
       ${doua()}<h3>Informare privind datele (GDPR)</h3><ul>${GDPR_DOM.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
       <p><a href="${CFG.gdpr}#dom" target="_blank" rel="noopener">GDPR și folosire date</a> · <a href="conditii.html" target="_blank" rel="noopener">condițiile de utilizare</a></p>
       <label class="pl-acc"><input type="checkbox" id="pl-acc"><span>${esc(ACORD_DOM)}</span></label>
-      <button type="button" class="pl-go" disabled>Plătește ${CFG.pret_ron} ${CFG.moneda}</button>
+      <div class="pl-cont"><input id="pl-pag-ct" type="text" inputmode="email" autocomplete="email" maxlength="120" placeholder="telefon sau email" aria-label="telefon sau email" style="${IN}">
+      <button type="button" class="pl-go" id="pl-pag-trimite" disabled>Trimite comanda</button>
+      <button type="button" class="pl-go" id="pl-pag-plata" hidden disabled>Plătește ${CFG.pret_ron} ${CFG.moneda}</button></div>
       <div class="pl-stripe" hidden></div><p class="pl-msg" role="status"></p></div>`;
-    const inchide = () => { ov.remove(); document.documentElement.style.overflow = ""; };
+    window.__ccPagina = true;
+    const inchide = () => { ov.remove(); document.documentElement.style.overflow = ""; setTimeout(() => { window.__ccPagina = false; }, 50); };
     ov.querySelector(".bk").onclick = () => { if (history.state && history.state.plPag) history.back(); else inchide(); };
-    const acc = ov.querySelector("#pl-acc"), go = ov.querySelector(".pl-go"), msg = ov.querySelector(".pl-msg");
-    acc.onchange = () => { go.disabled = !acc.checked; };
-    go.onclick = async () => {
-      const r = await apel("plata_config", {});
-      if (r.neconfigurat || r.configurat === false) { msg.innerHTML = 'Plata online nu e activă încă. <button type="button" class="bk" id="pl-pag-cmd">Comandă DOM cu telefon sau email</button>';
-        ov.querySelector("#pl-pag-cmd").onclick = () => { inchide(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }; return; }
-      plateste(ov.querySelector(".w"), () => { inchide(); location.reload(); });
+    const acc = ov.querySelector("#pl-acc"), tr = ov.querySelector("#pl-pag-trimite"), pg = ov.querySelector("#pl-pag-plata"), ct = ov.querySelector("#pl-pag-ct"), msg = ov.querySelector(".pl-msg");
+    acc.onchange = () => { tr.disabled = !acc.checked; pg.disabled = !acc.checked; };
+    apel("plata_config", {}).then(r => { if (r && !r.neconfigurat && r.configurat !== false) pg.hidden = false; });   // plata apare doar când e activă la server
+    tr.onclick = async () => {
+      const v = ct.value.trim(); if (v.length < 6) { msg.textContent = "Scrie telefonul sau emailul."; ct.focus(); return; }
+      const g = gSes(); if (!g || !g.token) { msg.textContent = "Sesiune lipsă; redeschide raportul cu codul de acces."; return; }
+      tr.disabled = true; msg.textContent = "…";
+      const r = await fetch(CFG.baza + "raport_cerere_dom", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: g.token, contact: v, raport: idProp() }) }).then(async x => ({ ok: x.ok, j: await x.json().catch(() => ({})) })).catch(() => ({ ok: false, j: {} }));
+      if (!r.ok) { msg.textContent = r.j.error || "Nu s-a putut trimite; încearcă din nou."; tr.disabled = false; return; }
+      ov.querySelector(".pl-cont").innerHTML = '<p style="font:700 16px/1.45 var(--font);color:#1f6b3d">Comanda e trimisă. Te contactăm în 120 de minute în program.</p>'; msg.textContent = "";
     };
+    pg.onclick = () => plateste(ov.querySelector(".w"), () => { inchide(); location.reload(); });
     document.body.appendChild(ov); document.documentElement.style.overflow = "hidden";
-    try { history.pushState({ plPag: 1 }, ""); const pop = () => { window.removeEventListener("popstate", pop); inchide(); }; window.addEventListener("popstate", pop); } catch (e) {}
+    try { history.pushState({ plPag: 1 }, ""); const pop = e => { e.stopImmediatePropagation(); window.removeEventListener("popstate", pop, true); inchide(); }; window.addEventListener("popstate", pop, true); } catch (e) {}   // v82.29.0: „← înapoi la raport” / butonul Înapoi al telefonului închid doar pagina de comandă, nu și capitolul deschis (înainte ecranul sărea în altă parte)
   }
   function montaj(el, dupa, conf, opt) {
     css();

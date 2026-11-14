@@ -11,7 +11,7 @@
   const IDS = ["cl-home", "cc-sf", "cc-s-f", "cc-s-m", "mn-rev", "mn-asp", "mn-poz", "mn-gen", "mn-cli", "mn-jur", "mn-print", "mn-src", "rc-print", "bld-open", "bld-client", "pick", "cc-tt-v", "cc-tt-nou", "cc-q-btn", "cq-open", "cc-adm-evid"];
   const SEL = [".cc-pasi", ".bld-btn", "#bld", "#builder", "[id^=bld-]", "[id^=cq-]", ".cq-btn", "#ac-bar button:not(#ac-mod button)", "#ac-bar #ac-print", "[data-cc-admin]", ".dfa-btn[data-a]", ".dfa-adm"];
   const TXT = /^(←\s*pagina principală|↓?\s*exportă pdf.*|generează.*|introdu adresa.*|✓?\s*pdf, trimitere.*|arată sursele.*|▤?\s*mapa proprietății|pașii următori|evidență qr|[✎▣▦⚙◐⚖]?\s*(mod client|revizie|aspect|alege pozele|generează raportul|raport juridic|stare date|surse))$/i;
-  const PASTREAZA = "#cc-tt-bar, #cc-tt-sel, #cc-tt-inst, #pl-am, #pl-cmd, .pl, .dfa-pl, #date_fine_aproape, .ac-pr";   // lacătul DOM, bara cu rapoartele cardului, instalarea
+  let PASTREAZA = "#cc-tt-bar, #cc-tt-sel, #cc-tt-inst, #pl-am, #pl-cmd, .pl, .dfa-pl, #date_fine_aproape, .ac-pr, .pl-pag, .dl-bar";   // lacătul DOM, bara cu rapoartele cardului, instalarea
   const ascunde = e => { if (e.dataset.ccCard) return; e.dataset.ccCard = "1"; e.hidden = true; e.setAttribute("inert", ""); e.setAttribute("aria-hidden", "true"); e.style.setProperty("display", "none", "important"); };   // ascuns, nu șters: restul aplicației își scrie în aceste elemente
   function curata() {
     IDS.forEach(i => { const e = document.getElementById(i); if (e && !e.matches(PASTREAZA)) ascunde(e); });
@@ -25,8 +25,9 @@
   window.CC_ADM_P.then(s => {
     if (!s || !(s.k || s.m || s.pv || s.ca_client)) return;   // v82.19.0: și codul master, previzualizarea și vederea „Utilizator” a Adminului
     document.documentElement.classList.add("cc-card");
+    if (s.m) PASTREAZA += ", #cc-qr, #cc-qr-cerc, [id^=cq-]";   // v82.29.0 (Manu, 14.11): masterul păstrează Evidența QR (cerculețul din dreapta sus și panoul)
     const st = document.createElement("style"); st.id = "cc-card-css";
-    st.textContent = "html.cc-card #cl-home,html.cc-card #cc-sf,html.cc-card #cc-tt-v,html.cc-card .cc-pasi,html.cc-card [id^=bld-],html.cc-card [id^=mn-],html.cc-card [id^=cq-],html.cc-card #pick{display:none!important}";
+    st.textContent = "html.cc-card #cl-home,html.cc-card #cc-sf,html.cc-card #cc-tt-v,html.cc-card .cc-pasi,html.cc-card [id^=bld-],html.cc-card [id^=mn-]," + (s.m ? "" : "html.cc-card [id^=cq-],") + "html.cc-card #pick{display:none!important}";
     document.head.appendChild(st);
     curata();
     try { new MutationObserver(() => { clearTimeout(curata._t); curata._t = setTimeout(curata, 120); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { setInterval(curata, 800); }

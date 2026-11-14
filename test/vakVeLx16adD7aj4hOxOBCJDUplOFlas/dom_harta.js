@@ -90,7 +90,10 @@
     const investitii = (V.investitii || []).map(x => { const g = x.g, w = g.type === "Point" ? [wx(g.coordinates[0]), wy(g.coordinates[1])] : null, lns = g.type === "LineString" ? [g.coordinates] : g.type === "MultiLineString" ? g.coordinates : null, ln = lns ? lns.map(l => l.map(c => [wx(c[0]), wy(c[1])])) : null; return { ...x, w, ln }; });
     return { f, firme, anunturi, investitii, centru: V.centru, raza: V.raza_max_m || 350, r0: V.r0 || 0, reguli: V.reguli, data: V.data, stat: V.stat };
   }
-  const RAZA = () => Math.max(0, Math.min(350, window.__dfaRaza == null ? 119 : Number(window.__dfaRaza)));   // aceeași rază ca în liste (cursor 0–350 m)
+  const RAZA = () => Math.max(0, Math.min(350, window.__dfaRazaLive != null ? Number(window.__dfaRazaLive) : window.__dfaRaza == null ? 119 : Number(window.__dfaRaza)));
+  /* v82.29.0 (Manu, 14.11: „vederea e cu poza hărții cu cerc — pe care îl modificăm și se vede vizibil”): cercul urmărește cursorul în timp ce îl miști, nu doar la eliberare */
+  document.addEventListener("input", e => { if (e.target && e.target.id === "dfa-raza") { window.__dfaRazaLive = Number(e.target.value); if (M) M.dirty = true; } }, true);
+  document.addEventListener("change", e => { if (e.target && e.target.id === "dfa-raza") setTimeout(() => { window.__dfaRazaLive = null; if (M) M.dirty = true; }, 600); }, true);   // aceeași rază ca în liste (cursor 0–350 m)
   const mW = lat => 40075016.686 * Math.cos(lat * Math.PI / 180);   // metri pe unitatea de lume
   const inPoly = (rings, x, y) => { let c = false; for (const r of rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
   const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -132,6 +135,7 @@
     for (const x of V.anunturi) if (x.dist <= K.R) dot(x.w, -6, -6, "#e5192d", "#fff");   // anunț de vânzare: bulină mică roșie
     c.restore();
     c.beginPath(); c.arc(K.tp[0], K.tp[1], K.rp, 0, 7); c.setLineDash([7, 5]); c.strokeStyle = "rgba(255,255,255,.95)"; c.lineWidth = 1.8; c.stroke(); c.setLineDash([]);
+    { const t = K.R + " m", x = K.tp[0], y = K.tp[1] - K.rp; c.font = "700 12px system-ui"; const w = c.measureText(t).width + 12; c.fillStyle = "rgba(255,255,255,.95)"; c.beginPath(); c.roundRect ? c.roundRect(x - w / 2, y - 11, w, 22, 11) : c.rect(x - w / 2, y - 11, w, 22); c.fill(); c.fillStyle = "#1a1e2a"; c.textBaseline = "middle"; c.textAlign = "center"; c.fillText(t, x, y); c.textAlign = "start"; }   // v82.29.0: raza scrisă pe cerc
   }
 
   /* ---------- hartă ---------- */
@@ -325,6 +329,19 @@
     if (!sel) for (const k of Object.keys(V.f)) { const f = V.f[k]; if ((f.dm == null || f.dm <= K.R) && wxp >= f.b[0] && wxp <= f.b[2] && wyp >= f.b[1] && wyp <= f.b[3] && inPoly(f.rings, wxp, wyp)) { sel = { k }; break; } }
     if (!sel) return;
     const f = sel.k && V.f[sel.k]; M.hl = f ? [{ rings: f.rings, c: f.c, b: f.b, nc: sel.k }] : []; M.label = ""; M.dirty = true; fisa(box, sel);
+    if (sel.k) laRanduri(sel.k);
+  }
+  /* v82.29.0 (Manu, 14.11: „click pe parcelă — duce tabelul la datele respective cumulate; click pe listă — dă o nuanță liniei și aprinde parcela”):
+     atingerea unei parcele colorează toate rândurile care o privesc și derulează lista la primul (sub harta lipită) */
+  function laRanduri(k) {
+    const rows = [...document.querySelectorAll("#date_fine_aproape tr[data-i]")].filter(tr => pozitii(tr.dataset.s, +tr.dataset.i).some(h => h.nc === String(k)));
+    document.querySelectorAll("#date_fine_aproape tr.dfa-on").forEach(x => x.classList.remove("dfa-on"));
+    rows.forEach(tr => tr.classList.add("dfa-on"));
+    if (!rows.length) { if (M) M.mesaj("pentru această parcelă nu sunt rânduri în tabelele afișate"); return; }
+    const det = rows[0].closest("details"); if (det && !det.open) det.open = true;
+    const hm = document.querySelector("#date_fine_aproape .dhm"), off = (hm ? hm.getBoundingClientRect().height : 0) + 70;
+    window.scrollTo({ top: rows[0].getBoundingClientRect().top + scrollY - off, behavior: "smooth" });
+    if (M) M.mesaj(rows.length === 1 ? "1 rând în tabel" : rows.length + " rânduri în tabel");
   }
   function legenda(box) {
     if ($(".dhm-leg", box)) return; const d = document.createElement("details"); d.className = "dhm-leg";

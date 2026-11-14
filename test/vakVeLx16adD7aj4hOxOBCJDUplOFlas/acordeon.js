@@ -128,13 +128,13 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
       m.onclick = () => lung(i); W.appendChild(m); c.mai = m;
     });
     const f = $("#cl-final"), p = $("#rep-foot-p"); if (f) setare(f, baza(0) + 90); if (p) setare(p, 10000);
-    const b = document.createElement("button"); b.id = "ac-cap"; b.type = "button"; b.textContent = "Cuprins";   /* v82.24.1 (cerere Manu 13.11.2026): buton mic „Cuprins”; panoul e închis implicit și se închide la atingerea în afara lui sau pe un capitol */
+    const b = document.createElement("button"); b.id = "ac-cap"; b.type = "button"; b.textContent = "Secțiuni";   /* v82.29.0 (Manu, 14.11: „cuprins devine Secțiuni”) */   /* v82.24.1 (cerere Manu 13.11.2026): buton mic „Cuprins”; panoul e închis implicit și se închide la atingerea în afara lui sau pe un capitol */
     const l = document.createElement("div"); l.id = "ac-lista";
     document.body.append(b, l);
     b.onclick = e => { e.stopPropagation(); lista(); l.classList.toggle("on"); };
     document.addEventListener("click", e => { if (!e.target.closest("#ac-lista")) l.classList.remove("on"); });
     try { history.scrollRestoration = "manual"; } catch (e) {}   // închiderea alege singură unde derulează; browserul nu trebuie să sară înapoi
-    addEventListener("popstate", () => { if (deschis >= 0) inchide(false); });
+    addEventListener("popstate", () => { if (window.__ccPagina) return; if (deschis >= 0) inchide(false); });   // v82.29.0: „Înapoi” dintr-o pagină suprapusă (comanda DOM) nu închide capitolul de dedesubt
     addEventListener("beforeprint", laPrint); addEventListener("afterprint", dupaPrint);
     mostra();
     /* linkurile vechi spre capitole (semafor, referințe, adrese cu #) deschid cardul, nu schimbă pagina */
@@ -146,7 +146,8 @@ section.ac-s.ac-sub:not(.ac-sub-on){position:fixed!important;left:-99999px!impor
   function comutator() {
     const bar = $("#ac-bar"); if (!bar || $("#ac-mod")) return;
     const m = document.createElement("span"); m.id = "ac-mod"; m.setAttribute("role", "group"); m.setAttribute("aria-label", "ce vezi");
-    m.innerHTML = ["Cuprins", "Raport", "Rezumat"].map(t => `<button type="button" data-m="${t}" aria-pressed="false">${t}</button>`).join("");
+    const ET = { Cuprins: "Secțiuni", Raport: "Raport", Rezumat: "Pe scurt" };   // v82.29.0 (Manu, 14.11: „cuprins devine Secțiuni; Raport; rezumat devine Pe scurt”): doar etichetele; valorile interne rămân
+    m.innerHTML = ["Cuprins", "Raport", "Rezumat"].map(t => `<button type="button" data-m="${t}" aria-pressed="false">${ET[t]}</button>`).join("");
     bar.prepend(m);
     m.onclick = e => { const t = e.target.closest("button")?.dataset.m; if (!t) return; if (t === "Raport") toate(true); else { toate(false); if (t === "Cuprins") { if (deschis >= 0) { stare(deschis, false); deschis = -1; } scrollTo(0, 0); } else deschide(0, true); } mod(); };
     mod();

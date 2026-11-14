@@ -17,14 +17,19 @@
   const api = async (actiune, b) => { const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune, token: S.token, ...(b || {}) }) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "eroare " + r.status); return j; };
 
   window.CC_ADM_P.then(async s => {
-    if (!s || !s.adm || s.c || s.g || s.k || !s.token) return;   // doar jetonul Admin
+    if (!s || !s.token || !(s.m || (s.adm && !s.c && !s.g && !s.k))) return;   // jetonul Admin sau (v82.29.0, cerere Manu 14.11) jetonul master
     S = s;
     try { await api("verifica"); } catch (e) { return; }
     const mk = () => { const b = document.getElementById("cc-tt-bar"); if (!b) return setTimeout(mk, 400); if (document.getElementById("cc-qr-btn")) return;
       const x = document.createElement("button"); x.id = "cc-qr-btn"; x.type = "button"; x.textContent = "Evidență QR";
       x.style.cssText = "font:700 12px -apple-system,system-ui,sans-serif;border:0;border-radius:8px;padding:6px 9px;background:#1d5fb0;color:#fff;white-space:nowrap";
       x.onclick = panou; b.insertBefore(x, b.querySelector("#cc-tt-v")); };
-    mk();
+    if (s.m) {   // v82.29.0 (Manu, 14.11: „pe pagina principală un mic cerculeț cu un QR code, în dreapta sus e suficient”): masterul deschide Evidența QR din cerculețul din dreapta sus
+      const c = document.createElement("button"); c.id = "cc-qr-cerc"; c.type = "button"; c.title = "Coduri QR și accese"; c.setAttribute("aria-label", "Coduri QR și accese");
+      c.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm9-2h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h3v2h-3v-2zm-4 4h2v2h-2v-2zm4 0h3v4h-2v-2h-1v-2zm-2 2h2v2h-2v-2z"/></svg>';
+      c.style.cssText = "position:fixed;right:12px;top:10px;z-index:9001;width:40px;height:40px;border-radius:50%;border:1.5px solid #1a1e2a;background:#fffdf8;color:#1a1e2a;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.18);cursor:pointer;padding:0";
+      c.onclick = panou; document.body.appendChild(c);
+    } else mk();
   });
 
   function stil() {
@@ -109,13 +114,21 @@
 
   function formular() {
     const box = document.getElementById("cq-c");
-    box.innerHTML = `<div class="bx"><b>Generează QR nou</b><div style="margin-top:10px;display:grid;gap:10px"><input type="text" id="cq-d" placeholder="destinatar" maxlength="120"><input type="text" id="cq-n" placeholder="notă (opțional)" maxlength="300"><div><b style="font-size:13px">Rapoarte</b>${CAT.map(c => `<label class="b"><input type="checkbox" value="${esc(c.id)}"> <span>${esc(c.eticheta || c.id)}</span></label>`).join("")}</div><label class="r">Valabil <input type="number" id="cq-z" value="30" min="1" max="365" style="width:5em"> zile</label><div class="r"><button class="p" id="cq-g">Generează</button><button id="cq-gx">Renunță</button></div><div class="m" id="cq-gm"></div></div></div>`;
+    box.innerHTML = `<div class="bx"><b>Generează QR nou</b><div style="margin-top:10px;display:grid;gap:10px"><input type="text" id="cq-d" placeholder="destinatar" maxlength="120"><input type="text" id="cq-n" placeholder="notă (opțional)" maxlength="300"><div><b style="font-size:13px">Rapoarte</b>${CAT.map(c => `<label class="b"><input type="checkbox" value="${esc(c.id)}"> <span>${esc(c.eticheta || c.id)}</span></label>`).join("")}</div><label class="r">Valabil <input type="number" id="cq-z" value="30" min="1" max="365" style="width:5em"> zile</label><div><b style="font-size:13px">Acces</b><label class="b"><input type="radio" name="cq-ac" value="complet" checked> <span>complet (cu Depth of Market)</span></label><label class="b"><input type="radio" name="cq-ac" value="partial"> <span>parțial: fără Depth of Market</span></label></div><div id="cq-domb"><b style="font-size:13px">Cod DOM pe rapoartele bifate</b><label class="b"><input type="radio" name="cq-dc" value="pastreaza" checked> <span>păstrează codul existent</span></label><label class="b"><input type="radio" name="cq-dc" value="aleator"> <span>cod nou aleator</span></label><label class="b"><input type="radio" name="cq-dc" value="ales"> <span>cod ales: </span><input type="text" id="cq-dv" inputmode="numeric" maxlength="12" placeholder="ex. 8549" style="width:7em"></label></div><div class="r"><button class="p" id="cq-g">Generează</button><button id="cq-gx">Renunță</button></div><div class="m" id="cq-gm"></div></div></div>`;
     box.querySelector("#cq-gx").onclick = () => { box.innerHTML = ""; };
     box.querySelector("#cq-g").onclick = async () => {
       const dest = box.querySelector("#cq-d").value.trim(), rap = [...box.querySelectorAll("input[type=checkbox]:checked")].map(x => x.value), zile = Number(box.querySelector("#cq-z").value) || 30, m = box.querySelector("#cq-gm");
       if (dest.length < 2) { m.textContent = "scrie destinatarul"; return; } if (!rap.length) { m.textContent = "bifează cel puțin un raport"; return; }
-      if (!confirm(`Generezi un card pentru „${dest}” cu ${rap.length} rapoarte, valabil ${zile} zile?`)) return;
-      try { const j = await api("genereaza", { destinatar: dest, nota: box.querySelector("#cq-n").value.trim(), rapoarte: rap, zile }); await tabel(); arata(j.card); } catch (e) { m.textContent = e.message; }
+      const ac = (box.querySelector("input[name=cq-ac]:checked") || {}).value || "complet", dc = (box.querySelector("input[name=cq-dc]:checked") || {}).value || "pastreaza";
+      let cod = dc === "ales" ? box.querySelector("#cq-dv").value.replace(/[^0-9A-Za-z]/g, "") : dc === "aleator" ? String(100000 + crypto.getRandomValues(new Uint32Array(1))[0] % 900000) : "";
+      if (ac === "complet" && dc === "ales" && cod.length < 4) { m.textContent = "codul ales are cel puțin 4 caractere"; return; }
+      const schimb = ac === "complet" && cod ? `\nCodul DOM ${cod} înlocuiește codul DOM de pe: ${rap.join(", ")} (toate cardurile acestor rapoarte primesc același cod DOM).` : "";
+      if (!confirm(`Generezi un card pentru „${dest}” cu ${rap.length} rapoarte, valabil ${zile} zile, acces ${ac === "complet" ? "complet" : "parțial (fără DOM)"}?${schimb}`)) return;
+      try {
+        if (ac === "complet" && cod) for (const r of rap) await api("coduri_seteaza", { tip: "dom", raport_id: r, cod, eticheta: "cod DOM · " + ((CAT.find(c => c.id === r) || {}).eticheta || r) });
+        const j = await api("genereaza", { destinatar: dest, nota: (box.querySelector("#cq-n").value.trim() + (ac === "partial" ? " · acces parțial (fără DOM)" : "")).trim(), rapoarte: rap, zile });
+        j.card._acces = ac; j.card._dom = ac === "partial" ? null : (cod || undefined); await tabel(); arata(j.card);
+      } catch (e) { m.textContent = e.message; }
     };
   }
 
@@ -130,7 +143,7 @@
     g.fillStyle = "#fff"; g.fillRect(x0, y0, Q, Q); g.fillStyle = "#1a1e2a";
     for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect(Math.floor(x0 + (k + 2) * cell), Math.floor(y0 + (r + 2) * cell), Math.ceil(cell), Math.ceil(cell));
     let y = y0 + Q + 40; g.textAlign = "center"; g.font = F(56, 1); g.fillText("Cod de intrare: " + COD_INTRARE, W / 2, y); y += 78;
-    g.font = F(48, 1); g.fillText("🔒 Cod DOM: " + COD_DOM, W / 2, y); y += 64;
+    g.font = F(48, 1); g.fillText(c._dom === null ? "Acces parțial: fără Depth of Market" : "🔒 Cod DOM: " + (c._dom || COD_DOM), W / 2, y); y += 64;   // v82.29.0: cod ales / aleator pe card sau acces parțial
     g.font = F(30); g.fillStyle = "#5b6275"; g.fillText("Depth of Market – Level 2", W / 2, y); y += 62;
     g.textAlign = "left"; g.fillStyle = "#1d5fb0"; g.font = F(38, 1); g.fillText("Rapoartele de pe card", 70, y); y += 54;
     const et = Object.fromEntries(CAT.map(x => [x.id, x.eticheta || x.id])); g.fillStyle = "#1a1e2a"; g.font = F(28);
