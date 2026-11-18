@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   const st = document.createElement("style"); st.id = "pc-css";
-  st.textContent = `#cc-sf.pc{border:1px solid var(--line,#e2e2e2);border-radius:14px;background:#eff3fa;padding:0 16px;margin-top:10px}
+  st.textContent = `#cc-sf.pc{box-sizing:border-box;border:1px solid var(--line,#e2e2e2);border-radius:14px;background:#eff3fa;padding:0 16px;margin-top:10px}
 #cc-sf.pc.pc-v{background:#fff}
 #cc-sf.pc .cc-pasi{margin:0;padding:14px 0}#cc-sf.pc .pc-h{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;cursor:pointer;font:800 20px/1.2 var(--font)}
 #cc-sf.pc .pc-h::after{content:"+";font:600 26px/1 var(--font)}#cc-sf.pc:not(.pc-inch) .pc-h::after{content:"\\2212"}
