@@ -71,7 +71,7 @@
     const btn = box.querySelector(".ac-pr-btn");
     const div = document.createElement("div"); div.className = "msk"; div.innerHTML = V && V.contoare ? admin(V) : client(j);
     box.innerHTML = ""; box.appendChild(div);
-    const pl = div.querySelector(".msk-pl"); if (pl) window.CC_PLATA.montaj(pl, () => {}, true, { compact: true });   // v82.33.0: „Am cod / Comandă DOM”
+    const pl = div.querySelector(".msk-pl"); if (pl) { if (window.CC_DOM_LACAT && window.CC_DOM_LACAT.link) pl.appendChild(window.CC_DOM_LACAT.link()); else window.CC_PLATA.montaj(pl, () => {}, true, { compact: true }); }   // v82.34.0 (Manu, 20.11: „un mod mai simplu”): aici doar „🔒 Deblochează DOM” → bara unică
     if (btn && !V && !pl) box.appendChild(btn);
     box.dataset.msk = V ? "admin" : "client"; ultim = box;
     const go = box.querySelector("#msk-pin-go"); if (go) { const inp = box.querySelector("#msk-pin"), m = box.querySelector("#msk-pin-m");

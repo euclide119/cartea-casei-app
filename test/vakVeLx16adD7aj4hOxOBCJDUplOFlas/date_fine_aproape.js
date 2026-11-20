@@ -12,7 +12,8 @@
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const ADMIN = () => window.parent === window && ((local && !window.CC_CLIENT) || !!(window.CC_ADM && window.CC_ADM.adm && (!window.CC_ADM.ca_client || window.CC_ADM.n >= 2)));
   const SEC = "date_fine_aproape";
-  let arataAdmin = false, ascunsAdmin = false, arataSurse = false, facut = null;   // v82.14.2: sursele doar la „i”, nici în Admin implicit
+  let arataAdmin = true, ascunsAdmin = false,   // v82.34.0 (Manu, 20.11.2026: „un mod mai simplu”): în Admin / master DOM-ul e deschis direct, fără cod; „Ascunde” / „Arată” rămân
+      arataSurse = false, facut = null;   // v82.14.2: sursele doar la „i”, nici în Admin implicit
 
   function css() {
     if ($("#dfa-css")) return;
@@ -145,8 +146,10 @@
       sec.dataset.dfaLacat = cheie; sec.hidden = false; sec.classList.add("dfa-lock");
       sec.innerHTML = `<div><h2>🔒 Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății. Datele complete se deschid cu codul.</p></div><div class="dfa-pl dfa-pl-sus"></div><div class="dfa-corp"></div><div class="dfa-pl dfa-pl-jos"></div><div class="dfa-debl"></div>`;
       $(".dfa-corp", sec).innerHTML = mo ? randare(mo, "ascuns") : `<p class="dfa-gol">${GOL}</p>`;
-      window.CC_PLATA.montaj($(".dfa-pl-sus", sec), () => {}, true, { compact: true });
-      window.CC_PLATA.montaj($(".dfa-pl-jos", sec), () => {}, true, { compact: true });
+      /* v82.34.0 (Manu, 20.11.2026: „DOM are 3 sau mai multe zone de bifă și băgat codul - avem nevoie de un mod mai simplu de prezentare”): o singură bară de deblocare pe raport, aici, deasupra hărții;
+         sub date rămâne doar „🔒 Deblochează DOM”, care aduce bara unică pe ecranul de cod */
+      window.CC_PLATA.montaj($(".dfa-pl-sus", sec), () => {}, true, { compact: true, unic: true });
+      if (window.CC_DOM_LACAT && window.CC_DOM_LACAT.link) $(".dfa-pl-jos", sec).appendChild(window.CC_DOM_LACAT.link());
       if (window.CC_PLATA.deblocheaza) window.CC_PLATA.deblocheaza($(".dfa-debl", sec));
       return;
     }
@@ -164,7 +167,7 @@
         corp.querySelector('[data-a="surse"]').onclick = () => { arataSurse = !arataSurse; facut = null; porneste(); };
       } else {
         corp.innerHTML = `<span class="dfa-adm">Nivel ascuns (valorile sensibile sunt mascate)</span> <button type="button" class="dfa-btn" data-a="arata">Arată</button>` + randare(mostra, "ascuns");
-        corp.querySelector('[data-a="arata"]').onclick = async () => { const c = window.prompt("Cod Admin:"); if (!c) return; try { const r = await fetch((window.CC_STARE && window.CC_STARE.FN) || "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(window.CC_ADM && window.CC_ADM.token ? { actiune: "privat", token: window.CC_ADM.token, pin: c } : { actiune: "cod_master", cod: c }) }); if (r.ok) { arataAdmin = true; facut = null; porneste(); } else window.alert("Cod greșit"); } catch (e) { window.alert("Nu pot verifica codul acum"); } };   // v82.21.1: codul se verifică pe server, nu în aplicație; v82.33.0: fără jeton (Admin local) prin cod_master, deci și cu 1199
+        corp.querySelector('[data-a="arata"]').onclick = () => { arataAdmin = true; ascunsAdmin = false; facut = null; porneste(); };   // v82.34.0: Admin / master: fără al doilea cod (înainte: promptul „Cod Admin”, v82.21.1 / v82.33.0)
       }
       return;
     }

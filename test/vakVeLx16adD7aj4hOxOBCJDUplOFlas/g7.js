@@ -455,6 +455,13 @@
   }
   function privat(G, D, S, id, NIV) {
     const pv = G.privat; if (!pv) { S.innerHTML = `<h2 class="g7-h">Privat</h2><p class="g7-p">Modulul privat nu e configurat pentru această proprietate.</p>`; return; }
+    if (NIV < 2 && window.CC_SES_CLIENT && window.CC_SES_CLIENT() && window.CC_DOM_LACAT && window.CC_DOM_LACAT.link) {
+      /* v82.34.0 (Manu, 20.11.2026: „DOM are 3 sau mai multe zone de bifă și băgat codul - avem nevoie de un mod mai simplu de prezentare”): în sesiunea de client, fără câmpul de 4 cifre și bifa „nu sunt robot”;
+         doar „🔒 Deblochează DOM” → bara unică din capitolul Depth of Market (codul se scrie o dată) */
+      S.innerHTML = `<h2 class="g7-h">🔒 Date fine</h2><div class="g7-b"><div class="g7-n y">În datele fine sunt: istoricul CU și PUZ, raportul juridic complet, extrasul de informare urbanistică, situația tehnică, utilitățile, PUG-ul, proiectele din zonă, evaluarea, prețul în timp, anunțurile din zonă, afișul, numele și telefoanele.</div></div>`;
+      S.querySelector(".g7-b").appendChild(window.CC_DOM_LACAT.link());
+      return;
+    }
     if (NIV < 2) {
       S.innerHTML = `<h2 class="g7-h">🔒 Date fine</h2><div class="g7-b"><div class="g7-n y"><b>Ai deja codul?</b>În datele fine sunt: istoricul CU și PUZ, raportul juridic complet, extrasul de informare urbanistică electronică, situația tehnică, utilitățile, rețelele și drumurile autorizate, PUG-ul, proiectele care schimbă zona, evaluarea, prețul în timp, anunțurile din zonă, afișul, numele și telefoanele. Introdu codul de 4 cifre primit la cerere.</div>
         <div class="g7-code"><input id="g7cod" inputmode="numeric" placeholder="0000" maxlength="4" autocomplete="off" aria-label="codul privat"><button class="g7-btn" id="g7in">Deschide</button><span class="g7-p" id="g7msg"></span></div></div>`;

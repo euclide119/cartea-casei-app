@@ -167,7 +167,11 @@
         q("#pl-ct-go").onclick = go; ct.onkeydown = e => { if (e.key === "Enter") go(); }; }
     };
     ecran("alege");
-    if (compact) { el.querySelectorAll(".pl").forEach(x => x.classList.add("pl-c")); new MutationObserver(() => el.querySelectorAll(".pl:not(.pl-c)").forEach(x => x.classList.add("pl-c"))).observe(el, { childList: true }); return; }
+    /* v82.34.0 (Manu, 20.11.2026: „DOM are 3 sau mai multe zone de bifă și băgat codul - avem nevoie de un mod mai simplu de prezentare”): bara UNICĂ (opt.unic) are rândul „Continuând, accepți termenii” o singură dată, lângă câmp,
+       și poate fi adusă direct pe ecranul de cod de oriunde din raport (CC_PLATA.laCod, folosit de „🔒 Deblochează DOM”) */
+    const unic = !!(opt && opt.unic), cls = unic ? ["pl-c", "pl-u"] : ["pl-c"];
+    if (unic) window.__plLaCod = () => ecran("cod");
+    if (compact) { el.querySelectorAll(".pl").forEach(x => x.classList.add(...cls)); new MutationObserver(() => el.querySelectorAll(".pl:not(.pl-c)").forEach(x => x.classList.add(...cls))).observe(el, { childList: true }); return; }
     /* un singur loc de cod în fereastra DOM: titlul dublat și linkul de sub lacăt (date_fine_aproape.js) și vechiul câmp G7 „cod de 4 cifre / nu sunt robot” (g7.js) nu se mai văd cât lacătul e închis */
     try { const sec = el.closest("section"); if (sec) { const t = sec.querySelector(":scope > div:first-child"); if (t && !t.contains(el)) t.style.display = "none"; const f = sec.querySelector(":scope > .dfa-foot"); if (f) f.style.display = "none"; } } catch (e) {}
     document.body.classList.add("cc-dom-lacat");
@@ -180,7 +184,7 @@
     e.preventDefault(); e.stopImmediatePropagation(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }, true);
   { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else { if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM";
       /* v82.33.0 (Manu, 20.11.2026: „în mod client - buton dublu: cod / comandă DOM … la toate rapoartele”): unde lista de anunțuri avea doar „Comandă DOM” (ex. G7, mostra veche), apare aceeași pereche „Am cod / Comandă DOM” */
-      if (!b.dataset.dublu) { b.dataset.dublu = "1"; const d = document.createElement("div"); d.className = "ac-pr-dublu"; b.before(d); montaj(d, () => {}, true, { compact: true }); b.style.display = "none"; } } }); };
+      if (!b.dataset.dublu) { b.dataset.dublu = "1"; const d = window.CC_DOM_LACAT && window.CC_DOM_LACAT.link ? window.CC_DOM_LACAT.link() : document.createElement("div"); d.classList.add("ac-pr-dublu"); b.before(d); if (!(window.CC_DOM_LACAT && window.CC_DOM_LACAT.link)) montaj(d, () => {}, true, { compact: true }); b.style.display = "none"; } } }); };   // v82.34.0: aici doar „🔒 Deblochează DOM” → bara unică
     let n = 0; const t = setInterval(() => { fix(); if (++n > 40) clearInterval(t); }, 500); }
   /* v82.27.0 (Manu, 14.11.2026): „Deblochează datele complete” rămâne la 499 RON; butonul duce la pagina secundară de plată, cu GDPR-ul specific acestui set de date
      (surse publice, interes legitim declarat de cumpărător); sub casetă, pe două coloane, fără linii: ce conține și de unde vine. Texte generice, fără angajamente. */
@@ -196,7 +200,7 @@
   function cssDebl() {
     if (document.getElementById("pl-css-debl")) return;
     const s = document.createElement("style"); s.id = "pl-css-debl";
-    s.textContent = `.pl.pl-c{padding:10px;gap:8px;border-width:1px;margin:8px 0}.pl.pl-c .pl-ter{display:none}
+    s.textContent = `.pl.pl-c{padding:10px;gap:8px;border-width:1px;margin:8px 0}.pl.pl-c .pl-ter{display:none}.pl.pl-c.pl-u .pl-ter{display:block}
 .pl-2c{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:8px;margin:4px 2px 14px;font:13px/1.4 var(--font);color:#3d4354}.pl-2c b{font-weight:700;color:#1a1e2a}.pl-2c span{color:#5b6275}
 .pl-pag{position:fixed;inset:0;z-index:2147482000;background:#fffdf8!important;overflow:auto;-webkit-overflow-scrolling:touch}
 .pl-pag .w{max-width:430px;margin:0 auto;padding:12px 16px 32px;color:#1a1e2a;font:14px/1.5 var(--font);background:transparent!important}
@@ -265,5 +269,5 @@
     const sim = el.querySelector(".pl-sim"); if (sim) sim.onclick = () => { simulat = true; dupa && dupa(); };
   }
   window.CC_GRATUIT = CC_GRATUIT;
-  window.CC_PLATA = { deblocheaza, paginaPlata, gratuit: CC_GRATUIT, pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
+  window.CC_PLATA = { laCod: () => window.__plLaCod && window.__plLaCod(), deblocheaza, paginaPlata, gratuit: CC_GRATUIT, pret: CFG.pret_ron, moneda: CFG.moneda, stare, dateLivrate, montaj, plateste, filtruClient, caAdmin, adminReal, textAcord: TEXT_ACORD };
 })();

@@ -8,13 +8,22 @@
   const IDS = ["g7_sinteza", "g7_cu", "g7_privat", "anunturi_dom", "vecinatati_dom", "g7_juridic", "g7_extras", "g7_istoric", "g7_tehnic", "g7_utilitati", "g7_pug", "proiecte", "g7_proiecte", "evaluare", "g7_preturi", "roi", "g7_comercial", "g7_afis"];
   const css = document.createElement("style"); css.id = "dl-css";
   css.textContent = `section.dl-l>*:not(h2):not(.dl-bar){filter:blur(5px);max-height:120px;overflow:hidden;pointer-events:none;user-select:none;-webkit-user-select:none}
-section.dl-l>h2{margin-bottom:6px}.dl-bar{display:block;margin:4px 0 8px}.dl-bar>button{all:unset;cursor:pointer;display:inline-block;margin:0 8px 6px 0;padding:10px 16px;border-radius:12px;border:2px solid #1d5fb0;color:#1d5fb0;background:#fff;font:700 15px system-ui}.dl-bar>button[data-a="cmd"]{background:#1d5fb0;color:#fff}`;
+section.dl-l>h2{margin-bottom:6px}.dl-bar{display:block;margin:4px 0 8px}.dl-bar>button{all:unset;cursor:pointer;display:inline-block;margin:0 8px 6px 0;padding:10px 16px;border-radius:12px;border:2px solid #1d5fb0;color:#1d5fb0;background:#fff;font:700 15px system-ui}.dl-bar>button[data-a="cmd"]{background:#1d5fb0;color:#fff}.dl-unic{all:unset;cursor:pointer;display:inline-block;margin:4px 0 8px;padding:6px 12px;border-radius:999px;border:1.5px solid #1d5fb0;color:#1d5fb0;background:#fff;font:700 13px system-ui}`;
   document.head.appendChild(css);
   const nivel = () => window.CC_ADM && window.CC_ADM.n != null ? window.CC_ADM.n : (window.__dlN != null ? window.__dlN : 2);
   if (window.CC_NIVEL_P && !window.CC_ADM) window.CC_NIVEL_P.then(n => { window.__dlN = n; }).catch(() => {});
-  function deschide() {   // același loc de cod pentru toate: lacătul din capitolul DOM
+  function deschide(src) {   // același loc de cod pentru toate: bara unică din capitolul DOM (v82.34.0: deschisă direct pe câmpul de cod)
     const h = [...document.querySelectorAll("button.ac-h")].find(x => /Depth of Market/.test(x.textContent)); if (h && h.getAttribute("aria-expanded") !== "true") h.click();
-    setTimeout(() => { const t = document.querySelector("#date_fine_aproape .pl") || document.querySelector("#date_fine_aproape") || h; if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }, 450);
+    setTimeout(() => {
+      const u = document.querySelector("#date_fine_aproape .dfa-pl-sus");
+      if (u && u.querySelector(".pl")) { if (window.CC_PLATA && window.CC_PLATA.laCod) window.CC_PLATA.laCod(); u.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+      /* raport fără capitolul DOM în pagină: bara se pune aici, o singură dată */
+      if (src && src.isConnected && window.CC_PLATA && window.CC_PLATA.montaj && window.CC_SES_CLIENT && window.CC_SES_CLIENT() && !document.querySelector(".dl-unic-loc")) { const d = document.createElement("div"); d.className = "dl-unic-loc"; src.replaceWith(d); window.CC_PLATA.montaj(d, () => {}, true, { compact: true, unic: true }); return; }
+      const t = document.querySelector("#date_fine_aproape .pl") || document.querySelector("#date_fine_aproape") || h; if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 450);
+  }
+  function link() {   // v82.34.0: singurul element de deblocare din afara barei unice (fără câmp, fără bifă)
+    const b = document.createElement("button"); b.type = "button"; b.className = "dl-unic"; b.textContent = "🔒 Deblochează DOM"; b.onclick = () => deschide(b); return b;
   }
   function aplica() {
     const blocat = nivel() < 2;
@@ -25,15 +34,14 @@ section.dl-l>h2{margin-bottom:6px}.dl-bar{display:block;margin:4px 0 8px}.dl-bar
         s.classList.add("dl-l"); s.querySelectorAll(".dl-bar").forEach(x => x.remove());
         /* v82.29.0 (Manu, 14.11: „Depth of market trebuie standardizat: click, apoi 2 opțiuni, dar și deschiderea capitolului cu datele blurate; comandă sau cod acces; comandă te duce direct la pagina de comandă”):
            aceeași componentă ca în capitolul DOM (plata.js, „Am cod” / „Comandă DOM”); „Comandă DOM” deschide pagina de comandă, „Am cod” câmpul de cod pe loc */
-        const bar = document.createElement("div"); bar.className = "dl-bar";
-        if (window.CC_PLATA && window.CC_PLATA.montaj && (window.CC_SES_CLIENT ? window.CC_SES_CLIENT() : (window.CC_ADM && window.CC_ADM.g))) window.CC_PLATA.montaj(bar, () => {}, true, { compact: true });   // v82.33.0: aceeași componentă pentru orice sesiune de client (nu doar g)
-        else { bar.innerHTML = '<button type="button" data-a="cod">Am cod</button><button type="button" data-a="cmd">Comandă DOM</button>';
-          bar.querySelector('[data-a="cod"]').onclick = deschide; bar.querySelector('[data-a="cmd"]').onclick = () => window.CC_PLATA && window.CC_PLATA.paginaPlata ? window.CC_PLATA.paginaPlata() : deschide(); }
+        /* v82.34.0 (Manu, 20.11.2026: „DOM are 3 sau mai multe zone de bifă și băgat codul - avem nevoie de un mod mai simplu de prezentare, mă încearcă”): în capitolele DOM estompate nu mai e câmp de cod,
+           doar „🔒 Deblochează DOM”, care duce la bara UNICĂ din capitolul Depth of Market (acolo „Am cod / Comandă DOM”, codul se scrie o dată) */
+        const bar = document.createElement("div"); bar.className = "dl-bar"; bar.appendChild(link());
         /* v82.29.1 (Manu, 14.11: „la DOM toate butoanele sunt moarte”): titlul h2 sta într-un bloc „hero” estompat și fără atingeri (copil direct al secțiunii), iar bara se punea ÎN el; acum bara e copil direct al secțiunii, înaintea blocului estompat */
         const h = s.querySelector("h2"); (h && h.parentElement === s) ? h.after(bar) : s.prepend(bar);
       } else if (!blocat && are) { s.classList.remove("dl-l"); s.querySelectorAll(":scope>.dl-bar").forEach(x => x.remove()); }
     }
   }
   setInterval(() => { try { aplica(); } catch (e) { console.warn("dom_lacat", e); } }, 1500);
-  window.CC_DOM_LACAT = { aplica, deschide };
+  window.CC_DOM_LACAT = { aplica, deschide, link };
 })();
