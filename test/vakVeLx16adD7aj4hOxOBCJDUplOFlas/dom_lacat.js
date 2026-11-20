@@ -26,7 +26,7 @@ section.dl-l>h2{margin-bottom:6px}.dl-bar{display:block;margin:4px 0 8px}.dl-bar
         /* v82.29.0 (Manu, 14.11: „Depth of market trebuie standardizat: click, apoi 2 opțiuni, dar și deschiderea capitolului cu datele blurate; comandă sau cod acces; comandă te duce direct la pagina de comandă”):
            aceeași componentă ca în capitolul DOM (plata.js, „Am cod” / „Comandă DOM”); „Comandă DOM” deschide pagina de comandă, „Am cod” câmpul de cod pe loc */
         const bar = document.createElement("div"); bar.className = "dl-bar";
-        if (window.CC_PLATA && window.CC_PLATA.montaj && window.CC_ADM && window.CC_ADM.g) window.CC_PLATA.montaj(bar, () => {}, true, { compact: true });
+        if (window.CC_PLATA && window.CC_PLATA.montaj && (window.CC_SES_CLIENT ? window.CC_SES_CLIENT() : (window.CC_ADM && window.CC_ADM.g))) window.CC_PLATA.montaj(bar, () => {}, true, { compact: true });   // v82.33.0: aceeași componentă pentru orice sesiune de client (nu doar g)
         else { bar.innerHTML = '<button type="button" data-a="cod">Am cod</button><button type="button" data-a="cmd">Comandă DOM</button>';
           bar.querySelector('[data-a="cod"]').onclick = deschide; bar.querySelector('[data-a="cmd"]').onclick = () => window.CC_PLATA && window.CC_PLATA.paginaPlata ? window.CC_PLATA.paginaPlata() : deschide(); }
         /* v82.29.1 (Manu, 14.11: „la DOM toate butoanele sunt moarte”): titlul h2 sta într-un bloc „hero” estompat și fără atingeri (copil direct al secțiunii), iar bara se punea ÎN el; acum bara e copil direct al secțiunii, înaintea blocului estompat */

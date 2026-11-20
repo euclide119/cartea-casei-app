@@ -19,7 +19,10 @@
   const caAdmin = () => local && !!window.CC_CLIENT;          // Admin cu vederea „ca client”: singurul loc cu simulare
   const adminReal = () => local && !window.CC_CLIENT;
   let simulat = false, platit = false, ultimaStare = null;
-  const gSes = () => (window.CC_ADM && window.CC_ADM.g) ? window.CC_ADM : null;   // sesiune de client cu cod de intrare (gratuit)
+  /* v82.33.0 (Manu, 20.11.2026: „în mod client - buton dublu: cod / comandă DOM … la toate rapoartele”): orice sesiune cu jeton în vederea de client (cod de intrare g, cod de test, card, Admin „Vezi ca client”)
+     primește lacătul cu două butoane; înainte doar sesiunea g, iar celelalte vedeau blocul de plată 499 RON fără câmp de cod */
+  const gSes = () => (window.CC_ADM && window.CC_ADM.token && (window.CC_ADM.g || window.CC_ADM.ca_client)) ? window.CC_ADM : null;   // sesiune de client cu cod de intrare (gratuit)
+  window.CC_SES_CLIENT = gSes;
 
   async function apel(nume, corp) {
     try {
@@ -175,7 +178,9 @@
   window.CC_DOM_COMANDA = () => paginaPlata();   // v82.29.1: definit mereu (înainte doar după montarea lacătului: butonul „Comand DOM” din previzualizare nu făcea nimic când lacătul nu era montat)
   document.addEventListener("click", e => { const t = e.target && e.target.closest && e.target.closest(".ac-pr-btn"); if (!t || !(CC_GRATUIT && window.CC_ADM && window.CC_ADM.n < 2)) return;
     e.preventDefault(); e.stopImmediatePropagation(); if (window.CC_DOM_COMANDA) window.CC_DOM_COMANDA(); }, true);
-  { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM"; }); };
+  { const fix = () => { if (!(CC_GRATUIT && gSes())) return; document.querySelectorAll(".ac-pr-btn").forEach(b => { if (gSes().n >= 2) b.style.display = "none"; else { if (b.textContent !== "Comandă DOM") b.textContent = "Comandă DOM";
+      /* v82.33.0 (Manu, 20.11.2026: „în mod client - buton dublu: cod / comandă DOM … la toate rapoartele”): unde lista de anunțuri avea doar „Comandă DOM” (ex. G7, mostra veche), apare aceeași pereche „Am cod / Comandă DOM” */
+      if (!b.dataset.dublu) { b.dataset.dublu = "1"; const d = document.createElement("div"); d.className = "ac-pr-dublu"; b.before(d); montaj(d, () => {}, true, { compact: true }); b.style.display = "none"; } } }); };
     let n = 0; const t = setInterval(() => { fix(); if (++n > 40) clearInterval(t); }, 500); }
   /* v82.27.0 (Manu, 14.11.2026): „Deblochează datele complete” rămâne la 499 RON; butonul duce la pagina secundară de plată, cu GDPR-ul specific acestui set de date
      (surse publice, interes legitim declarat de cumpărător); sub casetă, pe două coloane, fără linii: ce conține și de unde vine. Texte generice, fără angajamente. */

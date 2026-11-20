@@ -109,10 +109,12 @@ body.generic #generic .gn-cov{margin-top:48px}
       let r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...corp, antibot: dv }) }), j = await r.json();
       if (!r.ok && /verificarea/.test(j.error || "")) { const d2 = await ab.ok(); if (d2) { r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...corp, antibot: d2 }) }); j = await r.json(); } }   // v82.25.0
       if (!r.ok) { msg.textContent = j.error || "codul nu mai e valabil"; return false; }
-      await stare({ id: j.id, titlu: j.titlu, tip: j.tip, token: j.token, n: 1, cod: corp.cod ? String(corp.cod).toUpperCase() : "" });
+      let tk = {}; try { tk = JSON.parse(atob(String(j.token || "").split(".")[0].replace(/-/g, "+").replace(/_/g, "/"))); } catch (e) {}   // v82.33.0: jetonul master (1199) are m:1, n:2
+      const idj = j.id || (tk.m && Array.isArray(j.lista) && j.lista[0] && j.lista[0].id) || "";
+      await stare({ id: idj, titlu: j.titlu, tip: j.tip, token: j.token, n: tk.m && tk.n >= 2 ? 2 : 1, cod: corp.cod ? String(corp.cod).toUpperCase() : "" });
       try { sessionStorage.setItem(K_INTRAT, "1"); } catch (e) {}
       const reg = await navigator.serviceWorker.ready; if (!navigator.serviceWorker.controller && reg.active) await new Promise(res => { navigator.serviceWorker.addEventListener("controllerchange", res, { once: true }); setTimeout(res, 1500); });
-      history.replaceState(null, "", location.pathname + "#" + j.id); location.reload(); return true;
+      history.replaceState(null, "", location.pathname + "#" + idj); location.reload(); return true;
     } catch (e) { msg.textContent = "nu s-a putut deschide; încearcă din nou"; return false; }
   }
   /* căsuța de cod stă mereu jos, la orice derulare a prezentării; cu QR, codul nu se mai scrie, rămâne doar bifa */
@@ -125,9 +127,10 @@ body.generic #generic .gn-cov{margin-top:48px}
     cov.after(w);   // v82.24.1 (cerere Manu 13.11.2026): coperta de sus în jos = 2 rânduri libere, poza, 3 rânduri libere, linia „Deschide raportul” cu câmpul de cod; nu mai e lipită jos/sub poză
     const m = w.querySelector("#cc-m"), go = w.querySelector("#cc-go"), inp = w.querySelector("#cc-in"), ab = window.CC_ANTIBOT.monteaza(w.querySelector("#cc-ab"));
     const merge = () => { if (!REMOTE) { m.textContent = "local nu se verifică codul: folosește adresa publică"; return; }
-      if (inp && inp.value.replace(/[^A-Za-z0-9]/g, "").length < 6) { m.textContent = "scrie codul de acces"; return; }
       const cm = inp ? inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
-      if (cm && !/^CC/.test(cm) && cm.length >= 8 && window.CC_MASTER_INTRA) { go.disabled = true; m.textContent = ""; window.CC_MASTER_INTRA(cm).then(x => { if (x && x.ok) return; go.disabled = false; m.textContent = (x && x.error) || "codul nu e valid"; }); return; }   // v82.25.0: codul master (10 caractere) intră direct
+      const scurt = /^\d{4}$/.test(cm);   // v82.33.0 (Manu, 20.11.2026: „DOM … trebuie să funcționeze cu COD 1199 pe toate rapoartele”): codul generic de 4 cifre nu mai e respins ca „prea scurt”; se verifică pe server
+      if (inp && cm.length < 6 && !scurt) { m.textContent = "scrie codul de acces"; return; }
+      if (cm && !/^CC/.test(cm) && (cm.length >= 8 || scurt) && window.CC_MASTER_INTRA) { go.disabled = true; m.textContent = ""; window.CC_MASTER_INTRA(cm).then(x => { if (x && x.ok) return; go.disabled = false; m.textContent = (x && x.error) || "codul nu e valid"; }); return; }   // v82.25.0: codul master (10 caractere) intră direct
       if (!w.querySelector("#cc-acc").checked) { m.textContent = "bifează „accept condițiile de utilizare”"; return; }
       go.disabled = true; intra(jt ? { actiune: "qr", qr: jt } : { actiune: "cod", cod: inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "") }, m, ab).then(ok => { if (!ok) go.disabled = false; }); };
     go.onclick = merge; if (inp) inp.onkeydown = e => { if (e.key === "Enter") merge(); };

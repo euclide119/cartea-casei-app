@@ -32,7 +32,9 @@
     return `<div class="msk-cnt">${Object.keys(ETI).filter(k => c[k] != null).map(k => `<span><b>${Number(c[k]).toLocaleString("ro-RO")}</b> ${ETI[k]}</span>`).join("")}</div>`;
   }
 
-  const pinForm = () => window.CC_ADM && window.CC_ADM.adm && window.CC_ADM.ca_client && window.CC_ADM.n < 2 ? `<div class="msk-pin"><label for="msk-pin">🔒 cod DOM</label><input id="msk-pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="····" aria-label="cod date fine"><button type="button" id="msk-pin-go">Deschide</button><small id="msk-pin-m">cu codul, datele fine se deschid complete</small></div>` : "";
+  /* v82.33.0 (Manu, 20.11.2026: „în mod client - buton dublu: cod / comandă DOM”): în locul câmpului „cod DOM” separat, aceeași componentă cu două butoane ca în capitolul DOM (plata.js); câmpul vechi rămâne doar dacă plata.js lipsește */
+  const dublu = () => !!(window.CC_PLATA && window.CC_PLATA.montaj && window.CC_SES_CLIENT && window.CC_SES_CLIENT());
+  const pinForm = () => window.CC_ADM && window.CC_ADM.adm && window.CC_ADM.ca_client && window.CC_ADM.n < 2 ? dublu() ? `<div class="msk-pl"></div>` : `<div class="msk-pin"><label for="msk-pin">🔒 cod DOM</label><input id="msk-pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="····" aria-label="cod date fine"><button type="button" id="msk-pin-go">Deschide</button><small id="msk-pin-m">cu codul, datele fine se deschid complete</small></div>` : "";
   function client(j) {
     const c = j.contoare || {};
     return pinForm() + `<p>Pentru această proprietate există date fine: ${esc(c.contacte ?? 0)} contacte, ${esc(c.firme ?? 0)} firme, ${esc(c.persoane ?? 0)} persoane, ${esc(c.acte ?? 0)} acte în zonă. Se văd primele caractere; restul se deschide la comandă.</p>`
@@ -68,7 +70,9 @@
     let box = pr; if (!box) { box = document.createElement("section"); box.id = "cc-privat-msk"; box.innerHTML = "<h2>🔒 Date fine</h2>"; ($(".wrap") || document.body).appendChild(box); }
     const btn = box.querySelector(".ac-pr-btn");
     const div = document.createElement("div"); div.className = "msk"; div.innerHTML = V && V.contoare ? admin(V) : client(j);
-    box.innerHTML = ""; box.appendChild(div); if (btn && !V) box.appendChild(btn);
+    box.innerHTML = ""; box.appendChild(div);
+    const pl = div.querySelector(".msk-pl"); if (pl) window.CC_PLATA.montaj(pl, () => {}, true, { compact: true });   // v82.33.0: „Am cod / Comandă DOM”
+    if (btn && !V && !pl) box.appendChild(btn);
     box.dataset.msk = V ? "admin" : "client"; ultim = box;
     const go = box.querySelector("#msk-pin-go"); if (go) { const inp = box.querySelector("#msk-pin"), m = box.querySelector("#msk-pin-m");
       const trimite = async () => { const pin = inp.value.trim(); if (!pin) { m.textContent = "scrie codul"; return; } go.disabled = true; m.textContent = "se verifică…";

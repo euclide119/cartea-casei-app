@@ -12,7 +12,7 @@
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const ADMIN = () => window.parent === window && ((local && !window.CC_CLIENT) || !!(window.CC_ADM && window.CC_ADM.adm && (!window.CC_ADM.ca_client || window.CC_ADM.n >= 2)));
   const SEC = "date_fine_aproape";
-  let arataAdmin = false, arataSurse = false, facut = null;   // v82.14.2: sursele doar la „i”, nici în Admin implicit
+  let arataAdmin = false, ascunsAdmin = false, arataSurse = false, facut = null;   // v82.14.2: sursele doar la „i”, nici în Admin implicit
 
   function css() {
     if ($("#dfa-css")) return;
@@ -133,7 +133,7 @@
     if (facut === Dd.id + "|" + (arataAdmin ? 1 : 0) + "|" + (window.CC_PLATA ? 1 : 0) && sec.querySelector(".dfa-corp")) return;
     const id = encodeURIComponent(Dd.id), P = `p/${id}/`;
     /* sesiunea cu cod (modul gratuit), înainte de PIN: doar lacătul, acordul și câmpul pentru cod; nu se încarcă nimic din DOM */
-    const g0 = window.CC_ADM && window.CC_ADM.g, lacat = g0 ? window.CC_ADM.n < 2 : !ADMIN();
+    const g0 = window.CC_SES_CLIENT ? !!window.CC_SES_CLIENT() : !!(window.CC_ADM && window.CC_ADM.g), lacat = g0 ? window.CC_ADM.n < 2 : !ADMIN();   // v82.33.0: orice sesiune de client (g, cod de test, card, Admin „Vezi ca client”) primește lacătul „Am cod / Comandă DOM”
     if (g0 && window.CC_ADM.n < 2 && window.CC_PLATA && window.CC_PLATA.gratuit) {
       /* v82.27.0 (Manu, 14.11): fără cod se văd datele minime, estompate (nume 2 litere, telefon 4 cifre, mascate la sursă) și harta; „Am cod / Comandă DOM” deasupra hărții și sub date;
          jos „Deblochează datele complete” (499 RON) → pagina de plată, cu GDPR-ul acestui set de date; dedesubt, pe două coloane, ce conține și de unde vine. */
@@ -157,14 +157,14 @@
     sec.innerHTML = `<div><h2>${lacat ? "🔒 " : ""}Depth of Market – Level 2</h2><p class="lead">Firmele, actele de urbanism și proiectele din jurul proprietății.</p></div><div class="dfa-corp"></div><p class="dfa-src dfa-foot"><a href="gdpr_date_fine.html" target="_blank" rel="noopener">GDPR și folosire date</a></p>`;
     const corp = $(".dfa-corp", sec), adm = ADMIN() && !(window.CC_ADM && window.CC_ADM.g);   // v82.13.0: Admin din aplicația de test e și el „client” pe adresa publicată; doar sesiunea cu cod (g) e client
     if (adm) {
-      if (arataAdmin) {
+      if (arataAdmin || (!ascunsAdmin && window.CC_ADM && window.CC_ADM.ca_client && window.CC_ADM.n >= 2)) {   // v82.33.0: după codul DOM (1199 sau codul raportului) din vederea de client, datele se deschid direct, fără al doilea cod
         const J = await json(P + "date_fine_aproape.json");
         corp.innerHTML = `<span class="dfa-adm">🔓 Admin: date complete (cod DOM), nu se publică</span> <button type="button" class="dfa-btn" data-a="ascunde">Ascunde</button> <button type="button" class="dfa-btn" data-a="surse" title="surse">i</button>` + (J ? randare(J, "arati_admin") : '<p class="dfa-gol">date_fine_aproape.json lipsește pentru această proprietate.</p>');
-        corp.querySelector('[data-a="ascunde"]').onclick = () => { arataAdmin = false; facut = null; porneste(); };
+        corp.querySelector('[data-a="ascunde"]').onclick = () => { arataAdmin = false; ascunsAdmin = true; facut = null; porneste(); };
         corp.querySelector('[data-a="surse"]').onclick = () => { arataSurse = !arataSurse; facut = null; porneste(); };
       } else {
         corp.innerHTML = `<span class="dfa-adm">Nivel ascuns (valorile sensibile sunt mascate)</span> <button type="button" class="dfa-btn" data-a="arata">Arată</button>` + randare(mostra, "ascuns");
-        corp.querySelector('[data-a="arata"]').onclick = async () => { const c = window.prompt("Cod Admin:"); if (!c) return; try { const r = await fetch((window.CC_STARE && window.CC_STARE.FN) || "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actiune: "privat", token: window.CC_ADM.token, pin: c }) }); if (r.ok) { arataAdmin = true; facut = null; porneste(); } else window.alert("Cod greșit"); } catch (e) { window.alert("Nu pot verifica codul acum"); } };   // v82.21.1: codul se verifică pe server, nu în aplicație
+        corp.querySelector('[data-a="arata"]').onclick = async () => { const c = window.prompt("Cod Admin:"); if (!c) return; try { const r = await fetch((window.CC_STARE && window.CC_STARE.FN) || "https://vzrozriarqocscpgfscw.supabase.co/functions/v1/raport_cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(window.CC_ADM && window.CC_ADM.token ? { actiune: "privat", token: window.CC_ADM.token, pin: c } : { actiune: "cod_master", cod: c }) }); if (r.ok) { arataAdmin = true; facut = null; porneste(); } else window.alert("Cod greșit"); } catch (e) { window.alert("Nu pot verifica codul acum"); } };   // v82.21.1: codul se verifică pe server, nu în aplicație; v82.33.0: fără jeton (Admin local) prin cod_master, deci și cu 1199
       }
       return;
     }
@@ -181,5 +181,5 @@
     if (P2) P2.montaj($(".dfa-pl", corp), () => { facut = null; porneste(); }, st.configurat);
   }
   ["copy", "cut", "contextmenu", "dragstart"].forEach(t => document.addEventListener(t, e => { const x = e.target && e.target.closest && e.target.closest("#" + SEC + ".dfa-lock"); if (x && !(e.target.closest("input"))) e.preventDefault(); }, true));   // v82.27.0: datele estompate nu se copiază
-  setInterval(() => { try { const s0 = $("#" + SEC); if (s0 && !(window.CC_ADM && window.CC_ADM.g && window.CC_ADM.n < 2)) s0.classList.remove("dfa-lock"); porneste(); } catch (e) { console.warn("date_fine_aproape", e); } }, 1500);
+  setInterval(() => { try { const s0 = $("#" + SEC); if (s0 && !(window.CC_ADM && (window.CC_ADM.g || window.CC_ADM.ca_client) && window.CC_ADM.n < 2)) s0.classList.remove("dfa-lock"); porneste(); } catch (e) { console.warn("date_fine_aproape", e); } }, 1500);
 })();

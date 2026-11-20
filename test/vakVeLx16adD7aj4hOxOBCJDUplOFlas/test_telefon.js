@@ -138,6 +138,14 @@
   /* v82.23.0: sesiunea de Admin nu se pierde când intri ca master / card / client cu cod: se păstrează în „sesiune_admin” și revii din bară cu „↩ Admin” (înainte, intrarea ca master o înlocuia și dispăreau Coduri, Evidență QR și Admin / Utilizator) */
   const adminPur = x => !!(x && x.adm && x.token && !x.c && !x.g && !x.k && !x.m && !x.pv);
   const salveaza = async s => { try { const o = window.CC_ADM; if (adminPur(o) && !adminPur(s)) await idbSet("sesiune_admin", o); } catch (e) {} await cachePut(s); await idbSet("sesiune", s); lg("cc-adm", "1"); };
+  /* v82.33.0 (Manu, 20.11.2026: „DOM … trebuie să funcționeze cu COD 1199 pe toate rapoartele”): serverul (raport_cod v25) întoarce jeton master (m:1, n:2) pentru 1199 la orice câmp de intrare
+     (cod de test, cod de acces, card); sesiunea se salvează atunci ca Master (tot DOM-ul deschis), nu ca client n:1 cu DOM închis */
+  const jetonMaster = t => { try { const o = JSON.parse(atob(String(t || "").split(".")[0].replace(/-/g, "+").replace(/_/g, "/"))); return !!(o && o.m && o.n >= 2); } catch (e) { return false; } };
+  async function intraMaster(j) {
+    const lista = j.lista || [], id0 = (lista.find(p => p.id === lg("cc-adm-id")) || lista[0] || {}).id;
+    await salveaza({ adm: 1, c: 1, g: 1, m: 1, n: 2, ca_client: true, token: j.token, e: j.e, titlu: "Master", id: id0, lista });
+    lg("cc-adm-id", id0); try { history.replaceState(null, "", location.pathname + location.search + "#" + id0); } catch (e) {} location.reload();
+  }
   window.CC_ADM_SALVEAZA = s => salveaza(s);   // folosit de mascare.js după ce codul de date fine e primit
   const sterge = async () => { await cachePut(null); await idbSet("sesiune", null); lg("cc-adm", null); lg("cc-adm-qr", null); try { await caches.delete("cc-date"); } catch (e) {} };
   const post = (b, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 8000); return F0(FN, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b), signal: c.signal }).then(async r => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) })).finally(() => clearTimeout(t)); };
@@ -154,6 +162,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const go = d.querySelector("#cc-tt-cod-go"); if (go) { const inp = d.querySelector("#cc-tt-cod"), m = d.querySelector("#cc-tt-cod-m");
         const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul raportului"; return; } go.disabled = true; m.textContent = "";
           try { const r = await post({ actiune: "cod_test", cod }); if (!r.ok || !r.j.token) { m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
+            if (jetonMaster(r.j.token)) return intraMaster(r.j);   // v82.33.0: 1199
             const lista = r.j.lista || [], id0 = lista[0] && lista[0].id; await salveaza({ adm: 1, c: 1, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id: id0, lista });
             const alege = (lg("cc-adm-id") && lista.some(p => p.id === lg("cc-adm-id"))) ? lg("cc-adm-id") : id0; if (alege) { lg("cc-adm-id", alege); try { history.replaceState(null, "", location.pathname + location.search + "#" + alege); } catch (e) {} } location.reload();
           } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
@@ -178,6 +187,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const inp = d.querySelector("#cc-tt-ci"), go = d.querySelector("#cc-tt-cig"), m = d.querySelector("#cc-tt-cim");
       const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de acces"; return; } if (!d.querySelector("#cc-tt-gd").checked) { m.textContent = "bifează „accept condițiile de utilizare și GDPR”"; return; } go.disabled = true; m.textContent = "";
         try { const r = await post({ actiune: "cod_gratuit", cod, id }); if (!r.ok || !r.j.token) { m.textContent = r.status === 404 ? "raportul nu mai e disponibil" : (r.j.error || "codul nu e valid"); go.disabled = false; return; }
+          if (jetonMaster(r.j.token)) { lg("cc-adm-id", id); return intraMaster(r.j); }   // v82.33.0: 1199 pe linkul clientului = Master, pe același raport
           await salveaza({ adm: 1, c: 1, g: 1, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id, lista: r.j.lista || [] });
           lg("cc-adm-g", id); lg("cc-adm-id", id); try { history.replaceState(null, "", location.pathname + location.search + "#" + id); } catch (e) {} location.reload();
         } catch (e) { m.textContent = "nu s-a putut verifica; încearcă din nou"; go.disabled = false; } };
@@ -220,6 +230,7 @@ ${TEST ? `<div style="margin:0 0 16px;display:flex;gap:8px;justify-content:cente
       const intra = async () => { const cod = inp.value.trim(); if (!cod) { m.textContent = "scrie codul de acces"; return; } if (!d.querySelector("#cc-tt-gd").checked) { m.textContent = "bifează „accept condițiile de utilizare și GDPR”"; return; } go.disabled = true; m.textContent = "";
         try { const r = await post({ actiune: "card_cod", card: k, cod, disp: await dispGet(k), inst: standalone() ? 1 : 0 });
           if (!r.ok || !r.j.token) { if (r.j.stare === "alt_dispozitiv" || r.j.stare === "blocat" || r.j.stare === "expirat") { mesajCard((r.j.error || "Cardul nu mai e valabil") + "."); return; } m.textContent = r.j.error || "codul nu e valid"; go.disabled = false; return; }
+          if (jetonMaster(r.j.token)) return intraMaster(r.j);   // v82.33.0: 1199 pe ecranul cardului
           if (r.j.disp) await dispSet(k, r.j.disp);
           const lista = r.j.lista || [], id0 = (lista[0] || {}).id;
           await salveaza({ adm: 1, c: 1, g: 1, k, n: 1, ca_client: true, token: r.j.token, e: r.j.e, titlu: "Client", id: id0, lista });
