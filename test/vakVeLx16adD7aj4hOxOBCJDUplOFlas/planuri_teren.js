@@ -1,4 +1,4 @@
-/* Raportul Casei · modul opțional „Cadastru” + „Proprietate” (planuri_teren.js v1.0.0, 13.11.2026). Blueprintul rămâne neatins: nu face nimic fără p/<id>/planuri.json.
+/* Raportul Casei · modul opțional „Cadastru” + „Proprietate” + „Planșe” (planuri_teren.js v1.1.0; v1.0.0 13.11.2026, v1.1.0 20.11.2026: secțiunea „Planșe” din planuri.json › planse, fiecare parte doar dacă există în date). Blueprintul rămâne neatins: nu face nimic fără p/<id>/planuri.json.
    Cerința lui Manu (13.11.2026): capitol cadastral și capitol proprietate, cu planurile trimise de el folosite cu prioritate acolo unde le indică.
    Datele publice nu au nume de persoane; proprietarii apar doar în Admin local (privat.json). Secțiunile intră în capitolul „Ce poți construi”, înaintea urbanismului. */
 (function () {
@@ -19,7 +19,8 @@
 .pt-f figcaption{padding:8px 12px;font:12.5px/1.45 var(--font);color:#3b4252}.pt-f figcaption b{display:block;color:#1b2230}
 .pt-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .pt-l{margin:0;padding-left:18px;font:13px/1.6 var(--font)}
-.pt-n{font:12.5px/1.5 var(--font);color:var(--muted)}`;
+.pt-n{font:12.5px/1.5 var(--font);color:var(--muted)}
+.pt-f a{display:block}.pt-f .pt-lc{padding:18px 12px;font:13px/1.5 var(--font);color:#3b4252;background:#f4f6fa}`;
   document.head.appendChild(st);
 
   function fila(k, titlu, dupa) {
@@ -44,6 +45,14 @@
 <h3>Planuri cadastrale</h3>${fig(id, C.planuri[0])}<div class="pt-g">${C.planuri.slice(1).map(p => fig(id, p)).join("")}</div></div>`;
   }
 
+  /* v1.1.0: planșele trimise pentru raport (PUZ în lucru, prezentări); imaginile „plansa_*” sunt private: se văd după codul DOM, altfel rămâne nota */
+  function planse(id, P) {
+    const s = fila("planse", P.titlu || "Planșe", "urbanism"); if (!s) return;
+    const f = p => `<figure class="pt-f"><a href="p/${esc(id)}/${esc(p.f)}" target="_blank" rel="noopener"><img src="p/${esc(id)}/${esc(p.f)}" alt="${esc(p.t)}" loading="lazy" onerror="this.parentNode.outerHTML='<div class=&quot;pt-lc&quot;>🔒 Planșa se deschide cu codul DOM.</div>'"></a><figcaption><b>${esc(p.t)}</b>${esc(p.d)}</figcaption></figure>`;
+    s.innerHTML = `<div class="pt-w"><h2>${esc(P.titlu || "Planșe")}</h2>${P.intro ? `<p class="pt-n">${esc(P.intro)}</p>` : ""}
+${(P.grupuri || []).map(g => `<h3>${esc(g.t)}</h3>${(g.p || []).map(f).join("")}`).join("")}</div>`;
+  }
+
   async function proprietate(id, P) {
     const s = fila("proprietate", "Proprietate", "urbanism"); if (!s) return;
     const Z = P.puz_vecin;
@@ -65,7 +74,7 @@ ${tab(P.situatie)}${adm}
       cur = Dd.id;
       const r = await fetch(`p/${Dd.id}/planuri.json`); if (!r.ok) return;
       const J = await r.json(); if (!J || !J.activ) return;
-      cadastru(Dd.id, J.cadastru); await proprietate(Dd.id, J.proprietate);
+      if (J.cadastru) cadastru(Dd.id, J.cadastru); if (J.proprietate) await proprietate(Dd.id, J.proprietate); if (J.planse) planse(Dd.id, J.planse);
     } catch (e) { console.warn("planuri_teren", e); }
   }, 700);
 })();
